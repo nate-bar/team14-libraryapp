@@ -1,5 +1,4 @@
 import React, { useEffect } from "react";
-import { NavBar } from "~/components/navbar";
 
 const UsingFetch = () => {
     const [items, setItems] = React.useState<any[]>([])
@@ -19,8 +18,6 @@ const UsingFetch = () => {
     }, [])
 
     return (
-        <>
-        <NavBar/>
         <div>
             {items.length > 0 && (
                 <table className="table-auto">
@@ -45,7 +42,6 @@ const UsingFetch = () => {
                 </table>
             )}
         </div>
-        </>
     )
 }
 

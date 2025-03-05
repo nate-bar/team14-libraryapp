@@ -1,10 +1,8 @@
-import { NavBar } from "~/components/navbar";
 
 export default function MyApp() {
   return (
-    <>
-      <NavBar/>
+    <div>
       <h1>Welcome to Home page</h1>
-    </>
+    </div>
   );
 }
