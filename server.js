@@ -9,6 +9,7 @@ const DEVELOPMENT = process.env.NODE_ENV === "development";
 const PORT = Number.parseInt(process.env.PORT || "3000");
 
 const app = express();
+app.use(express.json()); // built-in middleware json parser
 
 const db = mysql.createConnection({
   host: 't14mysqldb.mysql.database.azure.com',
@@ -18,6 +19,21 @@ const db = mysql.createConnection({
 });
 
 db.connect()
+
+app.post('/api/insert', (req, res) => {
+  const {name, email} = req.body;
+  const classID = 0;
+
+  // Insert the request body into the database
+  const query = `INSERT INTO Members (MemberName, MemberEmail, ClassID) VALUES (?, ?, ?)`;
+  db.query(query, [name, email, classID]);
+
+  res.json({ success: true, message: "Data inserted successfully" });
+
+  console.log(name);
+  console.log(email);
+  return;
+})
 
 // RETURNS ALL MEMBERS
 app.get('/api/members', (req,res) => {
