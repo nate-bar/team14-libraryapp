@@ -19,7 +19,10 @@ export function NavBar() {
           </li>
           <li className="text-lg flex items-center justify-center">
             <Link to="/members">Members</Link>
-          </li>
+          </li >
+          <li  className="text-lg flex items-center justify-center">
+          <Link to="/search">Search</Link>
+             </li>
         </ul>
       </div>
     </div>
