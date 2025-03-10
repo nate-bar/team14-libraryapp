@@ -35,6 +35,27 @@ app.post('/api/insert', (req, res) => {
   return;
 })
 
+
+// Add this search endpoint to your server code
+
+app.get('/api/search',(req,res) => {
+  const query = req.query.q;
+  
+  if (!query) {
+    return res.status(400).json({ success: false, message: "Missing search query" });
+  }
+
+  // Example: search in the Items table using a LIKE query on the ItemTitle column
+  const sql = `SELECT * FROM Items WHERE ItemTitle LIKE ?`;
+  db.query(sql, [`%${query}%`], (err, results) => {
+    if (err) {
+      console.error('Error executing search query:', err.stack);
+      return res.status(500).json({ success: false, message: "Error searching items" });
+    }
+    res.json(results);
+  });
+});
+
 // RETURNS ALL MEMBERS
 app.get('/api/members', (req,res) => {
   db.query('SELECT * FROM Members', (err, results) => {
@@ -58,6 +79,7 @@ app.get('/api/memberprivileges', (req, res) => {
       res.json(results);
   });
 });
+
 
 // RETURNS ALL ITEMS AND THEIR TYPE
 app.get('/api/items', (req, res) => {
@@ -98,37 +120,39 @@ app.get('/api/films', (req, res) => {
 app.use(compression());
 app.disable("x-powered-by");
 
-if (DEVELOPMENT) {
-  console.log("Starting development server");
-  const viteDevServer = await import("vite").then((vite) =>
-    vite.createServer({
-      server: { middlewareMode: true },
-    })
-  );
-  app.use(viteDevServer.middlewares);
-  app.use(async (req, res, next) => {
-    try {
-      const source = await viteDevServer.ssrLoadModule("./server/app.ts");
-      return await source.app(req, res, next);
-    } catch (error) {
-      if (typeof error === "object" && error instanceof Error) {
-        viteDevServer.ssrFixStacktrace(error);
+(async () => {
+  if (DEVELOPMENT) {
+    console.log("Starting development server");
+    const viteDevServer = await import("vite").then((vite) =>
+      vite.createServer({
+        server: { middlewareMode: true },
+      })
+    );
+    app.use(viteDevServer.middlewares);
+    app.use(async (req, res, next) => {
+      try {
+        const source = await viteDevServer.ssrLoadModule("./server/app.ts");
+        return await source.app(req, res, next);
+      } catch (error) {
+        if (typeof error === "object" && error instanceof Error) {
+          viteDevServer.ssrFixStacktrace(error);
+        }
+        next(error);
       }
-      next(error);
-    }
+    });
+  } else {
+    console.log("Starting production server");
+    app.use(
+      "/assets",
+      express.static("build/client/assets", { immutable: true, maxAge: "1y" })
+    );
+    app.use(express.static("build/client", { maxAge: "1h" }));
+    app.use(await import(BUILD_PATH).then((mod) => mod.app));
+  }
+
+  app.use(morgan("tiny"));
+
+  app.listen(PORT, () => {
+    console.log(`Server is running on http://localhost:${PORT}`);
   });
-} else {
-  console.log("Starting production server");
-  app.use(
-    "/assets",
-    express.static("build/client/assets", { immutable: true, maxAge: "1y" })
-  );
-  app.use(express.static("build/client", { maxAge: "1h" }));
-  app.use(await import(BUILD_PATH).then((mod) => mod.app));
-}
-
-app.use(morgan("tiny"));
-
-app.listen(PORT, () => {
-  console.log(`Server is running on http://localhost:${PORT}`);
-});
+})();
