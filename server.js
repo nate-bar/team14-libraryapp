@@ -12,10 +12,10 @@ const app = express();
 app.use(express.json()); // built-in middleware json parser
 
 const db = mysql.createConnection({
-  host: 't14mysqldb.mysql.database.azure.com',
-  user: 'Team14',
-  password: 'Cosc3380',
-  database: 'mydb'
+  host: '',
+  user: '',
+  password: '',
+  database: ''
 });
 
 db.connect()
