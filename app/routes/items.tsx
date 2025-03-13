@@ -33,9 +33,9 @@ const UsingFetch = () => {
                         {items.map(item => (
                             <tr key={item.ItemID}>
                                 <td>{item.ItemID}</td>
-                                <td>{item.ItemTitle}</td>
+                                <td>{item.Title}</td>
                                 <td>{item.TypeName}</td>
-                                <td>{item.ItemStatus}</td>
+                                <td>{item.Status}</td>
                             </tr>
                         ))}
                     </tbody>
