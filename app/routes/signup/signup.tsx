@@ -51,7 +51,7 @@ const SignupForm: React.FC = () => {
       alert("Registration successful! Redirecting to login page...");
 
       // Redirect to login page
-      navigate("/");
+      navigate("/login");
     } catch (error) {
       console.error("Error submitting form:", error);
       alert(`Error submitting form: ${error}`);

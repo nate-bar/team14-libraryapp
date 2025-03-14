@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 
 interface FormData {
   name: string;
@@ -8,57 +8,61 @@ interface FormData {
 const SimpleForm: React.FC = () => {
   // State to hold the input values
   const [formData, setFormData] = useState<FormData>({
-    name: '',
-    email: ''
+    name: "",
+    email: "",
   });
 
   // Handle change for input fields
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
     const { name, value } = e.target;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [name]: value
+      [name]: value,
     }));
   };
 
   // Handle form submission
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>): Promise<void> => {
+  const handleSubmit = async (
+    e: React.FormEvent<HTMLFormElement>
+  ): Promise<void> => {
     e.preventDefault();
-    console.log('Form submitted:', formData);
-    
+    console.log("Form submitted:", formData);
+
     try {
-      const response = await fetch('/api/insert', {
-        method: 'POST',
+      const response = await fetch("/api/insert", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify(formData),
       });
-      
+
       if (!response.ok) {
-        throw new Error('Network response was not ok');
+        throw new Error("Network response was not ok");
       }
-      
+
       const result = await response.json();
-      console.log('Success:', result);
+      console.log("Success:", result);
       // Handle successful submission (e.g., show success message, reset form)
-      setFormData({ name: '', email: '' });
-      alert('Form submitted successfully!');
+      setFormData({ name: "", email: "" });
+      alert("Form submitted successfully!");
     } catch (error) {
-      console.error('Error submitting form:', error);
-      alert('Error submitting form. Please try again.');
+      console.error("Error submitting form:", error);
+      alert("Error submitting form. Please try again.");
     }
   };
-
 
   return (
     <div className="max-w-md mx-auto mt-10 p-6 bg-black rounded-lg shadow-md">
       <h1 className="text-2xl font-bold mb-6 text-center">Simple Form</h1>
-      
+
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Name Field */}
         <div>
-          <label htmlFor="name" className="block text-gray-700 font-medium mb-1">
+          <label
+            htmlFor="name"
+            className="block text-gray-700 font-medium mb-1"
+          >
             Name
           </label>
           <input
@@ -74,7 +78,10 @@ const SimpleForm: React.FC = () => {
 
         {/* Email Field */}
         <div>
-          <label htmlFor="email" className="block text-gray-700 font-medium mb-1">
+          <label
+            htmlFor="email"
+            className="block text-gray-700 font-medium mb-1"
+          >
             Email
           </label>
           <input

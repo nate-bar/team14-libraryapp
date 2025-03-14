@@ -18,7 +18,7 @@ export const createAccount = async (
     };
 
     // Make the API call
-    const response = await fetch("/api/register", {
+    const response = await fetch("/api/signup", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
