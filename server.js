@@ -33,14 +33,13 @@ app.use(
   })
 );
 
-// database connection
+//connect to MySQL DB
 const db = mysql.createConnection({
   host: "",
   user: "",
   password: "",
   database: "",
 });
-
 
 db.connect();
 
@@ -232,7 +231,7 @@ app.post("/api/login", async (req, res) => {
 
     if (validPassword(password, storedHash, salt)) {
       // Password is valid, create user session
-      
+
       // debug check
       //console.log("Member ID from database:", member.ID); // Check the value
 
@@ -282,6 +281,28 @@ app.post("/api/insert", (req, res) => {
   console.log(name);
   console.log(email);
   return;
+});
+
+app.get("/api/search", (req, res) => {
+  const query = req.query.q;
+
+  if (!query) {
+    return res
+      .status(400)
+      .json({ success: false, message: "Missing search query" });
+  }
+
+  // Example: search in the Items table using a LIKE query on the ItemTitle column
+  const sql = `SELECT * FROM Items WHERE Title LIKE ?`;
+  db.query(sql, [`%${query}%`], (err, results) => {
+    if (err) {
+      console.error("Error executing search query:", err.stack);
+      return res
+        .status(500)
+        .json({ success: false, message: "Error searching items" });
+    }
+    res.json(results);
+  });
 });
 
 // RETURNS ALL MEMBERS

@@ -14,7 +14,7 @@ export const createAccount = async (
     const accountData = {
       email: userData.email,
       password: userData.password,
-      group: userData.group || "Student",
+      groupid: userData.group || "Student",
     };
 
     // Make the API call

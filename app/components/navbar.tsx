@@ -24,8 +24,11 @@ export function NavBar({ isLoggedIn, memberID, groupID }: NavBarProps) {
           <li className="text-lg flex items-center justify-center">
             <Link to="/items">Items</Link>
           </li>
-           {/* Admin link - only visible to administrators */}
-           {isLoggedIn && isAdmin && (
+          <li className="text-lg flex items-center justify-center">
+            <Link to="/search">Search</Link>
+          </li>
+          {/* Admin link - only visible to administrators */}
+          {isLoggedIn && isAdmin && (
             <li className="text-lg flex items-center justify-center">
               <Link to="/admin" className="text-white font-bold">
                 Admin Panel
@@ -37,7 +40,9 @@ export function NavBar({ isLoggedIn, memberID, groupID }: NavBarProps) {
       <div className="navbar-right ml-auto mr-4">
         {isLoggedIn ? (
           <div className="logged-in-content">
-            <h2>Hello #{memberID}, #{groupID}</h2>
+            <h2>
+              Hello #{memberID}, #{groupID}
+            </h2>
           </div>
         ) : (
           <div className="logged-out-content">
