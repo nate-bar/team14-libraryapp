@@ -35,10 +35,10 @@ app.use(
 
 //connect to MySQL DB
 const db = mysql.createConnection({
-  host: "",
-  user: "",
-  password: "",
-  database: "",
+  host: '',
+  user: '',
+  password: '',
+  database: '',
 });
 
 db.connect();
