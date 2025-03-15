@@ -1,14 +1,7 @@
 import { Link } from "react-router";
-import { useOutletContext } from "react-router";
+import { type AuthData } from "~/services/api";
 
-// Define the props interface
-interface NavBarProps {
-  isLoggedIn: boolean;
-  memberID: number | null;
-  groupID: string | null;
-}
-
-export function NavBar({ isLoggedIn, memberID, groupID }: NavBarProps) {
+export function NavBar({ isLoggedIn, memberID, groupID }: AuthData) {
   const isAdmin = groupID === "Administrator";
   return (
     <div className="bg-blue-500 flex">

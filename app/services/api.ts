@@ -27,7 +27,8 @@ export interface ApiResponse {
   user?: Member; // Add this property
 }
 
-export interface AuthContext {
+export interface AuthData {
   isLoggedIn: boolean;
   memberID: number | null;
+  groupID: string | null;
 }
