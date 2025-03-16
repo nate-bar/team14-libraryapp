@@ -3,7 +3,9 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router";
 import { type AccountLogin } from "~/services/api";
 import { loginAccount } from "./queries";
-
+import { NavBar } from "~/components/navbar";
+import { NavBar2 } from "~/components/Navbar2";
+import "../login/login.css";
 const LoginForm: React.FC = () => {
   const navigate = useNavigate();
 
@@ -58,7 +60,10 @@ const LoginForm: React.FC = () => {
   };
 
   return (
-    <div className="max-w-md mx-auto mt-10 p-6 bg-black rounded-lg shadow-md">
+    <div className="">
+      <NavBar/>
+      <NavBar2/>
+    <div className="custom-container">
       <h1 className="text-2xl font-bold mb-6 text-center">Login</h1>
 
       <form onSubmit={handleSubmit} className="space-y-6">
@@ -76,7 +81,7 @@ const LoginForm: React.FC = () => {
             name="email"
             value={loginData.email}
             onChange={handleInputChange}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="input-field"
             placeholder="Enter your email..."
             required
           />
@@ -96,7 +101,7 @@ const LoginForm: React.FC = () => {
             name="password"
             value={loginData.password}
             onChange={handleInputChange}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="input-field"
             placeholder="Enter your password..."
             required
           />
@@ -105,8 +110,9 @@ const LoginForm: React.FC = () => {
         {/* Submit Button */}
         <button
           type="submit"
-          className="w-full bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
-        ></button>
+          className="custom-button"
+        > Submit
+        </button>
 
         {/* Signup Link */}
         <div className="text-center mt-4">
@@ -118,6 +124,7 @@ const LoginForm: React.FC = () => {
           </p>
         </div>
       </form>
+    </div>
     </div>
   );
 };

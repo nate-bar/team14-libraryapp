@@ -1,6 +1,6 @@
 import { Link } from "react-router";
 import { useOutletContext } from "react-router";
-
+import "../components/navbar.css";
 // Define the props interface
 interface NavBarProps {
   isLoggedIn: boolean;
@@ -11,25 +11,17 @@ interface NavBarProps {
 export function NavBar({ isLoggedIn, memberID, groupID }: NavBarProps) {
   const isAdmin = groupID === "Administrator";
   return (
-    <div className="bg-blue-500 flex">
+    <div className="bg-nav">
+      
       <div className="navbar-left">{/* Left side content */}</div>
       <div className="m-2.5 p-2.5">
         <ul className="flex space-x-10">
-          <li className="text-lg flex items-center justify-center">
-            <Link to="/">Home</Link>
-          </li>
-          <li className="text-lg flex items-center justify-center">
-            <Link to="/about">About</Link>
-          </li>
-          <li className="text-lg flex items-center justify-center">
-            <Link to="/items">Items</Link>
-          </li>
-          <li className="text-lg flex items-center justify-center">
-            <Link to="/search">Search</Link>
+          <li className="text-nav">
+            <Link to="/">Symphony's Library</Link>
           </li>
           {/* Admin link - only visible to administrators */}
           {isLoggedIn && isAdmin && (
-            <li className="text-lg flex items-center justify-center">
+            <li className="text-nav">
               <Link to="/admin" className="text-white font-bold">
                 Admin Panel
               </Link>
@@ -46,9 +38,6 @@ export function NavBar({ isLoggedIn, memberID, groupID }: NavBarProps) {
           </div>
         ) : (
           <div className="logged-out-content">
-            <li className="text-lg flex items-right justify-center">
-              <Link to="/login">Login</Link>
-            </li>
           </div>
         )}
       </div>
