@@ -5,7 +5,9 @@ import { type AccountLogin } from "~/services/api";
 import { loginAccount } from "./queries";
 import { NavBar } from "~/components/navbar";
 import { NavBar2 } from "~/components/Navbar2";
+import { Footer } from "~/components/footer";
 import "../login/login.css";
+
 const LoginForm: React.FC = () => {
   const navigate = useNavigate();
 
@@ -125,6 +127,7 @@ const LoginForm: React.FC = () => {
         </div>
       </form>
     </div>
+    <Footer/>
     </div>
   );
 };

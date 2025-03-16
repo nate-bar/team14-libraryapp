@@ -35,12 +35,11 @@ app.use(
 
 //connect to MySQL DB
 const db = mysql.createConnection({
-  host: '',
-  user: '',
-  password: '',
-  database: '',
+  host: "t14librarydb.mysql.database.azure.com",
+  user: "T14Admin",
+  password: "D^7L=kM3-EHX>m>",
+  database: "librarysystem",
 });
-
 db.connect();
 
 // FOR SALTING AND HASHING PASSWORDS

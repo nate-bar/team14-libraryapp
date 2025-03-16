@@ -5,6 +5,7 @@ import { type AccountSignup } from "~/services/api";
 import { createAccount } from "./queries";
 import { NavBar } from "~/components/navbar";
 import { NavBar2 } from "~/components/Navbar2";
+import { Footer } from "~/components/footer";
 import "./signup.css";
 
 const SignupForm: React.FC = () => {
@@ -213,6 +214,7 @@ const SignupForm: React.FC = () => {
           </button>
         </form>
       </div>
+      <Footer/>
     </div>
   );
 };
