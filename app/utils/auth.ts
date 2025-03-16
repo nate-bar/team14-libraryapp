@@ -13,7 +13,7 @@ export function getCurrentMemberID(context: any) {
 
 // Function to get the current group ID
 export function getCurrentGroupID(context: any) {
-    return context.groupID || null;
+  return context.groupID || null;
 }
 
 // Function to require authentication (use in protected route loaders)

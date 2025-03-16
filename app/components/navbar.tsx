@@ -1,5 +1,6 @@
 import { Link } from "react-router";
 import { useOutletContext } from "react-router";
+import { type AuthData } from "~/services/api";
 import "../components/navbar.css";
 // Define the props interface
 interface NavBarProps {
@@ -8,7 +9,7 @@ interface NavBarProps {
   groupID: string | null;
 }
 
-export function NavBar({ isLoggedIn, memberID, groupID }: NavBarProps) {
+export function NavBar({ isLoggedIn, memberID, groupID }: AuthData) {
   const isAdmin = groupID === "Administrator";
   return (
     <div className="bg-nav">
