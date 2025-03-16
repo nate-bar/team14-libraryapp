@@ -33,14 +33,14 @@ app.use(
   })
 );
 
-//connect to MySQL DB
-const db = mysql.createConnection({
+// Connection Pool
+const pool = mysql.createPool({
   host: "",
   user: "",
   password: "",
   database: "",
+  connectionLimit: 0, // try like 10
 });
-db.connect();
 
 // FOR SALTING AND HASHING PASSWORDS
 /**
@@ -112,17 +112,27 @@ app.post("/api/signup", async (req, res) => {
     // may have to think about case sensitive emails, but maybe do that in the client side??
     const checkExistingUser = () => {
       return new Promise((resolve, reject) => {
-        db.query(
-          "SELECT 1 FROM Members WHERE Email = ? LIMIT 1",
-          [email],
-          (err, result) => {
-            if (err) {
-              reject(err);
-              return;
-            }
-            resolve(result && result.length > 0);
+        pool.getConnection((err, connection) => {
+          if (err) {
+            console.error("Error getting connection: ", err);
+            return;
           }
-        );
+
+          // use connection
+          connection.query(
+            "SELECT 1 FROM Members WHERE Email = ? LIMIT 1",
+            [email],
+            (err, result) => {
+              if (err) {
+                reject(err);
+                return;
+              }
+              resolve(results && result.length > 0);
+            }
+          );
+          // Important: Release the connection back to the pool
+          connection.release();
+        });
       });
     };
 
@@ -132,18 +142,26 @@ app.post("/api/signup", async (req, res) => {
         // Hash password
         const hashedPassword = generatePassword(password);
 
-        // Insert new user
-        db.query(
-          "INSERT INTO Members (Email, Password, GroupID) VALUES (?, ?, ?)",
-          [email, hashedPassword, groupid],
-          (err, result) => {
-            if (err) {
-              reject(err);
-              return;
-            }
-            resolve(result);
+        pool.getConnection((err, connection) => {
+          if (err) {
+            console.error("Error getting connection: ", err);
+            return;
           }
-        );
+
+          connection.query(
+            "INSERT INTO Members (Email, Password, GroupID) VALUES (?, ?, ?)",
+            [email, hashedPassword, groupid],
+            (err, result) => {
+              if (err) {
+                reject(err);
+                return;
+              }
+              resolve(result);
+            }
+          );
+          // Important: Release the connection back to the pool
+          connection.release();
+        });
       });
     };
 
@@ -193,23 +211,32 @@ app.post("/api/login", async (req, res) => {
     // Find user by email, this an async function definition that returns promise
     const findMember = () => {
       return new Promise((resolve, reject) => {
-        db.query(
-          "SELECT * FROM Members WHERE Email = ? LIMIT 1",
-          [email],
-          (err, results) => {
-            if (err) {
-              reject(err);
-              return;
-            }
-            // If no user found or multiple users somehow found (shouldn't happen with unique emails)
-            if (!results || results.length !== 1) {
-              resolve(null);
-              return;
-            }
-            // Return the user data
-            resolve(results[0]);
+        pool.getConnection((err, connection) => {
+          if (err) {
+            console.error("Error getting connection: ", err);
+            return;
           }
-        );
+
+          connection.query(
+            "SELECT * FROM Members WHERE Email = ? LIMIT 1",
+            [email],
+            (err, results) => {
+              if (err) {
+                reject(err);
+                return;
+              }
+              // If no user found or multiple users somehow found (shouldn't happen with unique emails)
+              if (!results || results.length !== 1) {
+                resolve(null);
+                return;
+              }
+              // Return the user data
+              resolve(results[0]);
+            }
+          );
+          // Important: Release the connection back to the pool
+          connection.release();
+        });
       });
     };
 
@@ -267,6 +294,7 @@ app.post("/api/login", async (req, res) => {
   }
 });
 
+/*
 app.post("/api/insert", (req, res) => {
   const { name, email } = req.body;
   const groupID = "Student";
@@ -281,6 +309,7 @@ app.post("/api/insert", (req, res) => {
   console.log(email);
   return;
 });
+*/
 
 app.get("/api/search", (req, res) => {
   const query = req.query.q;
@@ -292,18 +321,31 @@ app.get("/api/search", (req, res) => {
   }
 
   // Example: search in the Items table using a LIKE query on the ItemTitle column
-  const sql = `SELECT * FROM Items WHERE Title LIKE ?`;
-  db.query(sql, [`%${query}%`], (err, results) => {
+  pool.getConnection((err, connection) => {
     if (err) {
-      console.error("Error executing search query:", err.stack);
-      return res
-        .status(500)
-        .json({ success: false, message: "Error searching items" });
+      console.error("Error getting connection:", err);
+      return;
     }
-    res.json(results);
+
+    connection.query(
+      `SELECT * FROM Items WHERE Title LIKE ?`,
+      [`%${query}%`],
+      (err, results) => {
+        if (err) {
+          console.error("Error executing search query:", err.stack);
+          return res
+            .status(500)
+            .json({ success: false, message: "Error searching items" });
+        }
+        res.json(results);
+      }
+    );
+    // Important: Release the connection back to the pool
+    connection.release();
   });
 });
 
+/*
 // RETURNS ALL MEMBERS
 app.get("/api/members", (req, res) => {
   db.query("SELECT * FROM Members", (err, results) => {
@@ -315,7 +357,9 @@ app.get("/api/members", (req, res) => {
     res.json(results);
   });
 });
+*/
 
+/*
 // RETURNS MEMBER ID, NAME, THEIR CLASSIFICATION, AND LENDING PRIVILEGES
 app.get("/api/memberprivileges", (req, res) => {
   db.query(
@@ -330,22 +374,34 @@ app.get("/api/memberprivileges", (req, res) => {
     }
   );
 });
+*/
 
 // RETURNS ALL ITEMS AND THEIR TYPE
 app.get("/api/items", (req, res) => {
-  db.query(
-    "SELECT Items.ItemID, Items.Title, itemtypes.TypeName, Items.Status, Items.LastUpdated, Items.CreatedAt, Items.TimesBorrowed FROM Items INNER JOIN ItemTypes ON ItemTypes.ItemID=Items.ItemID",
-    (err, results) => {
-      if (err) {
-        console.error("Error executing query: " + err.stack);
-        res.status(500).send("Error fetching items");
-        return;
-      }
-      res.json(results);
+  pool.getConnection((err, connection) => {
+    if (err) {
+      console.error("Error getting connection: ", err);
+      return;
     }
-  );
+
+    // use connection for queries
+    connection.query(
+      "SELECT Items.ItemID, Items.Title, itemtypes.TypeName, Items.Status, Items.LastUpdated, Items.CreatedAt, Items.TimesBorrowed FROM Items INNER JOIN ItemTypes ON ItemTypes.ItemID=Items.ItemID",
+      (err, results) => {
+        if (err) {
+          console.error("Error executing query: " + err.stack);
+          res.status(500).send("Error fetching items");
+          return;
+        }
+        res.json(results);
+      }
+    );
+    // Important: Release the connection back to the pool
+    connection.release();
+  });
 });
 
+/*
 // RETURNS ALL BOOKS
 app.get("/api/books", (req, res) => {
   db.query(
@@ -360,6 +416,7 @@ app.get("/api/books", (req, res) => {
     }
   );
 });
+*/
 
 // RETURNS ALL FILMS
 /*
