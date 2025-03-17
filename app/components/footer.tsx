@@ -16,13 +16,13 @@ export function Footer() {
         {/* Right Side - Social Media Icons */}
         <div className="footer-social">
           <a href="https://facebook.com" target="_blank" rel="noopener noreferrer">
-            <img src="public/facebook-logo-transparent-background-free-png.webp" alt="Facebook" />
+            <img src="/facebook-logo-transparent-background-free-png.webp" alt="Facebook" />
           </a>
           <a href="https://twitter.com" target="_blank" rel="noopener noreferrer">
-            <img src="public/twitter-new-logo-twitter-icons-new-twitter-logo-x-2023-x-social-media-icon-free-png.webp" alt="Twitter" />
+            <img src="/twitter-new-logo-twitter-icons-new-twitter-logo-x-2023-x-social-media-icon-free-png.webp" alt="Twitter" />
           </a>
           <a href="https://instagram.com" target="_blank" rel="noopener noreferrer">
-            <img src="public/instagram-logo-instagram-icon-transparent-free-png.webp" alt="Instagram" />
+            <img src="/instagram-logo-instagram-icon-transparent-free-png.webp" alt="Instagram" />
           </a>
 
         </div>
