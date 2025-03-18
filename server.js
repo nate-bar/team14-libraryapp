@@ -39,7 +39,7 @@ const pool = mysql.createPool({
   user: "",
   password: "",
   database: "",
-  connectionLimit: 0, // try like 10
+  connectionLimit: 10, // try like 10
 });
 
 // FOR SALTING AND HASHING PASSWORDS
