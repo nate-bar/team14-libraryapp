@@ -37,7 +37,7 @@ app.use(
 const db = mysql.createConnection({
   host: "t14librarydb.mysql.database.azure.com",
   user: "T14Admin",
-  password: "D^7L=kM3-EHX>m>",
+  password: "Cq+.f.4nJpC7QD",
   database: "librarysystem",
 });
 db.connect();
@@ -286,19 +286,15 @@ app.get("/api/search", (req, res) => {
   const query = req.query.q;
 
   if (!query) {
-    return res
-      .status(400)
-      .json({ success: false, message: "Missing search query" });
+    return res.status(400).json({ success: false, message: "Missing search query" });
   }
 
-  // Example: search in the Items table using a LIKE query on the ItemTitle column
-  const sql = `SELECT * FROM Items WHERE Title LIKE ?`;
-  db.query(sql, [`%${query}%`], (err, results) => {
+  // Fetch ALL items
+  const sql = `SELECT * FROM items`;  
+  db.query(sql, (err, results) => { 
     if (err) {
-      console.error("Error executing search query:", err.stack);
-      return res
-        .status(500)
-        .json({ success: false, message: "Error searching items" });
+      console.error("Error executing query:", err.stack);
+      return res.status(500).json({ success: false, message: "Error fetching items" });
     }
     res.json(results);
   });
