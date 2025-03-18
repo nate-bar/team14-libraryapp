@@ -35,11 +35,11 @@ app.use(
 
 // Connection Pool
 const pool = mysql.createPool({
-  host: "t14librarydb.mysql.database.azure.com",
-  user: "T14Admin",
-  password: "Cq+.f.4nJpC7QD",
-  database: "librarysystem",
-  connectionLimit: 0, // try like 10
+  host: "",
+  user: "",
+  password: "",
+  database: "",
+  connectionLimit: 10, // try like 10
 });
 
 // FOR SALTING AND HASHING PASSWORDS
