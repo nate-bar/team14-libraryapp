@@ -1,0 +1,65 @@
+.item-container {
+    max-width: 800px;
+    margin: 50px auto;
+    padding: 20px;
+    background: #f9f9f9;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    text-align: center;
+  }
+  
+  .item-title {
+    font-size: 2rem;
+    color: #333;
+    margin-bottom: 10px;
+  }
+  
+  .item-info {
+    font-size: 1.2rem;
+    color: #555;
+    line-height: 1.6;
+  }
+  
+  .item-info p {
+    margin: 10px 0;
+  }
+  .item-container {
+    text-align: center;
+    padding: 20px;
+  }
+  .item-title {
+    font-size: 24px;
+    font-weight: bold;
+  }
+  .item-info p {
+    font-size: 18px;
+    margin: 10px 0;
+  }
+  .item-actions {
+    margin-top: 20px;
+  }
+  .btn {
+    margin: 10px;
+    padding: 10px 15px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+  }
+  .btn-primary {
+    background-color: #c2a87d;
+    color: white;
+  }
+  .btn-warning {
+    background-color: #76c6de;
+    color: black;
+  }
+  .btn-secondary {
+    background-color: #01497c;
+    color: white;
+  }
+  .btn-disabled {
+    background-color: #e4c9a8;
+    color: white;
+    cursor: not-allowed;
+  }
+  

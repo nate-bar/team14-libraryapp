@@ -3,7 +3,6 @@ import {
   route,
   index,
   layout,
-  prefix,
 } from "@react-router/dev/routes";
 
 export default [
@@ -16,7 +15,12 @@ export default [
     route("FAQ", "routes/faq.tsx"),
     route("resources", "routes/resources.tsx"),
     route("contactus", "routes/contactus.tsx"),
+    route("device/:itemId", "routes/devices/DeviceDetail.tsx"),
+    route("media/:itemId", "routes/media/mediaDetail.tsx"),
+    route("book/:itemId", "routes/books/bookDetail.tsx"),
+    route("cart", "routes/CartPage.tsx"),
   ]),
+
   route("signup", "routes/signup/signup.tsx"),
   route("login", "routes/login/login.tsx"),
 ] satisfies RouteConfig;

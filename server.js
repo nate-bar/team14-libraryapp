@@ -35,10 +35,10 @@ app.use(
 
 // Connection Pool
 const pool = mysql.createPool({
-  host: "t14librarydb.mysql.database.azure.com",
-  user: "T14Admin",
-  password: "Cq+.f.4nJpC7QD",
-  database: "librarysystem",
+  host: "",
+  user: "",
+  password: "",
+  database: "",
   connectionLimit: 0, // try like 10
 });
 
@@ -396,6 +396,33 @@ app.get("/api/items", (req, res) => {
     );
     // Important: Release the connection back to the pool
     connection.release();
+  });
+});
+//Return itemdevice
+app.get("/api/itemdevice/:itemId", (req, res) => {
+  const { itemId } = req.params;
+
+  pool.getConnection((err, connection) => {
+    if (err) {
+      console.error("Error getting connection:", err);
+      return res.status(500).json({ error: "Database connection error" });
+    }
+
+    connection.query(
+      "SELECT * FROM Items WHERE ItemID = ?",
+      [itemId],
+      (err, results) => {
+        connection.release(); // Important: Release the connection
+        if (err) {
+          console.error("Error executing query:", err);
+          return res.status(500).json({ error: "Query execution error" });
+        }
+        if (results.length === 0) {
+          return res.status(404).json({ error: "Item not found" });
+        }
+        res.json(results[0]); // Return the first matching item
+      }
+    );
   });
 });
 

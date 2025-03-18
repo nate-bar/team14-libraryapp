@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Link, useNavigate } from "react-router";
+import { useState, useEffect } from "react";
+import { Link, useNavigate } from "react-router"; // Using React Router
 import "../components/navbar.css";
 
 interface NavBarProps {
@@ -11,7 +11,7 @@ interface NavBarProps {
 interface Item {
   ItemID: number;
   Title: string;
-  Type: string;
+  TypeName: string;
   Status: string;
 }
 
@@ -19,19 +19,19 @@ export function NavBar2({ isLoggedIn, memberID, groupID }: NavBarProps) {
   const isAdmin = groupID === "Administrator";
   const [searchQuery, setSearchQuery] = useState("");
   const [showResults, setShowResults] = useState(false);
-  const navigate = useNavigate(); // React Router navigation
+  const [items, setItems] = useState<Item[]>([]); // Store fetched items
+  const navigate = useNavigate();
 
-  // List of items
-  const items: Item[] = [
-    { ItemID: 1000000001, Title: "Murder on the Orient Express", Type: "Book", Status: "Available" },
-    { ItemID: 1000000002, Title: "Me Talk Pretty One Day", Type: "Book", Status: "Available" },
-    { ItemID: 1000000003, Title: "The Autobiography Of Malcolm X", Type: "Book", Status: "Available" },
-    { ItemID: 1000000011, Title: "The Fast and the Furious", Type: "Media", Status: "Available" },
-    { ItemID: 1000000012, Title: "Step Brothers", Type: "Media", Status: "Available" }
-  ];
+  // Fetch items from API
+  useEffect(() => {
+    fetch("/api/items")
+      .then((response) => response.json())
+      .then((data) => setItems(data))
+      .catch((error) => console.error("Error fetching items:", error));
+  }, []);
 
   // Filter items based on search query
-  const filteredItems = items.filter(item =>
+  const filteredItems = items.filter((item) =>
     item.Title.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
@@ -58,6 +58,9 @@ export function NavBar2({ isLoggedIn, memberID, groupID }: NavBarProps) {
           <li className="text-nav2">
             <Link to="/login">Login</Link>
           </li>
+          <li className="text-nav2">
+            <Link to="/cart">🛒</Link>
+          </li>
         </ul>
 
         {/* Search Bar */}
@@ -79,15 +82,23 @@ export function NavBar2({ isLoggedIn, memberID, groupID }: NavBarProps) {
           {showResults && (
             <div className="search-results absolute top-12 left-0 bg-white border border-gray-300 rounded-lg shadow-lg w-full max-h-60 overflow-auto">
               {filteredItems.length > 0 ? (
-                filteredItems.map(item => (
-                  <Link
-                    key={item.ItemID}
-                    to={`/items/${item.ItemID}`}
-                    className="block px-4 py-2 hover:bg-gray-100"
-                  >
-                    {item.Title} <span className="text-gray-500">({item.Type})</span>
-                  </Link>
-                ))
+                filteredItems.map((item) => {
+                  // Determine the category for navigation
+                  let category = "items"; // Default
+                  if (item.TypeName === "Device") category = "device";
+                  else if (item.TypeName === "Media") category = "media";
+                  else if (item.TypeName === "Book") category = "book";
+
+                  return (
+                    <Link
+                      key={item.ItemID}
+                      to={`/${category}/${item.ItemID}`}
+                      className="block px-4 py-2 hover:bg-gray-100"
+                    >
+                      {item.Title} <span className="text-gray-500">({item.TypeName})</span>
+                    </Link>
+                  );
+                })
               ) : (
                 <p className="px-4 py-2 text-gray-500">No results found</p>
               )}
