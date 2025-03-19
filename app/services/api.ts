@@ -10,6 +10,10 @@ export interface AccountSignup {
   email: string;
   password: string;
   group: string;
+  firstName: string;
+  middleName?: string;
+  lastName: string;
+  address?: string;
 }
 
 // login interface
