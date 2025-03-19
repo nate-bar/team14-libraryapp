@@ -33,9 +33,9 @@ export function NavBar({ isLoggedIn, memberID, groupID }: AuthData) {
       <div className="navbar-right ml-auto mr-4">
         {isLoggedIn ? (
           <div className="logged-in-content">
-            <h2 className="text-nav">
-              Hello #{memberID}, {groupID}
-            </h2>
+            <li className="text-nav">
+              <Link to="/profile">#{memberID}</Link>
+            </li>
             <LogoutButton />
           </div>
         ) : (
