@@ -2,12 +2,6 @@ import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router"; // Using React Router
 import "../components/navbar.css";
 
-interface NavBarProps {
-  isLoggedIn: boolean;
-  memberID: number | null;
-  groupID: string | null;
-}
-
 interface Item {
   ItemID: number;
   Title: string;
@@ -15,8 +9,7 @@ interface Item {
   Status: string;
 }
 
-export function NavBar2({ isLoggedIn, memberID, groupID }: NavBarProps) {
-  const isAdmin = groupID === "Administrator";
+export function NavBar2() {
   const [searchQuery, setSearchQuery] = useState("");
   const [showResults, setShowResults] = useState(false);
   const [items, setItems] = useState<Item[]>([]); // Store fetched items
@@ -56,9 +49,6 @@ export function NavBar2({ isLoggedIn, memberID, groupID }: NavBarProps) {
             <Link to="/items">Items</Link>
           </li>
           <li className="text-nav2">
-            <Link to="/login">Login</Link>
-          </li>
-          <li className="text-nav2">
             <Link to="/cart">🛒</Link>
           </li>
         </ul>
@@ -76,7 +66,9 @@ export function NavBar2({ isLoggedIn, memberID, groupID }: NavBarProps) {
             className="search-input"
             aria-label="Search"
           />
-          <button type="submit" className="search-button">🔍</button>
+          <button type="submit" className="search-button">
+            🔍
+          </button>
 
           {/* Search Results Dropdown */}
           {showResults && (
@@ -95,7 +87,8 @@ export function NavBar2({ isLoggedIn, memberID, groupID }: NavBarProps) {
                       to={`/${category}/${item.ItemID}`}
                       className="block px-4 py-2 hover:bg-gray-100"
                     >
-                      {item.Title} <span className="text-gray-500">({item.TypeName})</span>
+                      {item.Title}{" "}
+                      <span className="text-gray-500">({item.TypeName})</span>
                     </Link>
                   );
                 })
