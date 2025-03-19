@@ -3,14 +3,8 @@ import { useOutletContext } from "react-router";
 import { type AuthData } from "~/services/api";
 import { LogoutButton } from "./logoutbutton";
 import "../components/navbar.css";
-// Define the props interface
-interface NavBarProps {
-  isLoggedIn: boolean;
-  memberID: number | null;
-  groupID: string | null;
-}
 
-export function NavBar({ isLoggedIn, memberID, groupID }: AuthData) {
+export function NavBar({ isLoggedIn, memberID, groupID, firstName }: AuthData) {
   const isAdmin = groupID === "Administrator";
   return (
     <div className="bg-nav">
@@ -33,8 +27,9 @@ export function NavBar({ isLoggedIn, memberID, groupID }: AuthData) {
       <div className="navbar-right ml-auto mr-4">
         {isLoggedIn ? (
           <div className="logged-in-content">
+            <h1 className="text-nav">Welcome {firstName}</h1>
             <li className="text-nav">
-              <Link to="/profile">#{memberID}</Link>
+              <Link to="/profile">Profile</Link>
             </li>
             <LogoutButton />
           </div>

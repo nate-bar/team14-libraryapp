@@ -35,10 +35,10 @@ app.use(
 
 // Connection Pool
 const pool = mysql.createPool({
-  host: "t14librarydb.mysql.database.azure.com",
-  user: "T14Admin",
-  password: "P'4kWhmsY#cL6.8",
-  database: "librarysystem",
+  host: "",
+  user: "",
+  password: "",
+  database: "",
   connectionLimit: 10, // try like 10
 });
 
@@ -439,6 +439,12 @@ app.post("/api/login", async (req, res) => {
       // Ensure this line runs after successful authentication
       req.session.memberID = member.MemberID;
       req.session.groupID = member.GroupID;
+
+      // just work you way up through app.ts, auth.ts, api.ts, layout.tsx, then wherever
+      req.session.firstName = member.FirstName;
+      req.session.middleName = member.MiddleName;
+      req.session.lastName = member.LastName;
+      req.session.address = member.Address;
 
       // Debug check
       //console.log("Session after setting memberID:", req.session);

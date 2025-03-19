@@ -5,7 +5,10 @@ import { NavBar2 } from "~/components/Navbar2";
 import { getAuthData } from "~/utils/auth";
 import { type AuthData } from "~/services/api";
 import { Footer } from "~/components/footer";
+
 export function loader({ context }: LoaderFunctionArgs): AuthData {
+  //debug
+  console.log("Context in loader:", context);
   // Use the centralized auth utility
   return getAuthData(context);
 }
@@ -16,15 +19,20 @@ export default function Layout() {
   return (
     <div>
       <NavBar
+        // like the one that will be here
         isLoggedIn={authData.isLoggedIn}
         memberID={authData.memberID}
         groupID={authData.groupID}
+        firstName={authData.firstName}
+        lastName={authData.lastName}
+        address={authData.address}
+        middleName={authData.middleName}
       />
-      <NavBar2/>
+      <NavBar2 />
       <main>
         <Outlet context={authData} />
       </main>
-      <Footer/>
+      <Footer />
     </div>
   );
 }
