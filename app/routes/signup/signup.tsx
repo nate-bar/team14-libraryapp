@@ -3,9 +3,6 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router";
 import { type AccountSignup } from "~/services/api";
 import { createAccount } from "./queries";
-import { NavBar } from "~/components/navbar";
-import { NavBar2 } from "~/components/Navbar2";
-import { Footer } from "~/components/footer";
 import "./signup.css";
 
 const SignupForm: React.FC = () => {
@@ -16,11 +13,10 @@ const SignupForm: React.FC = () => {
     email: "",
     password: "",
     group: "",
-    fname: "",
-    mname: "",
-    lname: "",
-    Bdate: "",
-    Address: ""
+    firstName: "",
+    middleName: "",
+    lastName: "",
+    address: "",
   });
 
   // Handle change for input fields
@@ -53,7 +49,15 @@ const SignupForm: React.FC = () => {
       console.log("Success:", result);
 
       // Clear form
-      setAccountData({ email: "", password: "", group: "Student", fname: "", mname: "", lname: "", Bdate: "", Address: "" });
+      setAccountData({
+        email: "",
+        password: "",
+        group: "Student",
+        firstName: "",
+        middleName: "",
+        lastName: "",
+        address: "",
+      });
 
       // Show success message
       alert("Registration successful! Redirecting to login page...");
@@ -68,8 +72,6 @@ const SignupForm: React.FC = () => {
 
   return (
     <div>
-      <NavBar/>
-      <NavBar2/>
       <div className="custom-container">
         <h1 className="text-2xl font-bold mb-6 text-center">Signup Form</h1>
 
@@ -78,14 +80,17 @@ const SignupForm: React.FC = () => {
           <div className="form-group">
             {/* First Name Field */}
             <div>
-              <label htmlFor="fname" className="block text-gray-700 font-medium mb-1">
+              <label
+                htmlFor="firstName"
+                className="block text-gray-700 font-medium mb-1"
+              >
                 First Name
               </label>
               <input
                 type="text"
-                id="fname"
-                name="fname"
-                value={accountData.fname}
+                id="firstName"
+                name="firstName"
+                value={accountData.firstName}
                 onChange={handleInputChange}
                 className="input-field"
                 placeholder="Eg. Abigail"
@@ -93,14 +98,17 @@ const SignupForm: React.FC = () => {
             </div>
             {/* Middle Name Field */}
             <div>
-              <label htmlFor="mname" className="block text-gray-700 font-medium mb-1">
+              <label
+                htmlFor="middleName"
+                className="block text-gray-700 font-medium mb-1"
+              >
                 Middle Name
               </label>
               <input
                 type="text"
-                id="mname"
-                name="mname"
-                value={accountData.mname}
+                id="middleName"
+                name="middleName"
+                value={accountData.middleName}
                 onChange={handleInputChange}
                 className="input-field"
                 placeholder="Eg. Jane"
@@ -108,14 +116,17 @@ const SignupForm: React.FC = () => {
             </div>
             {/* Last Name Field */}
             <div>
-              <label htmlFor="lname" className="block text-gray-700 font-medium mb-1">
+              <label
+                htmlFor="lastName"
+                className="block text-gray-700 font-medium mb-1"
+              >
                 Last Name
               </label>
               <input
                 type="text"
-                id="lname"
-                name="lname"
-                value={accountData.lname}
+                id="lastName"
+                name="lastName"
+                value={accountData.lastName}
                 onChange={handleInputChange}
                 className="input-field"
                 placeholder="Eg. Sanders"
@@ -125,8 +136,11 @@ const SignupForm: React.FC = () => {
 
           {/* Row Group: Birthdate and Address (side by side) */}
           <div className="row-group">
-            <div>
-              <label htmlFor="Bdate" className="block text-gray-700 font-medium mb-1">
+            {/*<div>
+              <label
+                htmlFor="Bdate"
+                className="block text-gray-700 font-medium mb-1"
+              >
                 Birthdate
               </label>
               <input
@@ -139,15 +153,19 @@ const SignupForm: React.FC = () => {
                 placeholder="YYYY-MM-DD"
               />
             </div>
+            */}
             <div>
-              <label htmlFor="Address" className="block text-gray-700 font-medium mb-1">
+              <label
+                htmlFor="address"
+                className="block text-gray-700 font-medium mb-1"
+              >
                 Address
               </label>
               <input
                 type="text"
-                id="Address"
-                name="Address"
-                value={accountData.Address}
+                id="address"
+                name="address"
+                value={accountData.address}
                 onChange={handleInputChange}
                 className="input-field"
                 placeholder="Eg. 123 Main St"
@@ -158,7 +176,10 @@ const SignupForm: React.FC = () => {
           {/* Row Group: Email and Password (side by side) */}
           <div className="row-group">
             <div>
-              <label htmlFor="email" className="block text-gray-700 font-medium mb-1">
+              <label
+                htmlFor="email"
+                className="block text-gray-700 font-medium mb-1"
+              >
                 Email
               </label>
               <input
@@ -172,7 +193,10 @@ const SignupForm: React.FC = () => {
               />
             </div>
             <div>
-              <label htmlFor="password" className="block text-gray-700 font-medium mb-1">
+              <label
+                htmlFor="password"
+                className="block text-gray-700 font-medium mb-1"
+              >
                 Password
               </label>
               <input
@@ -189,7 +213,10 @@ const SignupForm: React.FC = () => {
 
           {/* Group Selection Dropdown */}
           <div>
-            <label htmlFor="group" className="block text-gray-700 font-medium mb-1">
+            <label
+              htmlFor="group"
+              className="block text-gray-700 font-medium mb-1"
+            >
               I am a
             </label>
             <select
@@ -206,15 +233,11 @@ const SignupForm: React.FC = () => {
           </div>
 
           {/* Submit Button */}
-          <button
-            type="submit"
-            className="custom-button"
-          >
+          <button type="submit" className="custom-button">
             Submit
           </button>
         </form>
       </div>
-      <Footer/>
     </div>
   );
 };
