@@ -1,6 +1,7 @@
 import { Link } from "react-router";
 import { useOutletContext } from "react-router";
 import { type AuthData } from "~/services/api";
+import { LogoutButton } from "./logoutbutton";
 import "../components/navbar.css";
 // Define the props interface
 interface NavBarProps {
@@ -13,7 +14,6 @@ export function NavBar({ isLoggedIn, memberID, groupID }: AuthData) {
   const isAdmin = groupID === "Administrator";
   return (
     <div className="bg-nav">
-      
       <div className="navbar-left">{/* Left side content */}</div>
       <div className="m-2.5 p-2.5">
         <ul className="flex space-x-10">
@@ -33,12 +33,16 @@ export function NavBar({ isLoggedIn, memberID, groupID }: AuthData) {
       <div className="navbar-right ml-auto mr-4">
         {isLoggedIn ? (
           <div className="logged-in-content">
-            <h2>
-              Hello #{memberID}, #{groupID}
+            <h2 className="text-nav">
+              Hello #{memberID}, {groupID}
             </h2>
+            <LogoutButton />
           </div>
         ) : (
           <div className="logged-out-content">
+            <li className="text-nav">
+              <Link to="/login">Login</Link>
+            </li>
           </div>
         )}
       </div>
