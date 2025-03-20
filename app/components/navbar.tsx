@@ -1,5 +1,4 @@
 import { Link } from "react-router";
-import { useOutletContext } from "react-router";
 import { type AuthData } from "~/services/api";
 import { LogoutButton } from "./logoutbutton";
 import "../components/navbar.css";
@@ -14,7 +13,6 @@ export function NavBar({ isLoggedIn, memberID, groupID, firstName }: AuthData) {
           <li className="text-nav">
             <Link to="/">Symphony's Library</Link>
           </li>
-          {/* Admin link - only visible to administrators */}
           {isLoggedIn && isAdmin && (
             <li className="text-nav">
               <Link to="/admin" className="text-white font-bold">
@@ -28,16 +26,20 @@ export function NavBar({ isLoggedIn, memberID, groupID, firstName }: AuthData) {
         {isLoggedIn ? (
           <div className="logged-in-content">
             <h1 className="text-nav">Welcome {firstName}</h1>
-            <li className="text-nav">
-              <Link to="/profile">Profile</Link>
-            </li>
+            <ul style={{ listStyleType: "none" }}> {/* Corrected here */}
+              <li className="text-nav">
+                <Link to="/profile">Profile</Link>
+              </li>
+            </ul>
             <LogoutButton />
           </div>
         ) : (
           <div className="logged-out-content">
-            <li className="text-nav">
-              <Link to="/login">Login</Link>
-            </li>
+            <ul style={{ listStyleType: "none" }}> {/* Corrected here */}
+              <li className="text-nav">
+                <Link to="/login">Login</Link>
+              </li>
+            </ul>
           </div>
         )}
       </div>

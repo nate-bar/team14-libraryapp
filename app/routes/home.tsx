@@ -36,49 +36,6 @@ const images2 = [
   { id: "tech", src: "/Tech.jpg", alt: "Technology" },
 ];
 
-// Sliding Gallery Component
-const ScrollingGallery: React.FC = () => {
-  const galleryRef = useRef<HTMLDivElement>(null);
-
-  // Scrolls the gallery to the specified item
-  const scrollToItem = (itemId: string) => {
-    const item = document.getElementById(itemId);
-    if (item && galleryRef.current) {
-      galleryRef.current.scrollTo({
-        top: item.offsetTop - galleryRef.current.offsetTop,
-        behavior: "smooth",
-      });
-    }
-  };
-
-  return (
-    <div className="scrolling-gallery">
-      {/* Header */}
-      <h2 className="gallery-header">Catalog At A Glance</h2>
-
-      <div className="gallery-container">
-        {/* Left Column: Text Navigation */}
-        <div className="gallery-nav">
-          {images2.map(({ id, alt }) => (
-            <button key={id} onClick={() => scrollToItem(id)}>
-              {alt}
-            </button>
-          ))}
-        </div>
-
-        {/* Right Column: Images */}
-        <div className="gallery-content" ref={galleryRef}>
-          {images2.map(({ id, src, alt }) => (
-            <div key={id} id={id} className="gallery-item">
-              <img src={src} alt={alt} />
-            </div>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-};
-
 const HomePage: React.FC = () => {
   const { memberID } = useOutletContext<AuthData>();
   const [currentSlide, setCurrentSlide] = useState(0);
@@ -139,6 +96,49 @@ const HomePage: React.FC = () => {
 
       {/* Scrolling Gallery Below */}
       <ScrollingGallery />
+    </div>
+  );
+};
+
+// Scrolling Gallery Component
+const ScrollingGallery: React.FC = () => {
+  const galleryRef = useRef<HTMLDivElement>(null);
+
+  // Scrolls the gallery to the specified item
+  const scrollToItem = (itemId: string) => {
+    const item = document.getElementById(itemId);
+    if (item && galleryRef.current) {
+      galleryRef.current.scrollTo({
+        top: item.offsetTop - galleryRef.current.offsetTop,
+        behavior: "smooth",
+      });
+    }
+  };
+
+  return (
+    <div className="scrolling-gallery">
+      {/* Header */}
+      <h2 className="gallery-header">Catalog At A Glance</h2>
+
+      <div className="gallery-container">
+        {/* Left Column: Text Navigation */}
+        <div className="gallery-nav">
+          {images2.map(({ id, alt }) => (
+            <button key={id} onClick={() => scrollToItem(id)}>
+              {alt}
+            </button>
+          ))}
+        </div>
+
+        {/* Right Column: Images */}
+        <div className="gallery-content" ref={galleryRef}>
+          {images2.map(({ id, src, alt }) => (
+            <div key={id} id={id} className="gallery-item">
+              <img src={src} alt={alt} />
+            </div>
+          ))}
+        </div>
+      </div>
     </div>
   );
 };
