@@ -17,7 +17,7 @@ export default function Layout() {
   const authData = useLoaderData() as AuthData;
 
   return (
-    <div>
+    <div className="">
       <NavBar
         // like the one that will be here
         isLoggedIn={authData.isLoggedIn}
@@ -29,7 +29,7 @@ export default function Layout() {
         middleName={authData.middleName}
       />
       <NavBar2 />
-      <main>
+      <main className="pb-16">
         <Outlet context={authData} />
       </main>
       <Footer />
