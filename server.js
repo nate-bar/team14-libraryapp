@@ -7,6 +7,9 @@ import morgan from "morgan";
 import mysql from "mysql"; // mysql package, should be self explanitory
 import crypto from "crypto"; // for salting and hashing passwords
 import session from "express-session"; // for session storage
+// Load environment variables
+import dotenv from 'dotenv';
+dotenv.config();
 
 // Short-circuit the type-checking of the built output.
 const BUILD_PATH = "./build/server/index.js";
@@ -35,10 +38,10 @@ app.use(
 
 // Connection Pool
 const pool = mysql.createPool({
-  host: "",
-  user: "",
-  password: "",
-  database: "",
+  host: process.env.DB_HOST,
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
+  database: process.env.DB_NAME,
   connectionLimit: 10, // try like 10
 });
 
@@ -439,6 +442,12 @@ app.post("/api/login", async (req, res) => {
       // Ensure this line runs after successful authentication
       req.session.memberID = member.MemberID;
       req.session.groupID = member.GroupID;
+
+      // just work you way up through app.ts, auth.ts, api.ts, layout.tsx, then wherever
+      req.session.firstName = member.FirstName;
+      req.session.middleName = member.MiddleName;
+      req.session.lastName = member.LastName;
+      req.session.address = member.Address;
 
       // Debug check
       //console.log("Session after setting memberID:", req.session);
