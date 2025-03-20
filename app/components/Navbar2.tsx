@@ -1,18 +1,12 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router"; // Using React Router
+import { type Items } from "~/services/api";
 import "../components/navbar.css";
-
-interface Item {
-  ItemID: number;
-  Title: string;
-  TypeName: string;
-  Status: string;
-}
 
 export function NavBar2() {
   const [searchQuery, setSearchQuery] = useState("");
   const [showResults, setShowResults] = useState(false);
-  const [items, setItems] = useState<Item[]>([]); // Store fetched items
+  const [items, setItems] = useState<Items[]>([]); // Store fetched items
   const navigate = useNavigate();
 
   // Fetch items from API
