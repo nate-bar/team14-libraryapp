@@ -41,3 +41,10 @@ export interface AuthData {
   address: string | null;
   middleName: string | null;
 }
+
+export interface Items {
+  ItemID: number;
+  Title: string;
+  TypeName: string;
+  Status: string;
+}
