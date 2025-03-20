@@ -13,7 +13,6 @@ export interface AccountSignup {
   firstName: string;
   middleName?: string;
   lastName: string;
-  address?: string;
 }
 
 // login interface
@@ -31,8 +30,14 @@ export interface ApiResponse {
   user?: Member; // Add this property
 }
 
+// (4) ADD IT IN HERE
+// now go to layouyt and fix any errors
 export interface AuthData {
   isLoggedIn: boolean;
   memberID: number | null;
   groupID: string | null;
+  firstName: string | null;
+  lastName: string | null;
+  address: string | null;
+  middleName: string | null;
 }

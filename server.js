@@ -440,6 +440,12 @@ app.post("/api/login", async (req, res) => {
       req.session.memberID = member.MemberID;
       req.session.groupID = member.GroupID;
 
+      // just work you way up through app.ts, auth.ts, api.ts, layout.tsx, then wherever
+      req.session.firstName = member.FirstName;
+      req.session.middleName = member.MiddleName;
+      req.session.lastName = member.LastName;
+      req.session.address = member.Address;
+
       // Debug check
       //console.log("Session after setting memberID:", req.session);
       //console.log("memberID in session:", req.session.memberID);
