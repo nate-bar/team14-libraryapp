@@ -7,6 +7,9 @@ import morgan from "morgan";
 import mysql from "mysql"; // mysql package, should be self explanitory
 import crypto from "crypto"; // for salting and hashing passwords
 import session from "express-session"; // for session storage
+// Load environment variables
+import dotenv from 'dotenv';
+dotenv.config();
 
 // Short-circuit the type-checking of the built output.
 const BUILD_PATH = "./build/server/index.js";
@@ -35,10 +38,10 @@ app.use(
 
 // Connection Pool
 const pool = mysql.createPool({
-  host: "",
-  user: "",
-  password: "",
-  database: "",
+  host: process.env.DB_HOST,
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
+  database: process.env.DB_NAME,
   connectionLimit: 10, // try like 10
 });
 
