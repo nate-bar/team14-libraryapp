@@ -50,7 +50,7 @@ const HomePage: React.FC = () => {
   return (
     <div>
       <div className="welcome-container">
-        <h2 className="welcome-title">Dive Into A Sea of Knowledge {memberID}</h2>
+        <h2 className="welcome-title">Dive Into A Sea of Knowledge</h2>
       </div>
 
       {/* Featured Picks Section */}
