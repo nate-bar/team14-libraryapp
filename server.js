@@ -130,6 +130,24 @@ app.get("/api/memberprivileges", (req, res) => {
 });
 */
 
+app.post("/api/checkout", (req, res) => {
+  try {
+    const { items, memberID } = req.body;
+
+    if (!items || !Array.isArray(items) || items.length === 0) {
+      res.status(400).json({ error: "Invalid or empty items array" });
+      return;
+    }
+
+    console.log("MemberID: ", memberID);
+    console.log("Items: ", items);
+  } catch (err) {
+    console.error("Checkout error:", error);
+    res.status(500).json({ error: "Server error processing checkout" });
+    return;
+  }
+});
+
 // RETURNS ALL ITEMS AND THEIR TYPE
 app.get("/api/items", (req, res) => {
   pool.getConnection((err, connection) => {
@@ -153,8 +171,10 @@ app.get("/api/items", (req, res) => {
     );
   });
 });
+
 //Return itemdevice
-app.get("/api/itemdevice/:itemId", (req, res) => {
+// Get detailed book information by ID
+app.get("/api/devicedetail/:itemId", (req, res) => {
   const { itemId } = req.params;
 
   pool.getConnection((err, connection) => {
@@ -164,39 +184,65 @@ app.get("/api/itemdevice/:itemId", (req, res) => {
     }
 
     connection.query(
-      "SELECT * FROM Items WHERE ItemID = ?",
+      `SELECT i.ItemID, i.Title, i.Status, it.TypeName, id.DeviceID, id.DeviceType, id.Manufacturer FROM Items i INNER JOIN ItemTypes it ON it.ItemID = i.ItemID
+      INNER JOIN ItemDevice id ON it.DeviceID = id.DeviceID
+      WHERE i.ItemID = ? AND it.TypeName = 'Device'`,
       [itemId],
       (err, results) => {
         connection.release();
+
         if (err) {
-          console.error("Error executing query:", err);
-          return res.status(500).json({ error: "Query execution error" });
+          console.error("Error fetching book detail:", err);
+          return res.status(500).json({ error: "Database query error" });
         }
+
         if (results.length === 0) {
-          return res.status(404).json({ error: "Item not found" });
+          return res.status(404).json({ error: "Book not found" });
         }
-        res.json(results[0]); // Return the first matching item
+
+        res.json(results[0]);
       }
     );
   });
 });
 
-/*
-// RETURNS ALL BOOKS
-app.get("/api/books", (req, res) => {
-  db.query(
-    'SELECT Items.ItemID, Items.ItemTitle, Books.Authors, ItemTypes.ISBN, Genres.GenreName FROM (((Items INNER JOIN ItemTypes ON ItemTypes.ItemID=Items.ItemID AND ItemTypes.TypeName="Book") INNER JOIN Books ON ItemTypes.ISBN=Books.ISBN) INNER JOIN Genres ON Books.GenreID=Genres.GenreID)',
-    (err, results) => {
-      if (err) {
-        console.error("Error executing query: " + err.stack);
-        res.status(500).send("Error fetching books");
-        return;
-      }
-      res.json(results);
+// Get detailed book information by ID
+app.get("/api/bookdetail/:itemId", (req, res) => {
+  const { itemId } = req.params;
+
+  pool.getConnection((err, connection) => {
+    if (err) {
+      console.error("Error getting connection:", err);
+      return res.status(500).json({ error: "Database connection error" });
     }
-  );
+
+    connection.query(
+      `SELECT i.ItemID, i.Title, i.Status, it.TypeName, b.Authors, b.Publisher, b.PublicationYear, it.ISBN, g.GenreName, g.GenreID
+       FROM Items i
+       INNER JOIN ItemTypes it ON it.ItemID = i.ItemID
+       INNER JOIN Books b ON it.ISBN = b.ISBN
+       INNER JOIN Genres g ON b.GenreID = g.GenreID
+       WHERE i.ItemID = ? AND it.TypeName = 'Book'`,
+      [itemId],
+      (err, results) => {
+        connection.release();
+
+        if (err) {
+          console.error("Error fetching book detail:", err);
+          return res.status(500).json({ error: "Database query error" });
+        }
+
+        if (results.length === 0) {
+          return res.status(404).json({ error: "Book not found" });
+        }
+
+        res.json(results[0]);
+      }
+    );
+  });
 });
-*/
+
+//----------------------------------------------------------- SHOULD NOT HAVE TO GO BELOW THIS LINE ------------------------------------------------------------
 
 // FOR SALTING AND HASHING PASSWORDS
 /**

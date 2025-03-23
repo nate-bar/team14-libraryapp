@@ -5,6 +5,36 @@ export interface Member {
   password: string;
 }
 
+export interface CartItem {
+  ItemID: number;
+  Title: string;
+  TypeName: string;
+  Status: string;
+  Category: "In Cart" | "On Hold";
+}
+
+export interface Book {
+  ItemID: number;
+  Title: string;
+  TypeName: string;
+  Status: string;
+  Authors: string;
+  Publisher: string;
+  PublicationYear: number;
+  ISBN: string;
+  GenreName: string;
+}
+
+export interface Device {
+  ItemID: number;
+  Title: string;
+  TypeName: string;
+  Status: string;
+  DeviceID: number;
+  DeviceType: string;
+  Manufacturer: string;
+}
+
 // sign up interface
 export interface AccountSignup {
   email: string;

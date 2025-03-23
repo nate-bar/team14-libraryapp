@@ -1,12 +1,15 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Link, useNavigate } from "react-router"; // Using React Router
 import { type Items } from "~/services/api";
 import "../components/navbar.css";
+import { type CartItem } from "~/services/api";
 
 export function NavBar2() {
   const [searchQuery, setSearchQuery] = useState("");
   const [showResults, setShowResults] = useState(false);
   const [items, setItems] = useState<Items[]>([]); // Store fetched items
+  const [cartCount, setCartCount] = useState(0);
+  const searchRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
 
   // Fetch items from API
@@ -15,6 +18,47 @@ export function NavBar2() {
       .then((response) => response.json())
       .then((data) => setItems(data))
       .catch((error) => console.error("Error fetching items:", error));
+  }, []);
+
+  //************************LISTENER FOR EXITING DROPDOWN************
+  // ***********************SEARCH WHEN USER CLICKS AWAY************* */
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (
+        searchRef.current &&
+        !searchRef.current.contains(event.target as Node)
+      ) {
+        setShowResults(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
+  //************************FOR UPDATING CART COUNTER************
+  // ***********************ON ICON IN NAVBAR***************** */
+  useEffect(() => {
+    const updateCartCount = () => {
+      try {
+        const cartData = sessionStorage.getItem("shoppingCart");
+        if (cartData) {
+          const cart: CartItem[] = JSON.parse(cartData);
+          setCartCount(cart.length);
+        } else {
+          setCartCount(0);
+        }
+      } catch (error) {
+        console.error("Error reading cart data:", error);
+        setCartCount(0);
+      }
+    };
+    updateCartCount();
+    window.addEventListener("cartUpdated", updateCartCount);
+    return () => {
+      window.removeEventListener("cartUpdated", updateCartCount);
+    };
   }, []);
 
   // Filter items based on search query
@@ -26,7 +70,7 @@ export function NavBar2() {
   const handleSearch = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (searchQuery.trim() !== "") {
-      navigate(`/search?q=${encodeURIComponent(searchQuery)}`);
+      navigate(`/items?q=${encodeURIComponent(searchQuery)}`);
       setShowResults(false);
     }
   };
@@ -42,27 +86,41 @@ export function NavBar2() {
           <li className="text-nav2">
             <Link to="/items">Items</Link>
           </li>
-          <li className="text-nav2">
-            <Link to="/cart">🛒</Link>
+          <li className="text-nav2 relative">
+            <Link to="/cart">
+              🛒
+              {cartCount > 0 && (
+                <span className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs">
+                  {cartCount}
+                </span>
+              )}
+            </Link>
           </li>
         </ul>
 
         {/* Search Bar */}
-        <form onSubmit={handleSearch} className="search-bar relative">
-          <input
-            type="text"
-            placeholder="Search"
-            value={searchQuery}
-            onChange={(e) => {
-              setSearchQuery(e.target.value);
-              setShowResults(e.target.value.trim() !== "");
-            }}
-            className="search-input"
-            aria-label="Search"
-          />
-          <button type="submit" className="search-button">
-            🔍
-          </button>
+        <div ref={searchRef} className="relative">
+          <form onSubmit={handleSearch} className="search-bar">
+            <input
+              type="text"
+              placeholder="Search"
+              value={searchQuery}
+              onChange={(e) => {
+                setSearchQuery(e.target.value);
+                setShowResults(e.target.value.trim() !== "");
+              }}
+              className="search-input"
+              aria-label="Search"
+              onClick={() => {
+                if (searchQuery.trim() !== "") {
+                  setShowResults(true);
+                }
+              }}
+            />
+            <button type="submit" className="search-button">
+              🔍
+            </button>
+          </form>
 
           {/* Search Results Dropdown */}
           {showResults && (
@@ -91,7 +149,7 @@ export function NavBar2() {
               )}
             </div>
           )}
-        </form>
+        </div>
       </div>
     </div>
   );
