@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { type Items } from "~/services/api"; // interface used to shape items
-import { useOutletContext, useLocation } from "react-router";
-import { type AuthData } from "~/services/api";
+import { useLocation } from "react-router";
+import { type CartItem } from "~/services/api";
 
 // Define possible item type categories
 type ItemCategory = "All" | "Books" | "Media" | "Devices";
@@ -14,7 +14,6 @@ const UsingFetch = () => {
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [activeFilter, setActiveFilter] = useState<ItemCategory>("All");
-  const { isLoggedIn, memberID } = useOutletContext<AuthData>(); // getting memberID and loggedin status
   const location = useLocation(); // Get the current location to read URL parameters
 
   const fetchData = () => {
@@ -108,41 +107,74 @@ const UsingFetch = () => {
     setActiveFilter(category);
   };
 
-  // Function to process selected items
-  const handleCheckout = () => {
+  // Function to add selected items to cart
+  const handleAddToCart = () => {
     if (selectedItems.length === 0) {
       alert("Please select at least one item");
       return;
-    } else if (!isLoggedIn) {
-      alert("Please login or create account");
-      return;
     }
 
-    // preparing item ids to send to server
-    const selectedItemIds = selectedItems.map((item) => item.ItemID);
+    try {
+      // Get current cart or initialize empty array
+      let cart: CartItem[] = [];
+      const cartData = sessionStorage.getItem("shoppingCart");
 
-    // api call
-    fetch("/api/checkout", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ items: selectedItemIds, memberID }),
-    })
-      .then((response) => {
-        if (!response.ok) {
-          throw new Error(`HTTP error! Status: ${response.status}`);
+      if (cartData) {
+        cart = JSON.parse(cartData);
+      }
+
+      // Track newly added items and unavailable items
+      let newItemsCount = 0;
+      let unavailableItems = 0;
+
+      // Add each selected item to cart if available and not already present
+      selectedItems.forEach((item) => {
+        if (item.Status !== "Available") {
+          unavailableItems++;
+          return;
         }
-        return response.json();
-      })
-      .then((data) => {
-        alert(`Successfully processed ${selectedItems.length} items`);
-        console.log("Server response:", data);
-      })
-      .catch((error) => {
-        console.error("Error sending items:", error);
-        alert(`Error processing items: ${error.message}`);
+
+        if (!cart.some((cartItem) => cartItem.ItemID === item.ItemID)) {
+          cart.push({
+            ItemID: item.ItemID,
+            Title: item.Title,
+            TypeName: item.TypeName,
+            Status: item.Status,
+            Category: "In Cart",
+          });
+          newItemsCount++;
+        }
       });
+
+      // Save updated cart to sessionStorage
+      sessionStorage.setItem("shoppingCart", JSON.stringify(cart));
+
+      // Dispatch event to update navbar cart count
+      window.dispatchEvent(new Event("cartUpdated"));
+
+      // Clear selection after adding to cart
+      setSelectedItems([]);
+
+      // Provide appropriate feedback
+      if (unavailableItems > 0) {
+        if (newItemsCount > 0) {
+          alert(
+            `${newItemsCount} items added to cart. ${unavailableItems} unavailable items were not added.`
+          );
+        } else {
+          alert(
+            `No items added. ${unavailableItems} selected items are unavailable.`
+          );
+        }
+      } else if (newItemsCount > 0) {
+        alert(`${newItemsCount} items added to cart`);
+      } else {
+        alert("Selected items are already in your cart");
+      }
+    } catch (error) {
+      console.error("Error adding items to cart:", error);
+      alert("There was an error adding items to cart");
+    }
   };
 
   return (
@@ -183,8 +215,8 @@ const UsingFetch = () => {
         <span style={{ marginRight: "10px" }}>
           {selectedItems.length} items selected
         </span>
-        <button onClick={handleCheckout} disabled={selectedItems.length === 0}>
-          Checkout Items
+        <button onClick={handleAddToCart} disabled={selectedItems.length === 0}>
+          Add to Cart
         </button>
       </div>
 
