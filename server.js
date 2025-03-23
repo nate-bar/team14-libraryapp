@@ -8,7 +8,7 @@ import mysql from "mysql"; // mysql package, should be self explanitory
 import crypto from "crypto"; // for salting and hashing passwords
 import session from "express-session"; // for session storage
 // Load environment variables
-import dotenv from 'dotenv';
+import dotenv from "dotenv";
 dotenv.config();
 
 // Short-circuit the type-checking of the built output.
@@ -197,20 +197,6 @@ app.get("/api/books", (req, res) => {
       res.json(results);
     }
   );
-});
-*/
-
-// RETURNS ALL FILMS
-/*
-app.get('/api/films', (req, res) => {
-  db.query('SELECT Items.ItemID, Items.ItemTitle, Films.FilmYear, ItemTypes.FilmID, Genres.GenreName FROM (((Items INNER JOIN ItemTypes ON ItemTypes.ItemID=Items.ItemID AND ItemTypes.TypeName="Film") INNER JOIN Films ON ItemTypes.FilmID=Films.FilmID) INNER JOIN Genres ON Films.GenreID=Genres.GenreID)', (err, results) => {
-      if (err) {
-          console.error('Error executing query: ' + err.stack);
-          res.status(500).send('Error fetching films');
-          return;
-      }
-      res.json(results);
-  });
 });
 */
 
