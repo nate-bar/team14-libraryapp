@@ -58,6 +58,15 @@ export default function CartPage() {
         return response.json();
       })
       .then((data) => {
+        // ON SUCCESSFUL CHECKOUT
+        const updatedCart = cartItems.filter(
+          (item) => item.Category === "On Hold"
+        );
+        setCartItems(updatedCart);
+        sessionStorage.setItem("shoppingCart", JSON.stringify(updatedCart));
+        window.dispatchEvent(new Event("cartUpdated"));
+        // CLEAR ITEMS FROM CART AND UPDATE
+
         alert(`Successfully processed ${cartItems.length} items`);
         console.log("Server response:", data);
       })

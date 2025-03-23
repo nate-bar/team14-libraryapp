@@ -43,6 +43,7 @@ export interface AccountSignup {
   firstName: string;
   middleName?: string;
   lastName: string;
+  address: string;
 }
 
 // login interface

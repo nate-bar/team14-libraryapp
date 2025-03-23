@@ -21,15 +21,23 @@ export default function MediaDetail() {
   }, [itemId]);
 
   if (!media) {
-    return <div className="item-container"><h2>Loading media details...</h2></div>;
+    return (
+      <div className="item-container">
+        <h2>Loading media details...</h2>
+      </div>
+    );
   }
 
   return (
     <div className="item-container">
       <h1 className="item-title">{media.Title}</h1>
       <div className="item-info">
-        <p><strong>Type:</strong> {media.TypeName}</p>
-        <p><strong>Status:</strong> {media.Status}</p>
+        <p>
+          <strong>Type:</strong> {media.TypeName}
+        </p>
+        <p>
+          <strong>Status:</strong> {media.Status}
+        </p>
       </div>
     </div>
   );

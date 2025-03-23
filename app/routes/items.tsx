@@ -178,7 +178,7 @@ const UsingFetch = () => {
   };
 
   return (
-    <div>
+    <div style={{ paddingLeft: "5%", paddingRight: "5%" }}>
       {error && (
         <div style={{ color: "red", marginBottom: "10px" }}>
           <p>{error}</p>

@@ -141,8 +141,103 @@ app.post("/api/checkout", (req, res) => {
 
     console.log("MemberID: ", memberID);
     console.log("Items: ", items);
+    // DO SHIT HERE
+
+    // first, grab connection for sure cause will have to make multipule queries
+    pool.getConnection((err, connection) => {
+      if (err) {
+        console.error("Error getting connection:", err);
+        res.status(500).json({ error: "Database connection error" });
+        return;
+      }
+      // DO SHIT HERE
+
+      // begin transaction
+      // Transactions in MySQL are used to execute a series of operations
+      // as a single unit of work,
+      // ensuring that all operations either succeed or fail together
+      connection.beginTransaction((err) => {
+        // ERROR HANDLING
+        if (err) {
+          connection.release();
+          res.status(500).json({ error: "Transaction error" });
+          return;
+        }
+
+        // Array for tracking processed items
+        const processedItems = [];
+        let hasErrors = false;
+
+        // begin processing each item
+        const processItem = (index) => {
+          if (index >= items.length || hasErrors) {
+            if (hasErrors) {
+              connection.rollback(() => {
+                connection.release();
+                res.status(500).json({
+                  error: "Failed to process some items",
+                  processed: processedItems,
+                });
+              });
+            } else {
+              connection.commit((err) => {
+                if (err) {
+                  connection.rollback(() => {
+                    connection.release();
+                    res
+                      .status(500)
+                      .json({ error: "Failed to commit transaction" });
+                    return;
+                  });
+                } else {
+                  connection.release();
+                  res.status(200).json({
+                    success: true,
+                    message: `${processedItems.length} Items checked out successfully`,
+                    items: processedItems,
+                  });
+                }
+              });
+            }
+            return;
+          }
+
+          const itemid = items[index];
+
+          connection.query(
+            `INSERT INTO borrowrecord (MemberID, ItemID) VALUES (?, ?)`,
+            [memberID, itemid],
+            (err, insertResult) => {
+              if (err) {
+                console.error(`Error inserting item ${itemid}:`, err);
+                hasErrors = true;
+                processItem(index + 1);
+                return;
+              }
+              // update item status
+              connection.query(
+                `UPDATE Items SET Status = 'Checked Out', LastUpdated = NOW(), TimesBorrowed = TimesBorrowed + 1 WHERE ItemID = ?`,
+                [itemid],
+                (err, updateResult) => {
+                  if (err) {
+                    console.error(`Error updating Item ${itemid}:`, err);
+                    hasErrors = true;
+                  } else {
+                    processedItems.push(itemid);
+                  }
+                  processItem(index + 1);
+                }
+              );
+            }
+          );
+        };
+
+        // Start processing the first item
+        processItem(0);
+      });
+    });
   } catch (err) {
-    console.error("Checkout error:", error);
+    console.error("Checkout error:", err);
     res.status(500).json({ error: "Server error processing checkout" });
     return;
   }

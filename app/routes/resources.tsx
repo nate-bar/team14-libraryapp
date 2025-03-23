@@ -20,7 +20,9 @@ export default function Resources() {
         <p>Reserve a quiet space for group discussions or individual study.</p>
 
         <h2> Research Assistance</h2>
-        <p>Meet with a librarian to help with research projects and citations.</p>
+        <p>
+          Meet with a librarian to help with research projects and citations.
+        </p>
       </div>
     </div>
   );

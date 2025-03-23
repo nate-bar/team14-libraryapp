@@ -9,22 +9,22 @@ const images = [
   {
     src: "/Rodeo.jpg",
     caption: "Rodeo Season! Tales of the Wild West",
-    link: "https://example.com/image1",
+    link: "/items?q=Rodeo",
   },
   {
     src: "/Memorial.jpg",
     caption: "Honor Our Troops for Memorial Day",
-    link: "https://example.com/image2",
+    link: "/items?q=Memorial Day",
   },
   {
     src: "/Juneteenth.jpg",
     caption: "Juneteenth! Freedom and Equality For All",
-    link: "https://example.com/image3",
+    link: "/items?q=Juneteenth",
   },
   {
     src: "/4th.jpg",
     caption: "Celebrate Liberty and Independence",
-    link: "https://example.com/image4",
+    link: "/items?q=independence",
   },
 ];
 
