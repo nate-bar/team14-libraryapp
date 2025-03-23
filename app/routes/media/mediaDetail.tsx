@@ -115,7 +115,7 @@ export default function MediaDetail() {
             <strong>Genre:</strong> {media.GenreName}
           </p>
           <p>
-            <strong>Language:</strong> {media.GenreName}
+            <strong>Language:</strong> {media.Language}
           </p>
         </div>
 

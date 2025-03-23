@@ -278,11 +278,12 @@ app.get("/api/mediadetail/:itemId", (req, res) => {
     }
 
     connection.query(
-      `SELECT i.ItemID, i.Title, i.Status, it.TypeName, im.Director, im.Leads, im.ReleaseYear, it.MediaID, g.GenreName, g.GenreID
+      `SELECT i.ItemID, i.Title, i.Status, it.TypeName, im.Director, im.Leads, im.ReleaseYear, it.MediaID, g.GenreName, g.GenreID, l.LanguageID, l.Language
        FROM Items i
        INNER JOIN ItemTypes it ON it.ItemID = i.ItemID
        INNER JOIN Media im ON it.MediaID = im.MediaID
        INNER JOIN Genres g ON im.GenreID = g.GenreID
+       INNER JOIN Languages l ON im.LanguageID = l.LanguageID
        WHERE i.ItemID = ? AND it.TypeName = 'Media'`,
       [itemId],
       (err, results) => {
