@@ -130,6 +130,142 @@ app.get("/api/memberprivileges", (req, res) => {
 });
 */
 
+const checkLimits = (memberID, itemIDs, connection) => {
+  return new Promise((resolve, reject) => {
+    // Step 1: Get member limits
+    connection.query(
+      `SELECT mg.ItemLimit, mg.MediaItemLimit, mg.DeviceLimit 
+       FROM Members m 
+       JOIN MemberGroups mg ON m.GroupID = mg.GroupID 
+       WHERE m.MemberID = ?`,
+      [memberID],
+      (err, memberLimits) => {
+        if (err) {
+          console.error("Error fetching member limits:", err);
+          return reject(new Error("Failed to retrieve member limits"));
+        }
+
+        if (memberLimits.length === 0) {
+          return reject(new Error("Member not found or has no group limits"));
+        }
+
+        const limits = memberLimits[0];
+        console.log("Member limits:", limits);
+
+        // Step 2: Count currently borrowed items
+        connection.query(
+          `SELECT COUNT(*) as totalBorrowed
+           FROM borrowrecord 
+           WHERE MemberID = ? AND ReturnDate IS NULL`,
+          [memberID],
+          (err, totalResults) => {
+            if (err) {
+              console.error("Error counting total borrows:", err);
+              return reject(new Error("Failed to count current borrows"));
+            }
+
+            const totalBorrowed = totalResults[0].totalBorrowed || 0;
+
+            // Step 3: Count borrowed items by type
+            connection.query(
+              `SELECT it.TypeName, COUNT(*) as count
+               FROM borrowrecord br
+               JOIN Items i ON br.ItemID = i.ItemID
+               JOIN ItemTypes it ON i.ItemID = it.ItemID
+               WHERE br.MemberID = ? AND br.ReturnDate IS NULL
+               GROUP BY it.TypeName`,
+              [memberID],
+              (err, typeResults) => {
+                if (err) {
+                  console.error("Error counting borrows by type:", err);
+                  return reject(new Error("Failed to count borrows by type"));
+                }
+
+                // Convert results to counts by type
+                let booksBorrowed = 0;
+                let mediaBorrowed = 0;
+                let deviceBorrowed = 0;
+
+                typeResults.forEach((row) => {
+                  if (row.TypeName === "Book") booksBorrowed = row.count;
+                  if (row.TypeName === "Media") mediaBorrowed = row.count;
+                  if (row.TypeName === "Device") deviceBorrowed = row.count;
+                });
+
+                console.log(
+                  `Current borrows: Total: ${totalBorrowed}, Books: ${booksBorrowed}, Media: ${mediaBorrowed}, Devices: ${deviceBorrowed}`
+                );
+
+                // Step 4: Get types of items being checked out
+                connection.query(
+                  `SELECT it.TypeName
+                   FROM Items i 
+                   JOIN ItemTypes it ON i.ItemID = it.ItemID 
+                   WHERE i.ItemID IN (?)`,
+                  [itemIDs],
+                  (err, checkoutItems) => {
+                    if (err) {
+                      console.error("Error getting checkout item types:", err);
+                      return reject(new Error("Failed to get item types"));
+                    }
+
+                    // Count new items by type
+                    const newBooks = checkoutItems.filter(
+                      (i) => i.TypeName === "Book"
+                    ).length;
+                    const newMedia = checkoutItems.filter(
+                      (i) => i.TypeName === "Media"
+                    ).length;
+                    const newDevices = checkoutItems.filter(
+                      (i) => i.TypeName === "Device"
+                    ).length;
+
+                    console.log(
+                      `New checkouts: Books: ${newBooks}, Media: ${newMedia}, Devices: ${newDevices}`
+                    );
+
+                    // Ensure limits exist
+                    const bookLimit = limits.ItemLimit;
+                    const mediaLimit = limits.MediaLimit;
+                    const deviceLimit = limits.DeviceLimit;
+
+                    if (booksBorrowed + newBooks > bookLimit) {
+                      return reject(
+                        new Error(
+                          `Checkout would exceed book limit of ${bookLimit}`
+                        )
+                      );
+                    }
+
+                    if (mediaBorrowed + newMedia > mediaLimit) {
+                      return reject(
+                        new Error(
+                          `Checkout would exceed media limit of ${mediaLimit}`
+                        )
+                      );
+                    }
+
+                    if (deviceBorrowed + newDevices > deviceLimit) {
+                      return reject(
+                        new Error(
+                          `Checkout would exceed device limit of ${deviceLimit}`
+                        )
+                      );
+                    }
+
+                    // All checks passed
+                    resolve(true);
+                  }
+                );
+              }
+            );
+          }
+        );
+      }
+    );
+  });
+};
+
 app.post("/api/checkout", (req, res) => {
   try {
     const { items, memberID } = req.body;
@@ -141,100 +277,104 @@ app.post("/api/checkout", (req, res) => {
 
     console.log("MemberID: ", memberID);
     console.log("Items: ", items);
-    // DO SHIT HERE
 
-    // first, grab connection for sure cause will have to make multipule queries
+    // first, grab connection for sure cause will have to make multiple queries
     pool.getConnection((err, connection) => {
       if (err) {
         console.error("Error getting connection:", err);
         res.status(500).json({ error: "Database connection error" });
         return;
       }
-      // DO SHIT HERE
 
-      // begin transaction
-      // Transactions in MySQL are used to execute a series of operations
-      // as a single unit of work,
-      // ensuring that all operations either succeed or fail together
-      connection.beginTransaction((err) => {
-        // ERROR HANDLING
-        if (err) {
-          connection.release();
-          res.status(500).json({ error: "Transaction error" });
-          return;
-        }
+      // First, check if borrowing limits would be exceeded
+      checkLimits(memberID, items, connection)
+        .then(() => {
+          // If limits check passes, begin the transaction
+          connection.beginTransaction((err) => {
+            // ERROR HANDLING
+            if (err) {
+              connection.release();
+              res.status(500).json({ error: "Transaction error" });
+              return;
+            }
 
-        // Array for tracking processed items
-        const processedItems = [];
-        let hasErrors = false;
+            // Array for tracking processed items
+            const processedItems = [];
+            let hasErrors = false;
 
-        // begin processing each item
-        const processItem = (index) => {
-          if (index >= items.length || hasErrors) {
-            if (hasErrors) {
-              connection.rollback(() => {
-                connection.release();
-                res.status(500).json({
-                  error: "Failed to process some items",
-                  processed: processedItems,
-                });
-              });
-            } else {
-              connection.commit((err) => {
-                if (err) {
+            // begin processing each item
+            const processItem = (index) => {
+              if (index >= items.length || hasErrors) {
+                if (hasErrors) {
                   connection.rollback(() => {
                     connection.release();
-                    res
-                      .status(500)
-                      .json({ error: "Failed to commit transaction" });
-                    return;
+                    res.status(500).json({
+                      error: "Failed to process some items",
+                      processed: processedItems,
+                    });
                   });
                 } else {
-                  connection.release();
-                  res.status(200).json({
-                    success: true,
-                    message: `${processedItems.length} Items checked out successfully`,
-                    items: processedItems,
+                  connection.commit((err) => {
+                    if (err) {
+                      connection.rollback(() => {
+                        connection.release();
+                        res
+                          .status(500)
+                          .json({ error: "Failed to commit transaction" });
+                        return;
+                      });
+                    } else {
+                      connection.release();
+                      res.status(200).json({
+                        success: true,
+                        message: `${processedItems.length} Items checked out successfully`,
+                        items: processedItems,
+                      });
+                    }
                   });
                 }
-              });
-            }
-            return;
-          }
-
-          const itemid = items[index];
-
-          connection.query(
-            `INSERT INTO borrowrecord (MemberID, ItemID) VALUES (?, ?)`,
-            [memberID, itemid],
-            (err, insertResult) => {
-              if (err) {
-                console.error(`Error inserting item ${itemid}:`, err);
-                hasErrors = true;
-                processItem(index + 1);
                 return;
               }
-              // update item status
+
+              const itemid = items[index];
+
               connection.query(
-                `UPDATE Items SET Status = 'Checked Out', LastUpdated = NOW(), TimesBorrowed = TimesBorrowed + 1 WHERE ItemID = ?`,
-                [itemid],
-                (err, updateResult) => {
+                `INSERT INTO borrowrecord (MemberID, ItemID) VALUES (?, ?)`,
+                [memberID, itemid],
+                (err, insertResult) => {
                   if (err) {
-                    console.error(`Error updating Item ${itemid}:`, err);
+                    console.error(`Error inserting item ${itemid}:`, err);
                     hasErrors = true;
-                  } else {
-                    processedItems.push(itemid);
+                    processItem(index + 1);
+                    return;
                   }
-                  processItem(index + 1);
+                  // update item status
+                  connection.query(
+                    `UPDATE Items SET Status = 'Checked Out', LastUpdated = NOW(), TimesBorrowed = TimesBorrowed + 1 WHERE ItemID = ?`,
+                    [itemid],
+                    (err, updateResult) => {
+                      if (err) {
+                        console.error(`Error updating Item ${itemid}:`, err);
+                        hasErrors = true;
+                      } else {
+                        processedItems.push(itemid);
+                      }
+                      processItem(index + 1);
+                    }
+                  );
                 }
               );
-            }
-          );
-        };
+            };
 
-        // Start processing the first item
-        processItem(0);
-      });
+            // Start processing the first item
+            processItem(0);
+          });
+        })
+        .catch((error) => {
+          // If limits check fails, return error and release connection
+          connection.release();
+          res.status(400).json({ error: error.message });
+        });
     });
   } catch (err) {
     console.error("Checkout error:", err);

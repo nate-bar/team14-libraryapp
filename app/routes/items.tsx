@@ -249,6 +249,12 @@ const UsingFetch = () => {
                         type="checkbox"
                         checked={isItemSelected(item.ItemID)}
                         onChange={() => handleSelectItem(item)}
+                        disabled={item.Status !== "Available"}
+                        title={
+                          item.Status !== "Available"
+                            ? "This item is not available"
+                            : ""
+                        }
                       />
                     </td>
                     <td>{item.Title}</td>
