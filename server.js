@@ -407,6 +407,35 @@ app.get("/api/items", (req, res) => {
   });
 });
 
+app.get("/api/borroweditems/:memberID", (req, res) => {
+  const { memberID } = req.params;
+
+  pool.getConnection((err, connection) => {
+    if (err) {
+      console.error("Error getting connection:", err);
+      return res.status(500).json({ error: "Database connection error" });
+    }
+
+    connection.query(
+      `SELECT Items.Title, BorrowRecord.DueDate, BorrowRecord.MemberID FROM BorrowRecord INNER JOIN Items ON BorrowRecord.ItemID = Items.ItemID WHERE BorrowRecord.MemberID = ?`,
+      [memberID],
+      (err, results) => {
+        connection.release();
+        if (err) {
+          console.error("Error fetching book detail:", err);
+          return res.status(500).json({ error: "Database query error" });
+        }
+
+        if (results.length === 0) {
+          return res.status(404).json({ error: "Book not found" });
+        }
+
+        res.json(results);
+      }
+    );
+  });
+});
+
 // Get detailed book information by ID
 app.get("/api/mediadetail/:itemId", (req, res) => {
   const { itemId } = req.params;
