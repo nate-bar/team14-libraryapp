@@ -25,6 +25,21 @@ export interface Book {
   GenreName: string;
 }
 
+export interface Media {
+  ItemID: number;
+  Title: string;
+  TypeName: string;
+  Status: string;
+  MediaID: number;
+  Director: string;
+  Leads: string;
+  ReleaseYear: number;
+  GenreName: string;
+  Language: string;
+  Format: string;
+  Rating: number;
+}
+
 export interface Device {
   ItemID: number;
   Title: string;

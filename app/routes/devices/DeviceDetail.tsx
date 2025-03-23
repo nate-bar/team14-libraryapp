@@ -72,7 +72,7 @@ export default function DeviceDetail() {
   if (loading) {
     return (
       <div className="item-container">
-        <h2>Loading book details...</h2>
+        <h2>Loading device details...</h2>
       </div>
     );
   }
@@ -89,7 +89,7 @@ export default function DeviceDetail() {
   if (!device) {
     return (
       <div className="item-container">
-        <h2>Book not found</h2>
+        <h2>Device not found</h2>
       </div>
     );
   }

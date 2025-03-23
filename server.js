@@ -267,8 +267,43 @@ app.get("/api/items", (req, res) => {
   });
 });
 
-//Return itemdevice
 // Get detailed book information by ID
+app.get("/api/mediadetail/:itemId", (req, res) => {
+  const { itemId } = req.params;
+
+  pool.getConnection((err, connection) => {
+    if (err) {
+      console.error("Error getting connection:", err);
+      return res.status(500).json({ error: "Database connection error" });
+    }
+
+    connection.query(
+      `SELECT i.ItemID, i.Title, i.Status, it.TypeName, im.Director, im.Leads, im.ReleaseYear, it.MediaID, g.GenreName, g.GenreID
+       FROM Items i
+       INNER JOIN ItemTypes it ON it.ItemID = i.ItemID
+       INNER JOIN Media im ON it.MediaID = im.MediaID
+       INNER JOIN Genres g ON im.GenreID = g.GenreID
+       WHERE i.ItemID = ? AND it.TypeName = 'Media'`,
+      [itemId],
+      (err, results) => {
+        connection.release();
+
+        if (err) {
+          console.error("Error fetching book detail:", err);
+          return res.status(500).json({ error: "Database query error" });
+        }
+
+        if (results.length === 0) {
+          return res.status(404).json({ error: "Book not found" });
+        }
+
+        res.json(results[0]);
+      }
+    );
+  });
+});
+
+//Return itemdevice
 app.get("/api/devicedetail/:itemId", (req, res) => {
   const { itemId } = req.params;
 
