@@ -151,7 +151,6 @@ app.get("/api/items", (req, res) => {
         res.json(results);
       }
     );
-    connection.release();
   });
 });
 //Return itemdevice
