@@ -24,10 +24,14 @@ export function NavBar({ isLoggedIn, memberID, groupID, firstName }: AuthData) {
       </div>
       <div className="navbar-right ml-auto mr-4">
         {isLoggedIn ? (
-          <div className="logged-in-content">
-            <h1 className="text-nav">Welcome {firstName}</h1>
-            <ul style={{ listStyleType: "none" }}> {/* Corrected here */}
-              <li className="text-nav">
+          <div className="logged-in-content flex items-center justify-center gap-4">
+            <h1 className="text-nav m-0">Welcome {firstName},</h1>
+            <ul
+              className="flex items-center m-0 p-0"
+              style={{ listStyleType: "none" }}
+            >
+              {" "}
+              <li className="text-nav mx-4">
                 <Link to="/profile">Profile</Link>
               </li>
             </ul>
@@ -35,7 +39,9 @@ export function NavBar({ isLoggedIn, memberID, groupID, firstName }: AuthData) {
           </div>
         ) : (
           <div className="logged-out-content">
-            <ul style={{ listStyleType: "none" }}> {/* Corrected here */}
+            <ul style={{ listStyleType: "none" }}>
+              {" "}
+              {/* Corrected here */}
               <li className="text-nav">
                 <Link to="/login">Login</Link>
               </li>
