@@ -1,0 +1,117 @@
+.bg-signup{
+    background: linear-gradient(to bottom right, #68a9d8, #f5e6d0); /* Adjust colors */ 
+}
+
+.custom-container {
+    max-width: 28rem; 
+    margin: 2.5rem auto; 
+    padding: 1.5rem; 
+
+}
+
+.custom-select {
+    background-color: white;
+    width: 100%; 
+    padding: 0.5rem 0.75rem; 
+    border: 1px solid #d1d5db; 
+    border-radius: 0.375rem; 
+    outline: none; 
+    transition: all 0.2s ease-in-out; 
+    &:focus {
+        background-color: rgb(0, 0, 0); 
+        color: white;
+        border-color: #3b82f6; 
+        outline: 2px solid #3b82f6; 
+    }
+}
+
+.input-field {
+    background-color: white;
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid #d1d5db; 
+    border-radius: 6px; 
+    outline: none;
+    transition: border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+}
+
+.input-field:focus {
+    border-color: #3b82f6; 
+    box-shadow: 0 0 4px rgba(59, 130, 246, 0.5);
+}
+
+.input-field::placeholder {
+    color: #9ca3af; 
+}
+
+.custom-container {
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 1rem;
+  }
+
+  .input-field {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid #d1d5db; 
+    border-radius: 6px;
+    outline: none;
+    transition: border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+  }
+  
+  .input-field:focus {
+    border-color: #3b82f6; 
+    box-shadow: 0 0 4px rgba(59, 130, 246, 0.5);
+  }
+  
+  .input-field::placeholder {
+    color: #9ca3af;
+  }
+  
+  .custom-select {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    outline: none;
+    transition: border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+  }
+  
+  .custom-select:focus {
+    border-color: #3b82f6;
+    box-shadow: 0 0 4px rgba(59, 130, 246, 0.5);
+  }
+
+  .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .row-group {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+  }
+  
+  .row-group > div {
+    flex: 1;
+  }
+  .custom-button {
+    max-width: 28rem;
+    background-color: #f4f8f7; 
+    color: #01497c; 
+    padding: 0.5rem 1rem; 
+    outline: none; 
+    transition: background-color 0.2s ease-in-out; 
+    font-weight: bold; 
+    box-shadow: 0 0 4px rgba(0, 0, 0, 0.5);
+
+    &:hover {
+        background-color: #c2a87d; 
+    }
+    &:focus {
+        outline: 2px solid #bdbdbd; 
+    }
+}

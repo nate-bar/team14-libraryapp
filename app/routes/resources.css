@@ -1,0 +1,32 @@
+.resources-container {
+    max-width: 800px;
+    margin: 50px auto;
+    padding: 20px;
+    background: #f9f9f9;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    text-align: center;
+  }
+  
+  .resources-container h1 {
+    color: #333;
+    font-size: 2rem;
+    margin-bottom: 20px;
+  }
+  
+  .resource-section {
+    text-align: left;
+    margin-top: 20px;
+  }
+  
+  .resource-section h2 {
+    color: #444;
+    font-size: 1.3rem;
+    margin-bottom: 5px;
+  }
+  
+  .resource-section p {
+    font-size: 1.1rem;
+    color: #555;
+    line-height: 
+}

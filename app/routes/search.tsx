@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import "./style.css";
 
 const Search: React.FC = () => {
   const [query, setQuery] = useState("");
@@ -8,7 +7,9 @@ const Search: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const response = await fetch(`/api/search?q=${encodeURIComponent(query)}`);
+      const response = await fetch(
+        `/api/search?q=${encodeURIComponent(query)}`
+      );
       if (response.ok) {
         const data = await response.json();
         setResults(data);
@@ -21,7 +22,7 @@ const Search: React.FC = () => {
   };
 
   return (
-    <div className="bg-image flex items-start justify-center h-screen pt-16">
+    <div className="bg-image-search flex items-start justify-center h-screen pt-16">
       <div className="text-center">
         <h1 className="text-2xl font-bold mb-6 text-white drop-shadow">
           Search
@@ -47,7 +48,7 @@ const Search: React.FC = () => {
               type="text"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search..."
+              placeholder="Search by Title..."
               className="bg-white/90 border border-gray-300 text-black rounded-lg w-80 px-4 py-2 pl-10 focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-300"
             />
           </div>
@@ -61,9 +62,17 @@ const Search: React.FC = () => {
         <div className="mt-8">
           {results.length > 0 ? (
             results.map((item: any) => (
-              <div key={item.ItemID} className="text-white">
-                <h2 className="text-xl">{item.ItemTitle}</h2>
-                {/* Add additional item details here if needed */}
+              <div key={item.ItemID} className="text-white mb-4">
+                <h2 className="text-xl">{item.Title}</h2>
+                {item.PhotoBase64 ? (
+                  <img
+                    src={`data:image/jpeg;base64,${item.PhotoBase64}`}
+                    alt={item.Title}
+                    style={{ width: "150px", height: "auto", marginTop: "10px" }}
+                  />
+                ) : (
+                  <p>No Photo Available</p>
+                )}
               </div>
             ))
           ) : (

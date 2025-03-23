@@ -1,0 +1,89 @@
+.bg-nav {
+    background-image: url("/dolphine.jpg"); 
+    background-size: 150% auto;
+    background-position: center 45%; 
+    background-repeat: no-repeat;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    padding: 0 20px;
+    border-radius: 15px; 
+    margin: 20px auto;
+    max-width: 90%;
+}
+
+.text-nav {
+    font-size: 22px; 
+    font-weight: bold;
+    font-family: "Arial", sans-serif;
+    color: white;
+    text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.6);
+    letter-spacing: 1px;
+}
+
+.bg-nav2 {
+    background-color: white;
+    background-size: 150% auto;
+    background-position: center 45%; 
+    background-repeat: no-repeat;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    padding: 0 20px;
+    border-radius: 15px; 
+    margin: 20px auto;
+    max-width: 90%;
+    margin-bottom: 40px;
+}
+
+.text-nav2 {
+    font-size: 22px;
+    font-weight: bold;
+    font-family: "Arial", sans-serif;
+    color: #01497c;
+    letter-spacing: 1px;
+}
+
+.search-bar {
+    display: flex;
+    align-items: center;
+    background-color: #c2a87d;
+    border-radius: 9999px;
+    padding: 6px 12px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    transition: box-shadow 0.2s ease-in-out;
+    margin-left: auto;
+    width: fit-content;
+}
+
+.search-bar:focus-within {
+    box-shadow: 0 0 4px rgba(0, 123, 255, 0.5);
+}
+
+.search-input {
+    flex: 1;
+    padding: 6px 8px;
+    color: #01497c;
+    outline: none;
+    background: transparent;
+    border: none;
+    font-size: 14px;
+}
+
+.search-input::placeholder {
+    color: #01497c;
+    font-size: 16px;
+    font-weight: bold;
+}
+
+.search-button {
+    margin-left: 8px;
+    color: #01497c;
+    background: none;
+    border: none;
+    cursor: pointer;
+}
+
+.search-button:hover {
+    color: #2563eb;
+}
