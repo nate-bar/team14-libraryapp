@@ -14,6 +14,9 @@ export function LogoutButton() {
       });
 
       if (response.ok) {
+        // Clear shopping cart from sessionStorage
+        sessionStorage.removeItem("shoppingCart");
+
         // Redirect to home page after successful logout
         navigate("/");
       } else {
