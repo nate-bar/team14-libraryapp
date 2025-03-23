@@ -16,6 +16,7 @@ export function LogoutButton() {
       if (response.ok) {
         // Clear shopping cart from sessionStorage
         sessionStorage.removeItem("shoppingCart");
+        window.dispatchEvent(new Event("cartUpdated"));
 
         // Redirect to home page after successful logout
         navigate("/");
