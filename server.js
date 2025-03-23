@@ -287,21 +287,14 @@ app.post("/api/admin/add-book", upload.single("photo"), (req, res) => {
           });
         }
 
-        // Insert into the Items table.
-        // Adjust the field values as needed:
-        // - 'Title' is the same as the book title.
-        // - 'Cost' comes from req.body (defaulting to 0 if not provided).
-        // - 'TimesBorrowed' starts at 0.
-        // - 'CreatedAt' and 'LastUpdated' use NOW().
-        // - 'CreatedBy' can be determined from your app logic (here we assume req.user.id if available).
-        // - 'Status' is set to 'active'.
+        
         const itemQuery = `
           INSERT INTO Items 
             (Title, Cost, TimesBorrowed, CreatedAt, CreatedBy, LastUpdated, Status)
           VALUES (?, ?, 0, NOW(), ?, NOW(), ?);
         `;
-        const createdBy = req.user ? req.user.id : null; // Modify as needed
-        const status = "Available"; // Modify as needed
+        const createdBy = req.user ? req.user.id : null; 
+        const status = "Available"; 
         const itemParams = [
           title,
           cost || 0,
