@@ -86,6 +86,7 @@ app.get("/api/search", (req, res) => {
       `SELECT * FROM Items WHERE Title LIKE ?`,
       [`%${query}%`],
       (err, results) => {
+        connection.release();
         if (err) {
           console.error("Error executing search query:", err.stack);
           return res
@@ -95,8 +96,6 @@ app.get("/api/search", (req, res) => {
         res.json(results);
       }
     );
-    // Important: Release the connection back to the pool
-    connection.release();
   });
 });
 
@@ -143,6 +142,7 @@ app.get("/api/items", (req, res) => {
     connection.query(
       "SELECT Items.ItemID, Items.Title, itemtypes.TypeName, Items.Status, Items.LastUpdated, Items.CreatedAt, Items.TimesBorrowed FROM Items INNER JOIN ItemTypes ON ItemTypes.ItemID=Items.ItemID",
       (err, results) => {
+        connection.release();
         if (err) {
           console.error("Error executing query: " + err.stack);
           res.status(500).send("Error fetching items");
@@ -151,7 +151,6 @@ app.get("/api/items", (req, res) => {
         res.json(results);
       }
     );
-    // Important: Release the connection back to the pool
     connection.release();
   });
 });
@@ -169,7 +168,7 @@ app.get("/api/itemdevice/:itemId", (req, res) => {
       "SELECT * FROM Items WHERE ItemID = ?",
       [itemId],
       (err, results) => {
-        connection.release(); // Important: Release the connection
+        connection.release();
         if (err) {
           console.error("Error executing query:", err);
           return res.status(500).json({ error: "Query execution error" });
@@ -278,6 +277,8 @@ app.post("/api/signup", async (req, res) => {
             "SELECT 1 FROM Members WHERE Email = ? LIMIT 1",
             [email],
             (err, result) => {
+              connection.release();
+
               if (err) {
                 reject(err);
                 return;
@@ -285,8 +286,6 @@ app.post("/api/signup", async (req, res) => {
               resolve(result && result.length > 0);
             }
           );
-          // Important: Release the connection back to the pool
-          connection.release();
         });
       });
     };
@@ -315,6 +314,7 @@ app.post("/api/signup", async (req, res) => {
               address,
             ],
             (err, result) => {
+              connection.release();
               if (err) {
                 reject(err);
                 return;
@@ -322,8 +322,6 @@ app.post("/api/signup", async (req, res) => {
               resolve(result);
             }
           );
-          // Important: Release the connection back to the pool
-          connection.release();
         });
       });
     };
@@ -385,6 +383,7 @@ app.post("/api/login", async (req, res) => {
             "SELECT * FROM Members WHERE Email = ? LIMIT 1",
             [email],
             (err, results) => {
+              connection.release();
               if (err) {
                 reject(err);
                 return;
@@ -398,8 +397,6 @@ app.post("/api/login", async (req, res) => {
               resolve(results[0]);
             }
           );
-          // Important: Release the connection back to the pool
-          connection.release();
         });
       });
     };
