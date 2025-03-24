@@ -1,0 +1,53 @@
+.bg-dashboard {
+    position: relative;
+    width: 1920px;
+    height: 1080px;
+
+    background: linear-gradient(137.19deg, #01497C -25.37%, rgba(118, 198, 222, 0.8) 22.69%, #F4F8F7 60.7%, #E4C9A8 88.64%);
+}
+
+.bg-navbar3 {
+    /* mail */
+    position: absolute;
+    width: 55px;
+    height: 55px;
+    left: 1756px;
+    top: 282px;
+
+    /* settings */
+    position: absolute;
+    width: 55px;
+    height: 55px;
+    left: 1821px;
+    top: 282px;
+
+    /* Dashboard */
+    position: absolute;
+    width: 372px;
+    height: 46px;
+    left: 40px;
+    top: 287px;
+
+    font-family: 'Mitr';
+    font-style: normal;
+    font-weight: 400;
+    font-size: 30px;
+    line-height: 47px;
+
+    color: #D9D9D9;
+
+    /* Items */
+    position: absolute;
+    width: 372px;
+    height: 46px;
+    left: 412px;
+    top: 287px;
+
+    font-family: 'Mitr';
+    font-style: normal;
+    font-weight: 400;
+    font-size: 30px;
+    line-height: 47px;
+
+    color: #D9D9D9;
+}
