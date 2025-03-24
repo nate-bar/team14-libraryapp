@@ -82,14 +82,15 @@ export default function ProfilePage() {
     setIsReturning(true);
     setReturnStatus("Processing return...");
 
-    // Send the entire selected items array to match your API
+    const itemIds = selectedItems.map((item) => item.ItemID);
+
     fetch(`api/return`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        items: selectedItems,
+        items: itemIds,
       }),
     })
       .then((response) => {

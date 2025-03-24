@@ -267,8 +267,103 @@ const checkLimits = (memberID, itemIDs, connection) => {
 };
 
 app.post("/api/return", (req, res) => {
-  const { items } = req.body;
-  console.log(items);
+  try {
+    const { items } = req.body;
+
+    console.log(items);
+
+    if (!items || !Array.isArray(items) || items.length === 0) {
+      res.status(400).json({ error: "Invalid or empty items array" });
+      return;
+    }
+
+    pool.getConnection((err, connection) => {
+      if (err) {
+        console.error("Error getting connection:", err);
+        res.status(500).json({ error: "Database connection error" });
+        return;
+      }
+
+      connection.beginTransaction((err) => {
+        if (err) {
+          connection.release();
+          res.status(500).json({ error: "Transaction error" });
+          return;
+        }
+
+        const returnedItems = [];
+        let hasErrors = false;
+
+        const returnItem = (index) => {
+          if (index >= items.length || hasErrors) {
+            if (hasErrors) {
+              connection.rollback(() => {
+                connection.release();
+                res.status(500).json({
+                  error: "Failed to return some items",
+                  returned: returnedItems,
+                });
+              });
+            } else {
+              connection.commit((err) => {
+                if (err) {
+                  connection.rollback(() => {
+                    connection.release();
+                    res.status(500).json({ error: "Failed to return item" });
+                    return;
+                  });
+                } else {
+                  connection.release();
+                  res.status(200).json({
+                    success: true,
+                    message: `${returnedItems.length} Items returned successfully`,
+                    items: returnedItems,
+                  });
+                }
+              });
+            }
+            return;
+          }
+
+          const itemid = items[index];
+
+          connection.query(
+            `UPDATE borrowrecord SET ReturnDate = NOW() WHERE ItemID = ? AND ReturnDate IS NULL`,
+            [itemid],
+            (err, returnResult) => {
+              if (err) {
+                console.error(`Error returning Item ${itemid}:`, err);
+                hasErrors = true;
+                returnItem(index + 1);
+                return;
+              }
+
+              // update item status
+              connection.query(
+                `UPDATE Items SET Status = 'Available', LastUpdated = NOW() WHERE ItemID = ?`,
+                [itemid],
+                (err, updateResult) => {
+                  if (err) {
+                    console.error(`Error updating Item ${itemid}:`, err);
+                    hasErrors = true;
+                  } else {
+                    returnedItems.push(itemid);
+                  }
+                  returnItem(index + 1);
+                }
+              );
+            }
+          );
+        };
+
+        returnItem(0);
+      });
+    });
+  } catch (err) {
+    console.error("Checkout error:", err);
+    res.status(500).json({ error: "Server error processing checkout" });
+    return;
+  }
 });
 
 app.post("/api/checkout", (req, res) => {
@@ -422,7 +517,7 @@ app.get("/api/borroweditems/:memberID", (req, res) => {
     }
 
     connection.query(
-      `SELECT Items.ItemID, Items.Title, BorrowRecord.DueDate, BorrowRecord.MemberID FROM BorrowRecord INNER JOIN Items ON BorrowRecord.ItemID = Items.ItemID WHERE BorrowRecord.MemberID = ?`,
+      `SELECT Items.ItemID, Items.Title, BorrowRecord.DueDate, BorrowRecord.MemberID FROM BorrowRecord INNER JOIN Items ON BorrowRecord.ItemID = Items.ItemID WHERE BorrowRecord.MemberID = ? AND ReturnDate IS NULL`,
       [memberID],
       (err, results) => {
         connection.release();
