@@ -1,4 +1,5 @@
 import { useOutletContext } from "react-router";
+import { Link, useNavigate } from "react-router"; // Using React Router
 import { type AuthData } from "~/services/api";
 import "./profile.css";
 
@@ -12,15 +13,20 @@ export default function ProfilePage() {
     middleName,
     address,
   } = useOutletContext<AuthData>();
+  const navigate = useNavigate();
   return (
-    <div>
-    <h2>Welcome to profile page {firstName} {lastName}! #{memberID}</h2>
-      <h2>{groupID}</h2>
-      <h2>First Name: {firstName}</h2>
-      <h2>Middle Name: {middleName}</h2>
-      <h2>Last Name: {lastName}</h2>
-      <h2>Address: {address}</h2>
-      <h1>Add more fields for birthday, balance, etc.</h1>
+    <div className="bg-nav3" > 
+      <div className="navbar-left w-full flex justify-between items-center">
+        <ul className="flex space-x-10">
+          <li className="text-nav3">
+            <Link to="/">Dashboard</Link>
+          </li>
+          <li className="text-nav3">
+            <Link to="/items">My Items</Link>
+          </li>
+        </ul>
+      </div>
     </div>
+
   );
 }
