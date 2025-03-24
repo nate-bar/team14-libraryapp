@@ -266,6 +266,11 @@ const checkLimits = (memberID, itemIDs, connection) => {
   });
 };
 
+app.post("/api/return", (req, res) => {
+  const { items } = req.body;
+  console.log(items);
+});
+
 app.post("/api/checkout", (req, res) => {
   try {
     const { items, memberID } = req.body;
@@ -417,7 +422,7 @@ app.get("/api/borroweditems/:memberID", (req, res) => {
     }
 
     connection.query(
-      `SELECT Items.Title, BorrowRecord.DueDate, BorrowRecord.MemberID FROM BorrowRecord INNER JOIN Items ON BorrowRecord.ItemID = Items.ItemID WHERE BorrowRecord.MemberID = ?`,
+      `SELECT Items.ItemID, Items.Title, BorrowRecord.DueDate, BorrowRecord.MemberID FROM BorrowRecord INNER JOIN Items ON BorrowRecord.ItemID = Items.ItemID WHERE BorrowRecord.MemberID = ?`,
       [memberID],
       (err, results) => {
         connection.release();
