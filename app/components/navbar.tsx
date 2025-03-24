@@ -35,6 +35,9 @@ export function NavBar({ isLoggedIn, memberID, groupID, firstName }: AuthData) {
             <li className="text-nav"> 
             <Link to="/admin">Add books</Link>
           </li>
+          <li className="text-nav">
+          <Link to="/adminedit">delete/edit</Link>
+          </li>
             <LogoutButton />
           </div>
         ) : (

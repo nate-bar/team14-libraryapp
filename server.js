@@ -1,6 +1,7 @@
 // server.js
 // disable typescript checks
 // @ts-nocheck
+import path from "path"
 import multer from "multer";
 import compression from "compression";
 import express from "express";
@@ -15,7 +16,7 @@ dotenv.config();
 // Short-circuit the type-checking of the built output.
 const BUILD_PATH = "./build/server/index.js";
 const DEVELOPMENT = process.env.NODE_ENV === "development";
-const PORT = Number.parseInt(process.env.PORT || "5001");
+const PORT = Number.parseInt(process.env.PORT || "5002");
 
 const app = express();
 app.use(express.json()); // built-in middleware json parser
@@ -94,6 +95,36 @@ app.get("/api/memberprivileges", (req, res) => {
     }
   );
 });
+// Define API routes first
+app.get("/api/admin/books", (req, res) => {
+  pool.getConnection((err, connection) => {
+    if (err) {
+      console.error("Error getting connection:", err);
+      return res.status(500).json({ error: "Database connection error." });
+    }
+
+    const query = `
+      SELECT 
+        TO_BASE64(Photo) AS photo, -- Encode Photo as Base64
+        Title AS title,
+        ISBN AS isbn
+      FROM Books
+      ORDER BY Title;
+    `;
+
+    connection.query(query, (err, results) => {
+      connection.release();
+      if (err) {
+        console.error("Error executing query:", err);
+        return res.status(500).json({ error: "Error fetching books." });
+      }
+      res.json({ books: results });
+    });
+  });
+});
+
+// Other API routes...
+
 
 // RETURNS ALL ITEMS AND THEIR TYPE
 app.get("/api/items", (req, res) => {
@@ -236,7 +267,7 @@ app.get("/api/test-connection", (req, res) => {
 // Configure multer for file uploads
 const upload = multer({ storage: multer.memoryStorage() });
 
-app.post("/api/admin/add-book", upload.single("photo"), (req, res) => {
+app.post("/api/admin/add-book", upload.single("photo"), (req, res) => { 
   console.log("Request body:", req.body); // Debugging
   console.log("Uploaded file:", req.file); // Debugging
 
@@ -451,6 +482,36 @@ app.post("/api/signup", async (req, res) => {
     res.status(500).json({ error: "Signup failed" });
     return;
   }
+});
+app.delete("/api/admin/delete-book/:isbn", (req, res) => {
+  const { isbn } = req.params;
+
+  if (!isbn) {
+    return res.status(400).json({ error: "ISBN is required." });
+  }
+
+  pool.getConnection((err, connection) => {
+    if (err) {
+      console.error("Error getting connection:", err);
+      return res.status(500).json({ error: "Database connection error." });
+    }
+
+    const deleteQuery = `DELETE FROM Books WHERE ISBN = ?`;
+
+    connection.query(deleteQuery, [isbn], (err, result) => {
+      connection.release();
+      if (err) {
+        console.error("Error deleting book:", err);
+        return res.status(500).json({ error: "Failed to delete book." });
+      }
+
+      if (result.affectedRows === 0) {
+        return res.status(404).json({ error: "Book not found." });
+      }
+
+      res.status(200).json({ success: true, message: "Book deleted successfully." });
+    });
+  });
 });
 // ------------------------------------------------- END SIGN UP -------------------------------------------------
 
