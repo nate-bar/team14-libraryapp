@@ -1,0 +1,180 @@
+/* HomePage.css */
+
+.welcome-container {
+  padding: 0px;
+  }
+
+.welcome-title {
+  font-size: 25px;
+  font-weight: bold;
+  font-family: "Arial", sans-serif;
+  color: #01497c;
+  margin-left: 25px;
+  letter-spacing: 1px;
+  }
+
+  /*Gallery Slider Container*/
+  .gallery-slider {
+    display: flex;
+    align-items: center;
+    padding: 20px;
+    background-color: white;
+    border-radius:10px;
+    margin:20px;
+  }
+
+  /* Sliding Gallery Header*/
+  .featured-title {
+    font-size: 22px;
+    font-weight: bold;
+    font-family: "Arial", sans-serif;
+    color: #01497c;
+    letter-spacing: 1px;
+  }
+  
+  /* Sliding Gallery Paragraph*/
+  .featured-description {
+    font-size: 16px;
+  }
+
+  /* Sliding Gallery idk*/
+  .slider-right {
+    flex: 2;
+    position: relative;
+    overflow: hidden; /* Important! */
+    display: flex;
+    align-items: center;
+  }
+  
+  .slider-images-container {
+    width: 100%;
+    overflow: hidden;
+    display: flex; /* Important! */
+  }
+  
+  .slider-images {
+    display: flex;
+    transition: transform 0.5s ease-in-out;
+    gap: 20px;
+    width: 96%; /* Ensure enough space for all images */
+  }
+  
+  .slider-image {
+    width: 50%; /* Each image takes 50% of the container */
+    flex-shrink: 0;
+    position: relative;
+  }
+  
+  .slider-image img {
+    width: 100%;
+    border-radius: 8px;
+    object-fit: cover;
+  }
+  
+  .slider-caption {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    background: rgba(0, 0, 0, 0.6);
+    color: white;
+    text-align: center;
+    padding: 10px;
+    font-size: 14px;
+    border-bottom-left-radius: 8px;
+    border-bottom-right-radius: 8px;
+  }
+  
+  .slider-button {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    background: white;
+    padding: 10px 15px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 20px;
+    font-weight: bold;
+    user-select: none;
+    border: 1px solid #ccc; /* Add a subtle border */
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2); /* Add a subtle shadow */
+  }
+  
+  /* Slightly darker on hover */
+  .slider-button:hover {
+    background: #f0f0f0; 
+  }
+  
+  .slider-button-right {
+    right: 10px;
+  }
+
+  /*Scrolling Gallery Container*/
+  .scrolling-gallery {
+  margin-top: 40px;
+  text-align: left;
+  }
+
+  /*Scrolling Gallery Text*/
+  .gallery-header {
+    font-size: 24px;
+    font-weight: bold;
+    color: #01497c;
+    margin-bottom: 20px;
+    padding: 20px;
+  }
+  
+  .gallery-container {
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    gap: 40px;
+  }
+  
+  /* Navigation (Left Column) */
+  .gallery-nav {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 20px;
+  }
+  
+  .gallery-nav button {
+    background: none;
+    border: none;
+    font-size: 18px;
+    font-weight: bold;
+    cursor: pointer;
+    color: #01497c;
+    transition: color 0.3s;
+  }
+  
+  .gallery-nav button:hover {
+    color: #012a4a;
+  }
+  
+  /* Image Gallery (Right Column) */
+  .gallery-content {
+    overflow-y: auto;
+    max-height: 600px;
+    padding-right: 10px;
+    border-left: 5px solid #01497c;
+  }
+  
+  .gallery-item {
+    margin-bottom: 40px; /* Space between images */
+  }
+  
+  .gallery-item img {
+    width: 854px;
+    height: 480px;
+    object-fit: scale-down;
+    border-radius: 10px;
+  }
+  
+
+  
+  .slider-left {
+    flex: 1;
+    padding-right: 20px;
+  }

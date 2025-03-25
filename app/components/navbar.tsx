@@ -23,6 +23,13 @@ export function NavBar({ isLoggedIn, memberID, groupID, firstName }: AuthData) {
           <li className="text-lg flex items-center justify-center">
             <Link to="/members">Members</Link>
           </li>
+          {isLoggedIn && isAdmin && (
+            <li className="text-nav">
+              <Link to="/admin" className="text-white font-bold">
+                Admin Panel
+              </Link>
+            </li>
+          )}
         </ul>
       </div>
       <div className="navbar-right ml-auto mr-4">
@@ -38,6 +45,11 @@ export function NavBar({ isLoggedIn, memberID, groupID, firstName }: AuthData) {
           <li className="text-nav">
           <Link to="/adminedit">delete/edit</Link>
           </li>
+            <ul style={{ listStyleType: "none" }}> {/* Corrected here */}
+              <li className="text-nav">
+                <Link to="/profile">Profile</Link>
+              </li>
+            </ul>
             <LogoutButton />
           </div>
         ) : (
@@ -45,6 +57,11 @@ export function NavBar({ isLoggedIn, memberID, groupID, firstName }: AuthData) {
             <li className="text-nav">
               <Link to="/login">Login</Link>
             </li>
+            <ul style={{ listStyleType: "none" }}> {/* Corrected here */}
+              <li className="text-nav">
+                <Link to="/login">Login</Link>
+              </li>
+            </ul>
           </div>
         )}
       </div>
