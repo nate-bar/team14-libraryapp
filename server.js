@@ -219,10 +219,12 @@ app.post("/api/admin/add-media", upload.single("photo"), (req, res) => {
   const { title, genreId, languageId, director, leads, releaseYear, format, rating } = req.body;
   const photo = req.file ? req.file.buffer : null;
 
+  // Validate required fields
   if (!title || !languageId) {
     return res.status(400).json({ error: "Title and Language ID are required." });
   }
 
+  // Obtain a connection for transaction control
   pool.getConnection((err, connection) => {
     if (err) {
       console.error("Connection error:", err);
@@ -235,12 +237,16 @@ app.post("/api/admin/add-media", upload.single("photo"), (req, res) => {
         return res.status(500).json({ error: "Transaction initiation error." });
       }
 
-      // Insert into Items table
+      // Insert into the Items table
       const itemQuery = `
-        INSERT INTO Items (Title, CreatedAt, LastUpdated, Status)
-        VALUES (?, NOW(), NOW(), 'Available');
+        INSERT INTO Items 
+          (Title, Cost, TimesBorrowed, CreatedAt, CreatedBy, LastUpdated, Status)
+        VALUES (?, 0, 0, NOW(), ?, NOW(), 'Available');
       `;
-      connection.query(itemQuery, [title], (err, itemResult) => {
+      const createdBy = req.user ? req.user.id : null; // Replace with actual user ID if available
+      const itemParams = [title, createdBy];
+
+      connection.query(itemQuery, itemParams, (err, itemResult) => {
         if (err) {
           return connection.rollback(() => {
             connection.release();
@@ -251,9 +257,10 @@ app.post("/api/admin/add-media", upload.single("photo"), (req, res) => {
 
         const itemId = itemResult.insertId;
 
-        // Insert into Media table
+        // Insert into the Media table
         const mediaQuery = `
-          INSERT INTO Media (MediaID, Director, Leads, ReleaseYear, GenreID, LanguageID, Format, Rating, Photo)
+          INSERT INTO Media 
+            (MediaID, Director, Leads, ReleaseYear, GenreID, LanguageID, Format, Rating, Photo)
           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);
         `;
         const mediaParams = [
@@ -277,17 +284,36 @@ app.post("/api/admin/add-media", upload.single("photo"), (req, res) => {
             });
           }
 
-          connection.commit((err) => {
+          // Insert into the ItemTypes table
+          const itemTypeQuery = `
+            INSERT INTO ItemTypes 
+              (ItemID, TypeName, MediaID)
+            VALUES (?, 'Media', ?);
+          `;
+          const itemTypeParams = [itemId, itemId];
+
+          connection.query(itemTypeQuery, itemTypeParams, (err) => {
             if (err) {
               return connection.rollback(() => {
                 connection.release();
-                console.error("Commit error:", err);
-                res.status(500).json({ error: "Transaction commit error." });
+                console.error("Error inserting item type:", err);
+                res.status(500).json({ error: "Failed to add item type record." });
               });
             }
 
-            connection.release();
-            res.status(201).json({ success: true, message: "Media added successfully!" });
+            // Commit the transaction
+            connection.commit((err) => {
+              if (err) {
+                return connection.rollback(() => {
+                  connection.release();
+                  console.error("Commit error:", err);
+                  res.status(500).json({ error: "Transaction commit error." });
+                });
+              }
+
+              connection.release();
+              res.status(201).json({ success: true, message: "Media and item added successfully!" });
+            });
           });
         });
       });
@@ -753,9 +779,7 @@ app.get("/api/test-connection", (req, res) => {
 
 
 // Configure multer for file uploads
-
-
-app.post("/api/admin/add-book", upload.single("photo"), (req, res) => { 
+app.post("/api/admin/add-book", upload.single("photo"), (req, res) => {
   console.log("Request body:", req.body); // Debugging
   console.log("Uploaded file:", req.file); // Debugging
 
@@ -774,7 +798,7 @@ app.post("/api/admin/add-book", upload.single("photo"), (req, res) => {
       return res.status(500).json({ error: "Database connection error." });
     }
 
-    connection.beginTransaction(err => {
+    connection.beginTransaction((err) => {
       if (err) {
         connection.release();
         return res.status(500).json({ error: "Transaction initiation error." });
@@ -794,10 +818,10 @@ app.post("/api/admin/add-book", upload.single("photo"), (req, res) => {
         publisher || null,
         publicationYear || null,
         languageId,
-        photo // Binary data for photo
+        photo, // Binary data for photo
       ];
 
-      connection.query(bookQuery, bookParams, (err, result) => {
+      connection.query(bookQuery, bookParams, (err) => {
         if (err) {
           return connection.rollback(() => {
             connection.release();
@@ -806,22 +830,17 @@ app.post("/api/admin/add-book", upload.single("photo"), (req, res) => {
           });
         }
 
-        
+        // Insert into the Items table
         const itemQuery = `
           INSERT INTO Items 
             (Title, Cost, TimesBorrowed, CreatedAt, CreatedBy, LastUpdated, Status)
           VALUES (?, ?, 0, NOW(), ?, NOW(), ?);
         `;
-        const createdBy = req.user ? req.user.id : null; 
-        const status = "Available"; 
-        const itemParams = [
-          title,
-          cost || 0,
-          createdBy,
-          status
-        ];
+        const createdBy = req.user ? req.user.id : null; // Replace with actual user ID if available
+        const status = "Available"; // Default status
+        const itemParams = [title, cost || 0, createdBy, status];
 
-        connection.query(itemQuery, itemParams, (err, result) => {
+        connection.query(itemQuery, itemParams, (err, itemResult) => {
           if (err) {
             return connection.rollback(() => {
               connection.release();
@@ -830,22 +849,46 @@ app.post("/api/admin/add-book", upload.single("photo"), (req, res) => {
             });
           }
 
-          connection.commit(err => {
+          const itemId = itemResult.insertId;
+
+          // Insert into the ItemTypes table
+          const itemTypeQuery = `
+            INSERT INTO ItemTypes 
+              (ItemID, TypeName, ISBN)
+            VALUES (?, 'Book', ?);
+          `;
+          const itemTypeParams = [itemId, isbn];
+
+          connection.query(itemTypeQuery, itemTypeParams, (err) => {
             if (err) {
               return connection.rollback(() => {
                 connection.release();
-                console.error("Commit error:", err);
-                res.status(500).json({ error: "Transaction commit error." });
+                console.error("Error inserting item type:", err);
+                res.status(500).json({ error: "Failed to add item type record." });
               });
             }
-            connection.release();
-            res.status(201).json({ success: true, message: "Book and item added successfully!" });
+
+            // Commit the transaction
+            connection.commit((err) => {
+              if (err) {
+                return connection.rollback(() => {
+                  connection.release();
+                  console.error("Commit error:", err);
+                  res.status(500).json({ error: "Transaction commit error." });
+                });
+              }
+
+              connection.release();
+              res.status(201).json({ success: true, message: "Book and item added successfully!" });
+            });
           });
         });
       });
     });
   });
 });
+
+
 
 app.post("/api/signup", async (req, res) => {
   // get Email, Password, & GroupID from request body
