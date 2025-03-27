@@ -294,6 +294,27 @@ app.post("/api/admin/add-media", upload.single("photo"), (req, res) => {
     });
   });
 });
+// Book view
+app.get("/api/book-details", (req, res) => {
+  pool.getConnection((err, connection) => {
+    if (err) {
+      console.error("Error getting connection:", err);
+      return res.status(500).json({ error: "Database connection error." });
+    }
+
+    const query = "SELECT * FROM book_details_view";
+
+    connection.query(query, (err, results) => {
+      connection.release(); // Release the connection back to the pool
+      if (err) {
+        console.error("Error executing query:", err);
+        return res.status(500).json({ error: "Error fetching book details." });
+      }
+
+      res.json(results);
+    });
+  });
+});
 app.get("/api/items", (req, res) => {
   pool.getConnection((err, connection) => {
     if (err) {

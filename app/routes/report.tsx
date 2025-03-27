@@ -13,6 +13,8 @@ const Report = () => {
       endpoint = "/api/users";
     } else if (selectedReport === "Report2") {
       endpoint = "/api/borrow-summary"; // Endpoint for borrow_summary_view
+    } else if (selectedReport === "bookDetailsReport") {
+      endpoint = "/api/book-details"; // Endpoint for book_details_view
     }
 
     fetch(endpoint)
@@ -45,6 +47,7 @@ const Report = () => {
       >
         <option value="userReport">User Report</option>
         <option value="Report2">Borrow Summary Report</option>
+        <option value="bookDetailsReport">Book Details Report</option>
       </select>
 
       {error && <p style={{ color: "red" }}>{error}</p>}
@@ -80,6 +83,17 @@ const Report = () => {
                   <th>Member Name</th>
                 </>
               )}
+              {selectedReport === "bookDetailsReport" && (
+                <>
+                  <th>ISBN</th>
+                  <th>Title</th>
+                  <th>Authors</th>
+                  <th>Genre</th>
+                  <th>Publisher</th>
+                  <th>Publication Year</th>
+                  <th>Language</th>
+                </>
+              )}
             </tr>
           </thead>
           <tbody>
@@ -110,6 +124,18 @@ const Report = () => {
                   <td>{record.ItemID}</td>
                   <td>{record.DueDate}</td>
                   <td>{record.MemberName}</td>
+                </tr>
+              ))}
+            {selectedReport === "bookDetailsReport" &&
+              data.map((book: any, index: number) => (
+                <tr key={index}>
+                  <td>{book.ISBN}</td>
+                  <td>{book.Title}</td>
+                  <td>{book.Authors}</td>
+                  <td>{book.GenreName || "N/A"}</td>
+                  <td>{book.Publisher || "N/A"}</td>
+                  <td>{book.PublicationYear || "N/A"}</td>
+                  <td>{book.Language || "N/A"}</td>
                 </tr>
               ))}
           </tbody>
