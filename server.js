@@ -324,18 +324,29 @@ app.get("/api/items", (req, res) => {
 
     const query = `
       SELECT 
-        ISBN AS ItemID, 
-        Title, 
+        b.ISBN AS ItemID, 
+        b.Title, 
         'Book' AS TypeName, 
         'Available' AS Status, 
-        TO_BASE64(Photo) AS PhotoBase64
-      FROM Books
+        TO_BASE64(b.Photo) AS PhotoBase64
+      FROM books b
+
+      UNION ALL
+
+      SELECT 
+        m.MediaID AS ItemID, 
+        i.Title, 
+        'Media' AS TypeName, 
+        i.Status, 
+        TO_BASE64(m.Photo) AS PhotoBase64
+      FROM media m
+      JOIN items i ON m.MediaID = i.ItemID;
     `;
 
     connection.query(query, (err, results) => {
       connection.release(); // Release the connection back to the pool
       if (err) {
-        console.error("Error executing query: " + err.stack);
+        console.error("Error executing query: ", err.stack);
         return res.status(500).send("Error fetching items");
       }
 
