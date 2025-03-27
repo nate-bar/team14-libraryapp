@@ -1,3 +1,4 @@
+//navigation bar when logging in
 import { useState, useEffect } from "react";
 import { type Items } from "~/services/api";
 import { useOutletContext } from "react-router";
@@ -55,7 +56,7 @@ export default function ProfilePage() {
       <div className="navbar-left w-full flex justify-between items-center">
         <ul className="flex space-x-10">
           <li className="text-nav3">
-            <Link to="/dashboard">Dashboard</Link>
+            <Link to="./dashboard">Dashboard</Link>
           </li>
           <li className="text-nav3">
             <Link to="/myitems">My Items</Link>
