@@ -312,7 +312,7 @@ app.post("/api/admin/add-media", upload.single("photo"), (req, res) => {
               }
 
               connection.release();
-              res.status(201).json({ success: true, message: "Media and item added successfully!" });
+              res.status(201).json({ success: true, message: "Media added successfully!" });
             });
           });
         });
