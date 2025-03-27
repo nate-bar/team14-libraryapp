@@ -37,11 +37,13 @@
 }
 
 .settings-nav3 {
+    text-align: right;
     margin-right: auto;
     width: fit-content;
 }
 
 .mailbox-nav3 {
+    text-align: right;
     margin-right: auto;
     width: fit-content;
 }
