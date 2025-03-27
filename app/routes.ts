@@ -20,6 +20,7 @@ export default [
     route("media/:itemId", "routes/media/mediaDetail.tsx"),
     route("book/:itemId", "routes/books/bookDetail.tsx"),
     route("cart", "routes/CartPage.tsx"),
+    route("email", "routes/Email.tsx"),
     route("signup", "routes/signup/signup.tsx"),
     route("login", "routes/login/login.tsx"),
     route("profile", "routes/profile.tsx"),

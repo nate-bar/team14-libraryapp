@@ -566,34 +566,6 @@ app.delete("/logout", (req, res) => {
 // ------------------------------------------------- END LOGOUT -------------------------------------------------
 
 
-// FOR SALTING AND HASHING PASSWORDS
-/**
- * Generates a secure password hash with salt
- * @param {string} password - The password to hash
- */
-function generatePassword(password) {
-  const salt = crypto.randomBytes(32).toString("hex");
-  const genHash = crypto
-    .pbkdf2Sync(password, salt, 10000, 64, "sha512")
-    .toString("hex");
-
-  return `${salt}:${genHash}`;
-}
-// FOR SALTING AND HASHING PASSWORDS
-/**
- * Generates a secure password hash with salt
- * @param {string} password - The password to hash
- * @param {string} hash
- * @param {string} salt
- */
-function validPassword(password, hash, salt) {
-  const checkHash = crypto
-    .pbkdf2Sync(password, salt, 10000, 64, "sha512")
-    .toString("hex");
-  return hash === checkHash;
-}
-// FOR SALTING AND HASHING PASSWORDS
-
 // ------------------------------------------------- BEGIN SIGN UP -------------------------------------------------
 app.get("/api/test-connection", (req, res) => {
   pool.getConnection((err, connection) => {
@@ -1034,3 +1006,134 @@ app.disable("x-powered-by");
     console.log(`Server is running on http://localhost:${PORT}`);
   });
 })();
+app.get("/api/notifications/:memberId", async (req, res) => {
+  const memberId = req.params.memberId;
+  const query = `
+    SELECT id, message, type, created_at, is_read, BorrowID
+    FROM notifications
+    WHERE MemberID = ?
+    ORDER BY created_at DESC
+  `;
+
+  db.query(query, [memberId], (err, results) => {
+    if (err) {
+      console.error("Error fetching notifications:", err);
+      return res.status(500).json({ error: "Internal Server Error" });
+    }
+    res.json(results);
+  });
+});
+app.get("/api/notifications/unread/:memberId", (req, res) => {
+  const memberId = req.params.memberId;
+  const query = `
+    SELECT COUNT(*) AS unreadCount
+    FROM notifications
+    WHERE MemberID = ? AND is_read = 0
+  `;
+
+  db.query(query, [memberId], (err, results) => {
+    if (err) return res.status(500).json({ error: "DB error" });
+    res.json({ unreadCount: results[0].unreadCount });
+  });
+});
+app.post("/api/notifications/mark-read/:memberId", (req, res) => {
+  const memberId = req.params.memberId;
+  const query = `
+    UPDATE notifications
+    SET is_read = 1
+    WHERE MemberID = ?
+  `;
+  db.query(query, [memberId], (err) => {
+    if (err) return res.status(500).json({ error: "DB error" });
+    res.json({ success: true });
+  });
+});
+// Serve frontend routes (catch-all)
+app.get("*", (req, res) => {
+  res.sendFile(path.join(__dirname, "path_to_your_frontend/index.html"));
+});
+app.get("/api/session", (req, res) => {
+  if (!req.session.memberID) {
+    return res.status(401).json({ error: "Not logged in" });
+  }
+
+  res.json({
+    memberId: req.session.memberID,
+    firstName: req.session.firstName,
+    lastName: req.session.lastName,
+    groupId: req.session.groupID,
+    address: req.session.address,
+  });
+});
+app.post("/api/cart/save", (req, res) => {
+  if (!req.session.memberID) {
+    return res.status(401).json({ error: "Not logged in" });
+  }
+
+  req.session.cart = req.body.cart || [];
+  res.json({ success: true });
+});
+app.post("/api/cart/checkout", (req, res) => {
+  if (!req.session.memberID || !req.session.cart) {
+    return res.status(401).json({ error: "Login required or empty cart" });
+  }
+
+  const memberId = req.session.memberID;
+  const cartItems = req.session.cart.filter(item => item.Category === "Check Out");
+
+  if (!cartItems.length) {
+    return res.status(400).json({ error: "No items to check out" });
+  }
+
+  pool.getConnection((err, connection) => {
+    if (err) return res.status(500).json({ error: "DB connection error" });
+
+    connection.beginTransaction((err) => {
+      if (err) return res.status(500).json({ error: "Transaction error" });
+
+      const borrowInserts = cartItems.map(item => {
+        return new Promise((resolve, reject) => {
+          connection.query(
+            "INSERT INTO borrowrecord (MemberID, ItemID, BorrowDate, DueDate, FineAccrued) VALUES (?, ?, NOW(), DATE_ADD(NOW(), INTERVAL 14 DAY), 0.00)",
+            [memberId, item.ItemID],
+            (err) => {
+              if (err) reject(err);
+              else {
+                connection.query(
+                  "UPDATE items SET Status = 'Checked Out' WHERE ItemID = ?",
+                  [item.ItemID],
+                  (err2) => {
+                    if (err2) reject(err2);
+                    else resolve();
+                  }
+                );
+              }
+            }
+          );
+        });
+      });
+
+      Promise.all(borrowInserts)
+        .then(() => {
+          connection.commit((err) => {
+            if (err) {
+              connection.rollback(() => {
+                res.status(500).json({ error: "Commit error" });
+              });
+            } else {
+              req.session.cart = []; // clear cart after checkout
+              res.json({ success: true, message: "Checkout successful" });
+            }
+            connection.release();
+          });
+        })
+        .catch((err) => {
+          connection.rollback(() => {
+            console.error("Transaction failed", err);
+            res.status(500).json({ error: "Checkout failed" });
+            connection.release();
+          });
+        });
+    });
+  });
+});

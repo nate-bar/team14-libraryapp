@@ -1,28 +1,50 @@
 import { useState, useEffect } from "react";
-import { Link, useNavigate } from "react-router"; // Using React Router
+import { Link, useNavigate } from "react-router";
 import { type Items } from "~/services/api";
 import "../components/navbar.css";
 
 export function NavBar2() {
   const [searchQuery, setSearchQuery] = useState("");
   const [showResults, setShowResults] = useState(false);
-  const [items, setItems] = useState<Items[]>([]); // Store fetched items
+  const [items, setItems] = useState<Items[]>([]);
+  const [hasUnread, setHasUnread] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const navigate = useNavigate();
 
-  // Fetch items from API
   useEffect(() => {
     fetch("/api/items")
-      .then((response) => response.json())
+      .then((res) => res.json())
       .then((data) => setItems(data))
-      .catch((error) => console.error("Error fetching items:", error));
+      .catch((err) => console.error("Error fetching items:", err));
   }, []);
 
-  // Filter items based on search query
+  // ✅ Check session and unread notifications
+  useEffect(() => {
+    fetch("/api/session")
+      .then((res) => {
+        if (!res.ok) throw new Error("Not logged in");
+        return res.json();
+      })
+      .then((session) => {
+        setIsLoggedIn(true);
+        const memberId = session.memberId;
+
+        return fetch(`/api/notifications/unread/${memberId}`);
+      })
+      .then((res) => res.json())
+      .then((data) => {
+        setHasUnread(data.unreadCount > 0);
+      })
+      .catch(() => {
+        setIsLoggedIn(false);
+        setHasUnread(false);
+      });
+  }, []);
+
   const filteredItems = items.filter((item) =>
     item.Title.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  // Handle search form submission
   const handleSearch = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (searchQuery.trim() !== "") {
@@ -33,18 +55,21 @@ export function NavBar2() {
 
   return (
     <div className="bg-nav2">
-      {/* Navigation Links */}
       <div className="navbar-left w-full flex justify-between items-center">
         <ul className="flex space-x-10">
-          <li className="text-nav2">
-            <Link to="/">Home</Link>
-          </li>
-          <li className="text-nav2">
-            <Link to="/items">Items</Link>
-          </li>
-          <li className="text-nav2">
-            <Link to="/cart">🛒</Link>
-          </li>
+          <li className="text-nav2"><Link to="/">Home</Link></li>
+          <li className="text-nav2"><Link to="/items">Items</Link></li>
+          <li className="text-nav2"><Link to="/cart">🛒</Link></li>
+          {isLoggedIn && (
+            <li className="text-nav2 relative">
+              <Link to="/email">
+                ✉️
+                {hasUnread && (
+                  <span className="absolute top-0 right-0 block h-2 w-2 rounded-full bg-red-500 ring-2 ring-white"></span>
+                )}
+              </Link>
+            </li>
+          )}
         </ul>
 
         {/* Search Bar */}
@@ -60,17 +85,13 @@ export function NavBar2() {
             className="search-input"
             aria-label="Search"
           />
-          <button type="submit" className="search-button">
-            🔍
-          </button>
+          <button type="submit" className="search-button">🔍</button>
 
-          {/* Search Results Dropdown */}
           {showResults && (
             <div className="search-results absolute top-12 left-0 bg-white border border-gray-300 rounded-lg shadow-lg w-full max-h-60 overflow-auto">
               {filteredItems.length > 0 ? (
                 filteredItems.map((item) => {
-                  // Determine the category for navigation
-                  let category = "items"; // Default
+                  let category = "items";
                   if (item.TypeName === "Device") category = "device";
                   else if (item.TypeName === "Media") category = "media";
                   else if (item.TypeName === "Book") category = "book";
