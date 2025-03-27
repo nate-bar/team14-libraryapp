@@ -744,97 +744,91 @@ app.get("/api/test-connection", (req, res) => {
 // Configure multer for file uploads
 
 
-app.post("/api/admin/add-book", upload.single("photo"), (req, res) => {
+app.post("/api/admin/add-book", upload.single("photo"), (req, res) => { 
+  console.log("Request body:", req.body); // Debugging
+  console.log("Uploaded file:", req.file); // Debugging
+
   const { isbn, title, authors, genreId, publisher, publicationYear, languageId, cost } = req.body;
   const photo = req.file ? req.file.buffer : null;
 
+  // Validate required fields
   if (!isbn || !title || !languageId) {
     return res.status(400).json({ error: "ISBN, Title, and LanguageID are required." });
   }
 
+  // Obtain a connection for transaction control
   pool.getConnection((err, connection) => {
     if (err) {
       console.error("Connection error:", err);
       return res.status(500).json({ error: "Database connection error." });
     }
 
-    connection.beginTransaction((err) => {
+    connection.beginTransaction(err => {
       if (err) {
         connection.release();
         return res.status(500).json({ error: "Transaction initiation error." });
       }
 
-      // Insert into Items table
-      const itemQuery = `
-        INSERT INTO Items (Title, Cost, TimesBorrowed, CreatedAt, CreatedBy, LastUpdated, Status)
-        VALUES (?, ?, 0, NOW(), ?, NOW(), ?);
+      // Insert into the Books table
+      const bookQuery = `
+        INSERT INTO Books 
+          (ISBN, Title, Authors, GenreID, Publisher, PublicationYear, LanguageID, Photo)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?);
       `;
-      const itemParams = [title, cost || 0, req.user ? req.user.id : null, "Available"];
+      const bookParams = [
+        isbn,
+        title,
+        authors || null,
+        genreId || null,
+        publisher || null,
+        publicationYear || null,
+        languageId,
+        photo // Binary data for photo
+      ];
 
-      connection.query(itemQuery, itemParams, (err, itemResult) => {
+      connection.query(bookQuery, bookParams, (err, result) => {
         if (err) {
           return connection.rollback(() => {
             connection.release();
-            console.error("Error inserting item:", err);
-            res.status(500).json({ error: "Failed to add item." });
+            console.error("Error inserting book:", err);
+            res.status(500).json({ error: "Failed to add book." });
           });
         }
 
-        const itemId = itemResult.insertId;
-
-        // Insert into ItemTypes table
-        const itemTypeQuery = `
-          INSERT INTO ItemTypes (ItemID, TypeName, ISBN)
-          VALUES (?, ?, ?);
+        
+        const itemQuery = `
+          INSERT INTO Items 
+            (Title, Cost, TimesBorrowed, CreatedAt, CreatedBy, LastUpdated, Status)
+          VALUES (?, ?, 0, NOW(), ?, NOW(), ?);
         `;
-        const itemTypeParams = [itemId, "Book", isbn];
+        const createdBy = req.user ? req.user.id : null; 
+        const status = "Available"; 
+        const itemParams = [
+          title,
+          cost || 0,
+          createdBy,
+          status
+        ];
 
-        connection.query(itemTypeQuery, itemTypeParams, (err) => {
+        connection.query(itemQuery, itemParams, (err, result) => {
           if (err) {
             return connection.rollback(() => {
               connection.release();
-              console.error("Error inserting item type:", err);
-              res.status(500).json({ error: "Failed to add item type." });
+              console.error("Error inserting item:", err);
+              res.status(500).json({ error: "Failed to add item record." });
             });
           }
 
-          // Insert into Books table
-          const bookQuery = `
-            INSERT INTO Books (ISBN, Title, Authors, GenreID, Publisher, PublicationYear, LanguageID, Photo)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?);
-          `;
-          const bookParams = [
-            isbn,
-            title,
-            authors || null,
-            genreId || null,
-            publisher || null,
-            publicationYear || null,
-            languageId,
-            photo,
-          ];
-
-          connection.query(bookQuery, bookParams, (err) => {
+          connection.commit(err => {
             if (err) {
               return connection.rollback(() => {
                 connection.release();
-                console.error("Error inserting book:", err);
-                res.status(500).json({ error: "Failed to add book." });
+                console.error("Commit error:", err);
+                res.status(500).json({ error: "Transaction commit error." });
               });
             }
-
-            connection.commit((err) => {
-              if (err) {
-                return connection.rollback(() => {
-                  connection.release();
-                  console.error("Commit error:", err);
-                  res.status(500).json({ error: "Transaction commit error." });
-                });
-              }
-
-              connection.release();
-              res.status(201).json({ success: true, message: "Book added successfully!" });
-            });
+            connection.release();
+            res.status(201).json({ success: true, message: "Book and item added successfully!" });
           });
         });
       });
