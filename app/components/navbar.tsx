@@ -45,6 +45,9 @@ export function NavBar({ isLoggedIn, memberID, groupID, firstName }: AuthData) {
           <li className="text-nav">
           <Link to="/adminedit">delete/edit</Link>
           </li>
+          <li className="text-nav">
+          <Link to="/report">Reports</Link>
+          </li>
             <ul style={{ listStyleType: "none" }}> {/* Corrected here */}
               <li className="text-nav">
                 <Link to="/profile">Profile</Link>

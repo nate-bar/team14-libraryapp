@@ -1,43 +1,51 @@
 import React, { useEffect, useState } from "react";
 
-interface Book {
-  photo: string;
-  title: string;
-  isbn: string;
+interface Item {
+  ItemID: string;
+  Title: string;
+  TypeName: string;
+  Status: string;
+  PhotoBase64: string | null; // Handle cases where PhotoBase64 might be null
 }
 
 export default function AdminEditPage() {
-  const [books, setBooks] = useState<Book[]>([]);
+  const [items, setItems] = useState<Item[]>([]); // Initialize items as an empty array
   const [message, setMessage] = useState("");
 
   useEffect(() => {
-    loadBooks();
+    loadItems();
   }, []);
 
-  async function loadBooks() {
+  async function loadItems() {
     try {
-      const res = await fetch("/api/admin/books");
-      const { books } = await res.json();
-      setBooks(books);
+      const res = await fetch("/api/items");
+      if (!res.ok) {
+        throw new Error("Failed to fetch items");
+      }
+      const data = await res.json();
+      console.log("Fetched items:", data); // Debugging
+      setItems(data || []); // Ensure items is always an array
     } catch (error) {
-      console.error("Error loading books:", error);
+      console.error("Error loading items:", error);
+      setItems([]); // Set items to an empty array on error
     }
   }
 
-  async function handleDelete(isbn: string) {
-    if (!window.confirm("Delete this book?")) return;
+  async function handleDelete(itemId: string) {
+    if (!window.confirm("Are you sure you want to delete this item?")) return;
+
     try {
-      const res = await fetch(`/api/admin/delete-book/${isbn}`, { method: "DELETE" });
+      const res = await fetch(`/api/items/${itemId}`, { method: "DELETE" });
       const result = await res.json();
       if (res.ok) {
-        setMessage("Book deleted.");
-        loadBooks();
+        setMessage("Item deleted successfully.");
+        loadItems(); // Reload items after deletion
       } else {
-        setMessage(result.error || "Delete failed.");
+        setMessage(result.error || "Failed to delete item.");
       }
     } catch (error) {
-      console.error("Delete error:", error);
-      setMessage("Error deleting book.");
+      console.error("Error deleting item:", error);
+      setMessage("Error deleting item.");
     }
   }
 
@@ -50,27 +58,41 @@ export default function AdminEditPage() {
           <tr>
             <th>Photo</th>
             <th>Title</th>
-            <th>ISBN</th>
+            <th>Item ID</th>
+            <th>Type</th>
+            <th>Status</th>
             <th>Actions</th>
           </tr>
         </thead>
         <tbody>
-          {books.map((book) => (
-            <tr key={book.isbn}>
-              <td>
-                <img
-                  src={`data:image/jpeg;base64,${book.photo}`} // Ensure Base64 encoding is handled
-                  alt={book.title}
-                  style={{ width: "80px", height: "auto", objectFit: "cover" }} // Increased size
-                />
-              </td>
-              <td>{book.title}</td>
-              <td>{book.isbn}</td>
-              <td>
-                <button onClick={() => handleDelete(book.isbn)}>Delete</button>
-              </td>
+          {items.length > 0 ? (
+            items.map((item) => (
+              <tr key={item.ItemID}>
+                <td>
+                  <img
+                    src={
+                      item.PhotoBase64
+                        ? `data:image/jpeg;base64,${item.PhotoBase64}`
+                        : "/placeholder.jpg" // Fallback image if PhotoBase64 is null
+                    }
+                    alt={item.Title}
+                    style={{ width: "80px", height: "auto", objectFit: "cover" }}
+                  />
+                </td>
+                <td>{item.Title}</td>
+                <td>{item.ItemID}</td>
+                <td>{item.TypeName}</td>
+                <td>{item.Status}</td>
+                <td>
+                  <button onClick={() => handleDelete(item.ItemID)}>Delete</button>
+                </td>
+              </tr>
+            ))
+          ) : (
+            <tr>
+              <td colSpan={6}>No items found.</td>
             </tr>
-          ))}
+          )}
         </tbody>
       </table>
     </div>
