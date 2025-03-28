@@ -397,7 +397,7 @@ app.get("/api/itemdevice/:itemId", (req, res) => {
       "SELECT * FROM Items WHERE ItemID = ?",
       [itemId],
       (err, results) => {
-        connection.release(); // Important: Release the connection
+        connection.release(); //   Important: Release the connection
         if (err) {
           console.error("Error executing query:", err);
           return res.status(500).json({ error: "Query execution error" });
