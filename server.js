@@ -17,7 +17,7 @@ dotenv.config();
 // Short-circuit the type-checking of the built output.
 const BUILD_PATH = "./build/server/index.js";
 const DEVELOPMENT = process.env.NODE_ENV === "development";
-const PORT = Number.parseInt(process.env.PORT || "5003");
+const PORT = Number.parseInt(process.env.PORT || "5004");
 
 const app = express();
 app.use(express.json()); // built-in middleware json parser
@@ -354,7 +354,8 @@ app.get("/api/items", (req, res) => {
         b.Title, 
         'Book' AS TypeName, 
         'Available' AS Status, 
-        TO_BASE64(b.Photo) AS PhotoBase64
+        TO_BASE64(b.Photo) AS PhotoBase64,
+        b.GenreID AS GenreID -- Include GenreID from books table
       FROM books b
 
       UNION ALL
@@ -364,7 +365,8 @@ app.get("/api/items", (req, res) => {
         i.Title, 
         'Media' AS TypeName, 
         i.Status, 
-        TO_BASE64(m.Photo) AS PhotoBase64
+        TO_BASE64(m.Photo) AS PhotoBase64,
+        m.GenreID AS GenreID -- Include GenreID from media table
       FROM media m
       JOIN items i ON m.MediaID = i.ItemID;
     `;

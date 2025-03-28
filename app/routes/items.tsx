@@ -4,7 +4,55 @@ const UsingFetch = () => {
   const [items, setItems] = useState<any[]>([]);
   const [filteredItems, setFilteredItems] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [searchQuery, setSearchQuery] = useState("");
+  const [filter, setFilter] = useState(""); // State for the dropdown filter
+
+  // Genre list
+  const genres = [
+    { id: 101, name: "Adventure" },
+    { id: 102, name: "Art" },
+    { id: 103, name: "Autobiography" },
+    { id: 104, name: "Biography" },
+    { id: 105, name: "Childrens" },
+    { id: 106, name: "Classic" },
+    { id: 107, name: "Cooking" },
+    { id: 108, name: "Crime" },
+    { id: 109, name: "Detective" },
+    { id: 110, name: "Fable" },
+    { id: 111, name: "Fairy Tale" },
+    { id: 112, name: "Fantasy" },
+    { id: 113, name: "Graphic Novel" },
+    { id: 114, name: "Health & Fitness" },
+    { id: 115, name: "Historical Fiction" },
+    { id: 116, name: "Horror" },
+    { id: 117, name: "Humor" },
+    { id: 118, name: "Law" },
+    { id: 119, name: "Memoir" },
+    { id: 120, name: "Mythology" },
+    { id: 121, name: "Poetry" },
+    { id: 122, name: "Religion" },
+    { id: 123, name: "Romance" },
+    { id: 124, name: "Science Fiction" },
+    { id: 125, name: "Self-Help" },
+    { id: 126, name: "Short Story" },
+    { id: 127, name: "Suspense" },
+    { id: 128, name: "Thriller" },
+    { id: 129, name: "Young Adult" },
+    { id: 130, name: "Western" },
+    { id: 201, name: "Action" },
+    { id: 202, name: "Adventure" },
+    { id: 203, name: "Documentary" },
+    { id: 204, name: "Drama" },
+    { id: 205, name: "Historical" },
+    { id: 206, name: "Historical Fiction" },
+    { id: 207, name: "Horror" },
+    { id: 208, name: "Musical" },
+    { id: 209, name: "Noir" },
+    { id: 210, name: "Romantic Comedy" },
+    { id: 211, name: "Satire" },
+    { id: 212, name: "Sports" },
+    { id: 213, name: "Thriller" },
+    { id: 214, name: "Western" },
+  ];
 
   // Fetch data from the /api/items endpoint
   const fetchData = () => {
@@ -40,33 +88,39 @@ const UsingFetch = () => {
     fetchData();
   }, []);
 
-  // Handle search input
-  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const query = e.target.value.toLowerCase();
-    setSearchQuery(query);
-    setFilteredItems(
-      items.filter(
-        (item) =>
-          item.Title.toLowerCase().includes(query) ||
-          item.TypeName.toLowerCase().includes(query) ||
-          item.Status.toLowerCase().includes(query)
-      )
-    );
+  // Handle dropdown filter change
+  const handleFilterChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const selectedFilter = e.target.value;
+    setFilter(selectedFilter);
+
+    if (selectedFilter === "") {
+      setFilteredItems(items); // Show all items if no filter is selected
+    } else {
+      setFilteredItems(items.filter((item) => item.TypeName === selectedFilter));
+    }
+  };
+
+  // Helper function to get genre name by ID
+  const getGenreName = (genreId: number) => {
+    const genre = genres.find((g) => g.id === genreId);
+    return genre ? genre.name : "N/A";
   };
 
   return (
     <div className="container mx-auto p-6">
-      <h1 className="text-3xl font-bold text-center mb-6">Search Library Items</h1>
+      <h1 className="text-3xl font-bold text-center mb-6">Filter Library Items</h1>
 
-      {/* Search Bar */}
+      {/* Dropdown Filter */}
       <div className="mb-6">
-        <input
-          type="text"
-          placeholder="Search by title, type, or status..."
-          value={searchQuery}
-          onChange={handleSearch}
-          className="w-full p-3 border border-gray-300 rounded shadow focus:outline-none focus:ring-2 focus:ring-blue-500"
-        />
+        <select
+          value={filter}
+          onChange={handleFilterChange}
+          className="w-48 p-2 text-sm border border-gray-300 rounded shadow focus:outline-none focus:ring-2 focus:ring-blue-500"
+        >
+          <option value="">All Types</option>
+          <option value="Book">Book</option>
+          <option value="Media">Media</option>
+        </select>
       </div>
 
       {/* Display items */}
@@ -81,6 +135,7 @@ const UsingFetch = () => {
                 <th className="border border-gray-300 px-4 py-2 text-left">Title</th>
                 <th className="border border-gray-300 px-4 py-2 text-left">Type</th>
                 <th className="border border-gray-300 px-4 py-2 text-left">Status</th>
+                <th className="border border-gray-300 px-4 py-2 text-left">Genre</th>
                 <th className="border border-gray-300 px-4 py-2 text-left">Photo</th>
               </tr>
             </thead>
@@ -100,6 +155,9 @@ const UsingFetch = () => {
                     >
                       {item.Status}
                     </span>
+                  </td>
+                  <td className="border border-gray-300 px-4 py-2">
+                    {getGenreName(Number(item.GenreID))}
                   </td>
                   <td className="border border-gray-300 px-4 py-2">
                     {item.PhotoBase64 ? (
