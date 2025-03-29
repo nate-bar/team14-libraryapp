@@ -78,28 +78,56 @@ app.get("/api/search", (req, res) => {
       .json({ success: false, message: "Missing search query" });
   }
 
-  // Example: search in the Items table using a LIKE query on the ItemTitle column
+  // Search in the Items table and include necessary fields
   pool.getConnection((err, connection) => {
     if (err) {
       console.error("Error getting connection:", err);
-      return;
+      return res.status(500).json({ success: false, message: "Database connection error" });
     }
 
-    connection.query(
-      `SELECT * FROM Items WHERE Title LIKE ?`,
-      [`%${query}%`],
-      (err, results) => {
-        if (err) {
-          console.error("Error executing search query:", err.stack);
-          return res
-            .status(500)
-            .json({ success: false, message: "Error searching items" });
-        }
-        res.json(results);
+    const searchQuery = `
+      SELECT 
+        b.ISBN AS ItemID, 
+        b.Title, 
+        'Book' AS TypeName, 
+        'Available' AS Status, 
+        TO_BASE64(b.Photo) AS PhotoBase64
+      FROM books b
+      WHERE b.Title LIKE ?
+
+      UNION ALL
+
+      SELECT 
+        m.MediaID AS ItemID, 
+        i.Title, 
+        'Media' AS TypeName, 
+        i.Status, 
+        TO_BASE64(m.Photo) AS PhotoBase64
+      FROM media m
+      JOIN items i ON m.MediaID = i.ItemID
+      WHERE i.Title LIKE ?
+
+      UNION ALL
+
+      SELECT 
+        d.DeviceID AS ItemID, 
+        d.DeviceName AS Title, 
+        'Device' AS TypeName, 
+        'Available' AS Status, 
+        TO_BASE64(d.Photo) AS PhotoBase64
+      FROM itemdevice d
+      WHERE d.DeviceName LIKE ?;
+    `;
+
+    connection.query(searchQuery, [`%${query}%`, `%${query}%`, `%${query}%`], (err, results) => {
+      connection.release(); // Release the connection back to the pool
+      if (err) {
+        console.error("Error executing search query:", err.stack);
+        return res.status(500).json({ success: false, message: "Error searching items" });
       }
-    );
-    // Important: Release the connection back to the pool
-    connection.release();
+
+      res.json(results);
+    });
   });
 });
 

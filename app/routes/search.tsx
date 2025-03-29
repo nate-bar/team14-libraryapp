@@ -22,16 +22,22 @@ const Search: React.FC = () => {
   };
 
   return (
-    <div className="bg-image-search flex items-start justify-center h-screen pt-16">
-      <div className="text-center">
-        <h1 className="text-2xl font-bold mb-6 text-white drop-shadow">
-          Search
-        </h1>
-        <form onSubmit={handleSubmit}>
-          <div className="relative inline-block">
+    <div
+      className="min-h-screen flex flex-col items-center py-10"
+      style={{
+        backgroundImage: "url('/bobs.jpg')",
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+        backgroundRepeat: "no-repeat",
+      }}
+    >
+      <div className="text-center w-full max-w-4xl bg-white/80 p-6 rounded-lg shadow-lg">
+        <h1 className="text-3xl font-bold mb-6 text-gray-800">Search</h1>
+        <form onSubmit={handleSubmit} className="mb-8">
+          <div className="relative inline-block w-full max-w-md">
             <span className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
               <svg
-                className="h-5 w-5 text-gray-500"
+                className="h-5 w-5 text-gray-1100"
                 fill="none"
                 stroke="currentColor"
                 strokeWidth="2"
@@ -48,39 +54,48 @@ const Search: React.FC = () => {
               type="text"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-
               placeholder="Search by Title..."
-
-              className="bg-white/90 border border-gray-300 text-black rounded-lg w-80 px-4 py-2 pl-10 focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-300"
+              className="bg-white border border-gray-300 text-black rounded-lg w-full px-4 py-2 pl-10 focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-300"
             />
           </div>
           <button
             type="submit"
-            className="mt-4 px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded"
+            className="mt-4 px-6 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg shadow-md"
           >
             Search
           </button>
         </form>
         <div className="mt-8">
           {results.length > 0 ? (
-            results.map((item: any) => (
-
-              <div key={item.ItemID} className="text-white mb-4">
-                <h2 className="text-xl">{item.Title}</h2>
-                {item.PhotoBase64 ? (
-                  <img
-                    src={`data:image/jpeg;base64,${item.PhotoBase64}`}
-                    alt={item.Title}
-                    style={{ width: "150px", height: "auto", marginTop: "10px" }}
-                  />
-                ) : (
-                  <p>No Photo Available</p>
-                )}
-
-              </div>
-            ))
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+              {results.map((item: any) => (
+                <div
+                  key={item.ItemID}
+                  className="bg-white p-4 rounded-lg shadow-lg text-black flex flex-col items-center"
+                >
+                  <h2 className="text-lg font-bold mb-2 text-center">
+                    {item.Title}
+                  </h2>
+                  {item.PhotoBase64 ? (
+                    <img
+                      src={`data:image/jpeg;base64,${item.PhotoBase64}`}
+                      alt={item.Title}
+                      className="w-full h-48 object-cover rounded-lg mb-2"
+                    />
+                  ) : (
+                    <p className="text-gray-500">No Photo Available</p>
+                  )}
+                  <p className="text-sm text-gray-700">
+                    <strong>Type:</strong> {item.TypeName}
+                  </p>
+                  <p className="text-sm text-gray-700">
+                    <strong>Status:</strong> {item.Status}
+                  </p>
+                </div>
+              ))}
+            </div>
           ) : (
-            <p className="text-white">No results found.</p>
+            <p className="text-gray-700">No results found.</p>
           )}
         </div>
       </div>
@@ -88,6 +103,4 @@ const Search: React.FC = () => {
   );
 };
 
-
 export default Search;
-

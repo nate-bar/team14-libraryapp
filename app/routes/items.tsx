@@ -4,7 +4,8 @@ const UsingFetch = () => {
   const [items, setItems] = useState<any[]>([]);
   const [filteredItems, setFilteredItems] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState(""); // State for the dropdown filter
+  const [typeFilter, setTypeFilter] = useState(""); // State for the type dropdown filter
+  const [genreFilter, setGenreFilter] = useState(""); // State for the genre dropdown filter
 
   // Genre list
   const genres = [
@@ -88,15 +89,37 @@ const UsingFetch = () => {
     fetchData();
   }, []);
 
-  // Handle dropdown filter change
-  const handleFilterChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const selectedFilter = e.target.value;
-    setFilter(selectedFilter);
+  // Handle type dropdown filter change
+  const handleTypeFilterChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const selectedType = e.target.value;
+    setTypeFilter(selectedType);
+    setGenreFilter(""); // Reset genre filter when type changes
 
-    if (selectedFilter === "") {
-      setFilteredItems(items); // Show all items if no filter is selected
+    if (selectedType === "") {
+      setFilteredItems(items); // Show all items if no type is selected
     } else {
-      setFilteredItems(items.filter((item) => item.TypeName === selectedFilter));
+      setFilteredItems(
+        items.filter((item) => item.TypeName === selectedType)
+      );
+    }
+  };
+
+  // Handle genre dropdown filter change
+  const handleGenreFilterChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const selectedGenre = e.target.value;
+    setGenreFilter(selectedGenre);
+
+    if (selectedGenre === "") {
+      setFilteredItems(
+        items.filter((item) => item.TypeName === typeFilter)
+      );
+    } else {
+      setFilteredItems(
+        items.filter(
+          (item) =>
+            item.TypeName === typeFilter && item.GenreID === parseInt(selectedGenre)
+        )
+      );
     }
   };
 
@@ -109,76 +132,86 @@ const UsingFetch = () => {
 
   return (
     <div className="container mx-auto p-6">
-      <h1 className="text-3xl font-bold text-center mb-6">Filter Library Items</h1>
+      <h1 className="text-4xl font-bold text-center mb-8 text-gray-800">
+        Library Items
+      </h1>
 
-      {/* Dropdown Filter */}
-      <div className="mb-6">
+      {/* Dropdown Filters */}
+      <div className="flex justify-center gap-4 mb-8">
+        {/* Type Filter */}
         <select
-          value={filter}
-          onChange={handleFilterChange}
-          className="w-48 p-2 text-sm border border-gray-300 rounded shadow focus:outline-none focus:ring-2 focus:ring-blue-500"
+          value={typeFilter}
+          onChange={handleTypeFilterChange}
+          className="w-64 p-3 text-sm border border-gray-300 rounded-lg shadow focus:outline-none focus:ring-2 focus:ring-blue-500"
         >
           <option value="">All Types</option>
           <option value="Book">Book</option>
           <option value="Media">Media</option>
           <option value="Device">Device</option>
         </select>
+
+        {/* Genre Filter (only show if "Book" or "Media" is selected) */}
+        {(typeFilter === "Book" || typeFilter === "Media") && (
+          <select
+            value={genreFilter}
+            onChange={handleGenreFilterChange}
+            className="w-64 p-3 text-sm border border-gray-300 rounded-lg shadow focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            <option value="">All Genres</option>
+            {genres.map((genre) => (
+              <option key={genre.id} value={genre.id}>
+                {genre.name}
+              </option>
+            ))}
+          </select>
+        )}
       </div>
 
       {/* Display items */}
       {loading ? (
-        <p className="text-center text-gray-500">Loading items...</p>
+        <p className="text-center text-gray-500 text-lg">Loading items...</p>
       ) : filteredItems.length > 0 ? (
-        <div className="overflow-x-auto">
-          <table className="table-auto w-full border-collapse border border-gray-300 shadow-lg">
-            <thead>
-              <tr className="bg-gray-100">
-                <th className="border border-gray-300 px-4 py-2 text-left">Item ID</th>
-                <th className="border border-gray-300 px-4 py-2 text-left">Title</th>
-                <th className="border border-gray-300 px-4 py-2 text-left">Type</th>
-                <th className="border border-gray-300 px-4 py-2 text-left">Status</th>
-                <th className="border border-gray-300 px-4 py-2 text-left">Genre</th>
-                <th className="border border-gray-300 px-4 py-2 text-left">Photo</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredItems.map((item) => (
-                <tr key={item.ItemID} className="hover:bg-gray-50">
-                  <td className="border border-gray-300 px-4 py-2">{item.ItemID}</td>
-                  <td className="border border-gray-300 px-4 py-2">{item.Title}</td>
-                  <td className="border border-gray-300 px-4 py-2">{item.TypeName}</td>
-                  <td className="border border-gray-300 px-4 py-2">
-                    <span
-                      className={`px-2 py-1 rounded ${
-                        item.Status === "Available"
-                          ? "bg-green-100 text-green-800"
-                          : "bg-red-100 text-red-800"
-                      }`}
-                    >
-                      {item.Status}
-                    </span>
-                  </td>
-                  <td className="border border-gray-300 px-4 py-2">
-                    {getGenreName(item.GenreID)}
-                  </td>
-                  <td className="border border-gray-300 px-4 py-2">
-                    {item.PhotoBase64 ? (
-                      <img
-                        src={`data:image/jpeg;base64,${item.PhotoBase64}`}
-                        alt={item.Title}
-                        className="w-24 h-auto rounded shadow"
-                      />
-                    ) : (
-                      <span className="text-gray-500">No Photo</span>
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+          {filteredItems.map((item) => (
+            <div
+              key={item.ItemID}
+              className="bg-white p-4 rounded-lg shadow-lg flex flex-col items-center"
+            >
+              <h2 className="text-lg font-bold mb-2 text-center">
+                {item.Title}
+              </h2>
+              {item.PhotoBase64 ? (
+                <img
+                  src={`data:image/jpeg;base64,${item.PhotoBase64}`}
+                  alt={item.Title}
+                  className="w-full h-48 object-cover rounded-lg mb-2"
+                />
+              ) : (
+                <p className="text-gray-500">No Photo Available</p>
+              )}
+              <p className="text-sm text-gray-700">
+                <strong>Type:</strong> {item.TypeName}
+              </p>
+              <p className="text-sm text-gray-700">
+                <strong>Status:</strong>{" "}
+                <span
+                  className={`px-2 py-1 rounded ${
+                    item.Status === "Available"
+                      ? "bg-green-100 text-green-800"
+                      : "bg-red-100 text-red-800"
+                  }`}
+                >
+                  {item.Status}
+                </span>
+              </p>
+              <p className="text-sm text-gray-700">
+                <strong>Genre:</strong> {getGenreName(item.GenreID)}
+              </p>
+            </div>
+          ))}
         </div>
       ) : (
-        <p className="text-center text-gray-500">No items found.</p>
+        <p className="text-center text-gray-500 text-lg">No items found.</p>
       )}
     </div>
   );
