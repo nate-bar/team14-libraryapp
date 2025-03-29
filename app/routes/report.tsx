@@ -35,113 +35,120 @@ const Report = () => {
   }, [selectedReport]); // Re-fetch data when the selected report changes
 
   return (
-    <div>
-      <h1>Reports</h1>
+    <div className="container mx-auto p-6">
+      <h1 className="text-3xl font-bold text-center mb-6">Reports</h1>
 
       {/* Dropdown for selecting reports */}
-      <label htmlFor="reportSelect">Select Report: </label>
-      <select
-        id="reportSelect"
-        value={selectedReport}
-        onChange={(e) => setSelectedReport(e.target.value)}
-      >
-        <option value="userReport">User Report</option>
-        <option value="Report2">Borrow Summary Report</option>
-        <option value="bookDetailsReport">Book Details Report</option>
-      </select>
+      <div className="mb-6">
+        <label htmlFor="reportSelect" className="block text-gray-700 font-medium mb-2">
+          Select Report:
+        </label>
+        <select
+          id="reportSelect"
+          value={selectedReport}
+          onChange={(e) => setSelectedReport(e.target.value)}
+          className="w-full p-3 border border-gray-300 rounded shadow focus:outline-none focus:ring-2 focus:ring-blue-500"
+        >
+          <option value="userReport">User Report</option>
+          <option value="Report2">Borrow Summary Report</option>
+          <option value="bookDetailsReport">Book Details Report</option>
+        </select>
+      </div>
 
-      {error && <p style={{ color: "red" }}>{error}</p>}
+      {error && <p className="text-red-500 text-center mb-4">{error}</p>}
 
       {data.length > 0 ? (
-        <table border={1}>
-          <thead>
-            <tr>
-              {/* Adjust table headers dynamically based on the selected report */}
-              {selectedReport === "userReport" && (
-                <>
-                  <th>Member ID</th>
-                  <th>First Name</th>
-                  <th>Middle Name</th>
-                  <th>Last Name</th>
-                  <th>Group ID</th>
-                  <th>Email</th>
-                  <th>Phone Number</th>
-                  <th>Birth Date</th>
-                  <th>Address</th>
-                  <th>Balance</th>
-                  <th>Created At</th>
-                  <th>Created By</th>
-                  <th>Last Updated</th>
-                  <th>Updated By</th>
-                </>
-              )}
-              {selectedReport === "Report2" && (
-                <>
-                  <th>Borrow ID</th>
-                  <th>Item ID</th>
-                  <th>Due Date</th>
-                  <th>Member Name</th>
-                </>
-              )}
-              {selectedReport === "bookDetailsReport" && (
-                <>
-                  <th>ISBN</th>
-                  <th>Title</th>
-                  <th>Authors</th>
-                  <th>Genre</th>
-                  <th>Publisher</th>
-                  <th>Publication Year</th>
-                  <th>Language</th>
-                </>
-              )}
-            </tr>
-          </thead>
-          <tbody>
-            {/* Adjust table rows dynamically based on the selected report */}
-            {selectedReport === "userReport" &&
-              data.map((user: any, index: number) => (
-                <tr key={index}>
-                  <td>{user.MemberID}</td>
-                  <td>{user.FirstName}</td>
-                  <td>{user.MiddleName || "N/A"}</td>
-                  <td>{user.LastName}</td>
-                  <td>{user.GroupID}</td>
-                  <td>{user.Email}</td>
-                  <td>{user.PhoneNumber || "N/A"}</td>
-                  <td>{user.BirthDate || "N/A"}</td>
-                  <td>{user.Address}</td>
-                  <td>{user.Balance}</td>
-                  <td>{user.CreatedAt}</td>
-                  <td>{user.CreatedBy || "N/A"}</td>
-                  <td>{user.LastUpdated}</td>
-                  <td>{user.UpdatedBy || "N/A"}</td>
-                </tr>
-              ))}
-            {selectedReport === "Report2" &&
-              data.map((record: any, index: number) => (
-                <tr key={index}>
-                  <td>{record.BorrowID}</td>
-                  <td>{record.ItemID}</td>
-                  <td>{record.DueDate}</td>
-                  <td>{record.MemberName}</td>
-                </tr>
-              ))}
-            {selectedReport === "bookDetailsReport" &&
-              data.map((book: any, index: number) => (
-                <tr key={index}>
-                  <td>{book.ISBN}</td>
-                  <td>{book.Title}</td>
-                  <td>{book.Authors}</td>
-                  <td>{book.GenreName || "N/A"}</td>
-                  <td>{book.Publisher || "N/A"}</td>
-                  <td>{book.PublicationYear || "N/A"}</td>
-                  <td>{book.Language || "N/A"}</td>
-                </tr>
-              ))}
-          </tbody>
-        </table>
+        <div className="overflow-x-auto">
+          <table className="table-auto w-full border-collapse border border-gray-300 shadow-lg">
+            <thead className="bg-gray-100">
+              <tr>
+                {/* Adjust table headers dynamically based on the selected report */}
+                {selectedReport === "userReport" && (
+                  <>
+                    <th className="border border-gray-300 px-4 py-2 text-left">Member ID</th>
+                    <th className="border border-gray-300 px-4 py-2 text-left">First Name</th>
+                    <th className="border border-gray-300 px-4 py-2 text-left">Middle Name</th>
+                    <th className="border border-gray-300 px-4 py-2 text-left">Last Name</th>
+                    <th className="border border-gray-300 px-4 py-2 text-left">Group ID</th>
+                    <th className="border border-gray-300 px-4 py-2 text-left">Email</th>
+                    <th className="border border-gray-300 px-4 py-2 text-left">Phone Number</th>
+                    <th className="border border-gray-300 px-4 py-2 text-left">Birth Date</th>
+                    <th className="border border-gray-300 px-4 py-2 text-left">Address</th>
+                    <th className="border border-gray-300 px-4 py-2 text-left">Balance</th>
+                    <th className="border border-gray-300 px-4 py-2 text-left">Created At</th>
+                    <th className="border border-gray-300 px-4 py-2 text-left">Created By</th>
+                    <th className="border border-gray-300 px-4 py-2 text-left">Last Updated</th>
+                    <th className="border border-gray-300 px-4 py-2 text-left">Updated By</th>
+                  </>
+                )}
+                {selectedReport === "Report2" && (
+                  <>
+                    <th className="border border-gray-300 px-4 py-2 text-left">Borrow ID</th>
+                    <th className="border border-gray-300 px-4 py-2 text-left">Item ID</th>
+                    <th className="border border-gray-300 px-4 py-2 text-left">Due Date</th>
+                    <th className="border border-gray-300 px-4 py-2 text-left">Member Name</th>
+                  </>
+                )}
+                {selectedReport === "bookDetailsReport" && (
+                  <>
+                    <th className="border border-gray-300 px-4 py-2 text-left">ISBN</th>
+                    <th className="border border-gray-300 px-4 py-2 text-left">Title</th>
+                    <th className="border border-gray-300 px-4 py-2 text-left">Authors</th>
+                    <th className="border border-gray-300 px-4 py-2 text-left">Genre</th>
+                    <th className="border border-gray-300 px-4 py-2 text-left">Publisher</th>
+                    <th className="border border-gray-300 px-4 py-2 text-left">Publication Year</th>
+                    <th className="border border-gray-300 px-4 py-2 text-left">Language</th>
+                  </>
+                )}
+              </tr>
+            </thead>
+            <tbody>
+              {/* Adjust table rows dynamically based on the selected report */}
+              {selectedReport === "userReport" &&
+                data.map((user: any, index: number) => (
+                  <tr key={index} className="hover:bg-gray-50">
+                    <td className="border border-gray-300 px-4 py-2">{user.MemberID}</td>
+                    <td className="border border-gray-300 px-4 py-2">{user.FirstName}</td>
+                    <td className="border border-gray-300 px-4 py-2">{user.MiddleName || "N/A"}</td>
+                    <td className="border border-gray-300 px-4 py-2">{user.LastName}</td>
+                    <td className="border border-gray-300 px-4 py-2">{user.GroupID}</td>
+                    <td className="border border-gray-300 px-4 py-2">{user.Email}</td>
+                    <td className="border border-gray-300 px-4 py-2">{user.PhoneNumber || "N/A"}</td>
+                    <td className="border border-gray-300 px-4 py-2">{user.BirthDate || "N/A"}</td>
+                    <td className="border border-gray-300 px-4 py-2">{user.Address}</td>
+                    <td className="border border-gray-300 px-4 py-2">{user.Balance}</td>
+                    <td className="border border-gray-300 px-4 py-2">{user.CreatedAt}</td>
+                    <td className="border border-gray-300 px-4 py-2">{user.CreatedBy || "N/A"}</td>
+                    <td className="border border-gray-300 px-4 py-2">{user.LastUpdated}</td>
+                    <td className="border border-gray-300 px-4 py-2">{user.UpdatedBy || "N/A"}</td>
+                  </tr>
+                ))}
+              {selectedReport === "Report2" &&
+                data.map((record: any, index: number) => (
+                  <tr key={index} className="hover:bg-gray-50">
+                    <td className="border border-gray-300 px-4 py-2">{record.BorrowID}</td>
+                    <td className="border border-gray-300 px-4 py-2">{record.ItemID}</td>
+                    <td className="border border-gray-300 px-4 py-2">{record.DueDate}</td>
+                    <td className="border border-gray-300 px-4 py-2">{record.MemberName}</td>
+                  </tr>
+                ))}
+              {selectedReport === "bookDetailsReport" &&
+                data.map((book: any, index: number) => (
+                  <tr key={index} className="hover:bg-gray-50">
+                    <td className="border border-gray-300 px-4 py-2">{book.ISBN}</td>
+                    <td className="border border-gray-300 px-4 py-2">{book.Title}</td>
+                    <td className="border border-gray-300 px-4 py-2">{book.Authors}</td>
+                    <td className="border border-gray-300 px-4 py-2">{book.GenreName || "N/A"}</td>
+                    <td className="border border-gray-300 px-4 py-2">{book.Publisher || "N/A"}</td>
+                    <td className="border border-gray-300 px-4 py-2">{book.PublicationYear || "N/A"}</td>
+                    <td className="border border-gray-300 px-4 py-2">{book.Language || "N/A"}</td>
+                  </tr>
+                ))}
+            </tbody>
+          </table>
+        </div>
       ) : (
-        <p>No data found for the selected report.</p>
+        <p className="text-center text-gray-500">No data found for the selected report.</p>
       )}
     </div>
   );

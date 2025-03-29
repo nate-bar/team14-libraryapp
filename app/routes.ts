@@ -24,6 +24,7 @@ export default [
     route("login", "routes/login/login.tsx"),
     route("profile", "routes/profile.tsx"),
     route("report", "routes/report.tsx"),
+    route("adminuserdelete", "routes/adminuserdelete.tsx"),
   ]),
 ] satisfies RouteConfig;
 

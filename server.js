@@ -341,6 +341,61 @@ app.get("/api/book-details", (req, res) => {
     });
   });
 });
+// displays all users in the system
+app.get("/api/users", (req, res) => {
+  pool.getConnection((err, connection) => {
+    if (err) {
+      console.error("Error getting connection:", err);
+      return res.status(500).json({ error: "Database connection error." });
+    }
+
+    const query = `
+      SELECT 
+        MemberID, 
+        FirstName, 
+        MiddleName, 
+        LastName 
+      FROM Members
+    `;
+
+    connection.query(query, (err, results) => {
+      connection.release(); // Release the connection back to the pool
+      if (err) {
+        console.error("Error executing query:", err);
+        return res.status(500).json({ error: "Error fetching users." });
+      }
+
+      res.json(results);
+    });
+  });
+});
+// deletes a user from the system
+app.delete("/api/usersdelete/:userId", (req, res) => {
+  const { userId } = req.params;
+
+  pool.getConnection((err, connection) => {
+    if (err) {
+      console.error("Error getting connection:", err);
+      return res.status(500).json({ error: "Database connection error." });
+    }
+
+    const query = "DELETE FROM Members WHERE MemberID = ?";
+
+    connection.query(query, [userId], (err, results) => {
+      connection.release(); // Release the connection back to the pool
+      if (err) {
+        console.error("Error executing query:", err);
+        return res.status(500).json({ error: "Error deleting user." });
+      }
+
+      if (results.affectedRows === 0) {
+        return res.status(404).json({ error: "User not found." });
+      }
+
+      res.status(200).json({ success: true, message: "User deleted successfully." });
+    });
+  });
+});
 app.get("/api/items", (req, res) => {
   pool.getConnection((err, connection) => {
     if (err) {
