@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import "../ItemStyle.css";
 import { type CartItem } from "~/services/api";
 import { type Device } from "~/services/api";
+import AddToCartButton from "~/components/buttons/addtocartbutton";
 
 export default function DeviceDetail() {
   const { itemId } = useParams<{ itemId: string }>();
@@ -12,7 +13,7 @@ export default function DeviceDetail() {
 
   useEffect(() => {
     setLoading(true);
-    fetch(`/api/devicedetail/${itemId}`)
+    fetch(`/api/itemdetail/${itemId}`)
       .then((response) => {
         if (!response.ok) {
           throw new Error(`HTTP error! Status: ${response.status}`);
@@ -29,45 +30,6 @@ export default function DeviceDetail() {
         setLoading(false);
       });
   }, [itemId]);
-
-  const handleAction = (action: "In Cart" | "On Hold") => {
-    if (!device) return;
-
-    try {
-      // Get current cart or initialize empty array
-      let cart: CartItem[] = [];
-      const cartData = sessionStorage.getItem("shoppingCart");
-
-      if (cartData) {
-        cart = JSON.parse(cartData);
-        console.log("Existing cart loaded:", cart);
-      }
-
-      // Check if item already exists
-      if (!cart.some((item) => item.ItemID === device.ItemID)) {
-        // Create a simplified item object
-        const newItem: CartItem = {
-          ItemID: device.ItemID,
-          Title: device.Title,
-          TypeName: device.TypeName,
-          Status: device.Status,
-          Category: action,
-        };
-
-        cart.push(newItem);
-        const newCartString = JSON.stringify(cart);
-        sessionStorage.setItem("shoppingCart", newCartString);
-        window.dispatchEvent(new Event("cartUpdated"));
-        console.log("Item added, new cart:", cart);
-        alert(`${device.Title} added to ${action}`);
-      } else {
-        alert(`${device.Title} is already in the cart`);
-      }
-    } catch (error) {
-      console.error("Error updating cart:", error);
-      alert("There was an error adding the item to cart");
-    }
-  };
 
   if (loading) {
     return (
@@ -115,28 +77,10 @@ export default function DeviceDetail() {
         </div>
       </div>
 
-      {/* Action Buttons */}
       <div className="item-actions">
-        {/* Checkout/Hold Button Based on Status */}
-        {device.Status === "Available" ? (
-          <button
-            className="btn btn-primary"
-            onClick={() => handleAction("In Cart")}
-          >
-            Add to Cart
-          </button>
-        ) : device.Status === "Checked Out" ? (
-          <button
-            className="btn btn-warning"
-            onClick={() => handleAction("On Hold")}
-          >
-            Place on Hold
-          </button>
-        ) : (
-          <button className="btn btn-disabled" disabled>
-            Unavailable
-          </button>
-        )}
+        <div className="item-actions">
+          <AddToCartButton item={device} />
+        </div>
       </div>
     </div>
   );

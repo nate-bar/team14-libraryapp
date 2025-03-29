@@ -1,6 +1,6 @@
 import { Link } from "react-router";
 import { type AuthData } from "~/services/api";
-import { LogoutButton } from "./logoutbutton";
+import { LogoutButton } from "./buttons/logoutbutton";
 import "../components/navbar.css";
 
 export function NavBar({ isLoggedIn, memberID, groupID, firstName }: AuthData) {

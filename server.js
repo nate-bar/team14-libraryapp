@@ -7,9 +7,13 @@ import morgan from "morgan";
 import mysql from "mysql"; // mysql package, should be self explanitory
 import crypto from "crypto"; // for salting and hashing passwords
 import session from "express-session"; // for session storage
+import path from "path";
+import multer from "multer";
 // Load environment variables
 import dotenv from "dotenv";
 dotenv.config();
+
+const upload = multer({ storage: multer.memoryStorage() });
 
 // Short-circuit the type-checking of the built output.
 const BUILD_PATH = "./build/server/index.js";
@@ -49,24 +53,71 @@ const pool = mysql.createPool({
 //---------------------CODE FOR API'S HERE--------------------
 */
 
-/*
-app.post("/api/insert", (req, res) => {
-  const { name, email } = req.body;
-  const groupID = "Student";
-
-  // Insert the request body into the database
-  const query = `INSERT INTO Members (FirstName, Email, GroupID) VALUES (?, ?, ?)`;
-  db.query(query, [name, email, groupID]);
-
-  res.json({ success: true, message: "Data inserted successfully" });
-
-  console.log(name);
-  console.log(email);
-  return;
-});
-*/
 
 app.get("/api/search", (req, res) => {
+  const query = req.query.q;
+
+  if (!query) {
+    return res
+      .status(400)
+      .json({ success: false, message: "Missing search query" });
+  }
+
+  pool.getConnection((err, connection) => {
+    if (err) {
+      console.error("Error getting connection:", err);
+      return res.status(500).json({ success: false, message: "Database connection error" });
+    }
+
+    const searchQuery = `
+      SELECT
+        b.ISBN AS ItemID,
+        b.Title,
+        'Book' AS TypeName,
+        'Available' AS Status,
+        TO_BASE64(b.Photo) AS PhotoBase64
+      FROM books b
+      WHERE b.Title LIKE ?
+      
+      UNION ALL
+      
+      SELECT
+        m.MediaID AS ItemID,
+        i.Title,
+        'Media' AS TypeName,
+        i.Status,
+        TO_BASE64(m.Photo) AS PhotoBase64
+      FROM media m
+      JOIN items i ON m.MediaID = i.ItemID
+      WHERE i.Title LIKE ?
+      
+      UNION ALL
+      
+      SELECT
+        d.DeviceID AS ItemID,
+        d.DeviceName AS Title,
+        'Device' AS TypeName,
+        'Available' AS Status,
+        TO_BASE64(d.Photo) AS PhotoBase64
+      FROM itemdevice d
+      WHERE d.DeviceName Like ?;
+      `;
+
+      connection.query(searchQuery, [`%${query}%`, `%${query}%`, `%${query}%`], (err, results) => {
+        connection.release();
+        if (err) {
+          console.error("Error executing search query:", err.stack);
+          return res.status(500).json({ success: false, message: "Error searching items" });
+        }
+
+        res.json(results);
+      });
+  });
+});
+
+
+/*
+app.get("/api/search1", (req, res) => {
   const query = req.query.q;
 
   if (!query) {
@@ -98,37 +149,8 @@ app.get("/api/search", (req, res) => {
     );
   });
 });
-
-/*
-// RETURNS ALL MEMBERS
-app.get("/api/members", (req, res) => {
-  db.query("SELECT * FROM Members", (err, results) => {
-    if (err) {
-      console.error("Error executing query: " + err.stack);
-      res.status(500).send("Error fetching users");
-      return;
-    }
-    res.json(results);
-  });
-});
 */
 
-/*
-// RETURNS MEMBER ID, NAME, THEIR CLASSIFICATION, AND LENDING PRIVILEGES
-app.get("/api/memberprivileges", (req, res) => {
-  db.query(
-    "SELECT Members.MemberID, Members.FirstName, membergroups.GroupID, membergroups.LendingPeriod, membergroups.ItemLimit, membergroups.MediaItemLimit FROM Members INNER JOIN membergroups ON Members.GroupID=membergroups.GroupID",
-    (err, results) => {
-      if (err) {
-        console.error("Error executing query: " + err.stack);
-        res.status(500).send("Error fetching user privleges");
-        return;
-      }
-      res.json(results);
-    }
-  );
-});
-*/
 
 const checkLimits = (memberID, itemIDs, connection) => {
   return new Promise((resolve, reject) => {
@@ -536,113 +558,93 @@ app.get("/api/borroweditems/:memberID", (req, res) => {
   });
 });
 
-// Get detailed book information by ID
-app.get("/api/mediadetail/:itemId", (req, res) => {
-  const { itemId } = req.params;
+
+
+ 
+
+/***********************************
+ *****RETURNS DETAILED INFORMATION**
+ *****BASED ON ITEM TYPE************
+***********************************/
+app.get("/api/itemdetail/:itemid", (req, res) => {
+  const { itemid } = req.params;
 
   pool.getConnection((err, connection) => {
     if (err) {
       console.error("Error getting connection:", err);
-      return res.status(500).json({ error: "Database connection error" });
+      res.status(500).json({ error: "Database connection error" });
+      return;
     }
 
     connection.query(
-      `SELECT i.ItemID, i.Title, i.Status, it.TypeName, im.Director, im.Leads, im.ReleaseYear, it.MediaID, g.GenreName, g.GenreID, l.LanguageID, l.Language
+      `SELECT itemtypes.TypeName FROM itemtypes  WHERE itemtypes.ItemID = ?`,
+      [itemid],
+      (err, typeResult) => {
+        if (err) {
+          console.error("Error fetching item type:", err);
+          connection.release();
+          res.status(500).json({ error: "Database query error" });
+          return;
+        }
+
+        if (!typeResult || typeResult.length === 0) {
+          connection.release();
+          res.status(404).json({ error: "Item type not found" });
+          return;
+        }
+
+        const currentItem = typeResult[0];
+        const currentType = currentItem.TypeName;
+        let q;
+
+        if (currentType === "Book") {
+          q = `SELECT i.ItemID, i.Title, i.Status, it.TypeName, b.Authors, b.Publisher, b.PublicationYear, it.ISBN, g.GenreName, g.GenreID
+       FROM Items i
+       INNER JOIN ItemTypes it ON it.ItemID = i.ItemID
+       INNER JOIN Books b ON it.ISBN = b.ISBN
+       INNER JOIN Genres g ON b.GenreID = g.GenreID
+       WHERE i.ItemID = ? AND it.TypeName = 'Book'`;
+        } else if (currentType === "Media") {
+          q = `SELECT i.ItemID, i.Title, i.Status, it.TypeName, im.Director, im.Leads, im.ReleaseYear, it.MediaID, g.GenreName, g.GenreID, l.LanguageID, l.Language
        FROM Items i
        INNER JOIN ItemTypes it ON it.ItemID = i.ItemID
        INNER JOIN Media im ON it.MediaID = im.MediaID
        INNER JOIN Genres g ON im.GenreID = g.GenreID
        INNER JOIN Languages l ON im.LanguageID = l.LanguageID
-       WHERE i.ItemID = ? AND it.TypeName = 'Media'`,
-      [itemId],
-      (err, results) => {
-        connection.release();
-
-        if (err) {
-          console.error("Error fetching book detail:", err);
-          return res.status(500).json({ error: "Database query error" });
-        }
-
-        if (results.length === 0) {
-          return res.status(404).json({ error: "Book not found" });
-        }
-
-        res.json(results[0]);
-      }
-    );
-  });
-});
-
-//Return itemdevice
-app.get("/api/devicedetail/:itemId", (req, res) => {
-  const { itemId } = req.params;
-
-  pool.getConnection((err, connection) => {
-    if (err) {
-      console.error("Error getting connection:", err);
-      return res.status(500).json({ error: "Database connection error" });
-    }
-
-    connection.query(
-      `SELECT i.ItemID, i.Title, i.Status, it.TypeName, id.DeviceID, id.DeviceType, id.Manufacturer FROM Items i INNER JOIN ItemTypes it ON it.ItemID = i.ItemID
+       WHERE i.ItemID = ? AND it.TypeName = 'Media'`;
+        } else if (currentType === "Device") {
+          q = `SELECT i.ItemID, i.Title, i.Status, it.TypeName, id.DeviceID, id.DeviceType, id.Manufacturer FROM Items i INNER JOIN ItemTypes it ON it.ItemID = i.ItemID
       INNER JOIN ItemDevice id ON it.DeviceID = id.DeviceID
-      WHERE i.ItemID = ? AND it.TypeName = 'Device'`,
-      [itemId],
-      (err, results) => {
-        connection.release();
-
-        if (err) {
-          console.error("Error fetching book detail:", err);
-          return res.status(500).json({ error: "Database query error" });
+      WHERE i.ItemID = ? AND it.TypeName = 'Device'`;
+        } else {
+          connection.release();
+          res.status(400).json({ error: `Unknown item type: ${currentType}` });
+          return;
         }
 
-        if (results.length === 0) {
-          return res.status(404).json({ error: "Book not found" });
-        }
+        connection.query(q, [itemid], (err, results) => {
+          connection.release();
 
-        res.json(results[0]);
+          if (err) {
+            console.error("Error fetching details", err);
+            res.status(500).json({ error: "Database query error" });
+            return;
+          }
+
+          if (results.length === 0) {
+            return res.status(404).json({ error: "Item not found" });
+          }
+
+          res.json(results[0]);
+        });
       }
     );
   });
 });
 
-// Get detailed book information by ID
-app.get("/api/bookdetail/:itemId", (req, res) => {
-  const { itemId } = req.params;
-
-  pool.getConnection((err, connection) => {
-    if (err) {
-      console.error("Error getting connection:", err);
-      return res.status(500).json({ error: "Database connection error" });
-    }
-
-    connection.query(
-      `SELECT i.ItemID, i.Title, i.Status, it.TypeName, b.Authors, b.Publisher, b.PublicationYear, it.ISBN, g.GenreName, g.GenreID
-       FROM Items i
-       INNER JOIN ItemTypes it ON it.ItemID = i.ItemID
-       INNER JOIN Books b ON it.ISBN = b.ISBN
-       INNER JOIN Genres g ON b.GenreID = g.GenreID
-       WHERE i.ItemID = ? AND it.TypeName = 'Book'`,
-      [itemId],
-      (err, results) => {
-        connection.release();
-
-        if (err) {
-          console.error("Error fetching book detail:", err);
-          return res.status(500).json({ error: "Database query error" });
-        }
-
-        if (results.length === 0) {
-          return res.status(404).json({ error: "Book not found" });
-        }
-
-        res.json(results[0]);
-      }
-    );
-  });
-});
-
+//--------------------------------------------------------------------------------------------------------------------------------------------------------------
 //----------------------------------------------------------- SHOULD NOT HAVE TO GO BELOW THIS LINE ------------------------------------------------------------
+//--------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 // FOR SALTING AND HASHING PASSWORDS
 /**
@@ -657,7 +659,6 @@ function generatePassword(password) {
 
   return `${salt}:${genHash}`;
 }
-// FOR SALTING AND HASHING PASSWORDS
 /**
  * Generates a secure password hash with salt
  * @param {string} password - The password to hash
@@ -670,7 +671,6 @@ function validPassword(password, hash, salt) {
     .toString("hex");
   return hash === checkHash;
 }
-// FOR SALTING AND HASHING PASSWORDS
 
 // ------------------------------------------------- BEGIN SIGN UP -------------------------------------------------
 app.post("/api/signup", async (req, res) => {
@@ -775,14 +775,14 @@ app.post("/api/signup", async (req, res) => {
     const userExists = await checkExistingUser();
 
     if (userExists) {
-      res.status(409).json({ error: "Account already exists" }); // 409 Conflict is more appropriate
+      res.status(409).json({ error: "Account already exists" });
       return;
     }
 
     // Create the user
     await createUser();
 
-    // Log successful registration (consider adding user ID but not PII)
+    // Log successful registration
     console.log(`New user registered with email: ${email.substring(0, 3)}...`);
 
     // Return success response
@@ -801,8 +801,6 @@ app.post("/api/signup", async (req, res) => {
 // ------------------------------------------------- BEGIN LOGIN -------------------------------------------------
 app.post("/api/login", async (req, res) => {
   // get Email and Password from request body
-  // sorry about the capital? capitol? (idk how to spell that) variable names
-  // just matching how its stored in the database so I don't get confused
   const { email, password } = req.body;
 
   // validation check same as signup api

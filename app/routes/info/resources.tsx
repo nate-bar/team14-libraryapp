@@ -1,4 +1,4 @@
-import "./Resources.css";
+import "./resources.css"
 
 export default function Resources() {
   return (

@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import "../ItemStyle.css";
 import { type Book } from "~/services/api";
 import { type CartItem } from "~/services/api";
+import AddToCartButton from "~/components/buttons/addtocartbutton";
 
 export default function BookDetail() {
   const { itemId } = useParams<{ itemId: string }>();
@@ -12,7 +13,7 @@ export default function BookDetail() {
 
   useEffect(() => {
     setLoading(true);
-    fetch(`/api/bookdetail/${itemId}`)
+    fetch(`/api/itemdetail/${itemId}`)
       .then((response) => {
         if (!response.ok) {
           throw new Error(`HTTP error! Status: ${response.status}`);
@@ -29,45 +30,6 @@ export default function BookDetail() {
         setLoading(false);
       });
   }, [itemId]);
-
-  const handleAction = (action: "In Cart" | "On Hold") => {
-    if (!book) return;
-
-    try {
-      // Get current cart or initialize empty array
-      let cart: CartItem[] = [];
-      const cartData = sessionStorage.getItem("shoppingCart");
-
-      if (cartData) {
-        cart = JSON.parse(cartData);
-        console.log("Existing cart loaded:", cart);
-      }
-
-      // Check if item already exists
-      if (!cart.some((item) => item.ItemID === book.ItemID)) {
-        // Create a simplified item object
-        const newItem: CartItem = {
-          ItemID: book.ItemID,
-          Title: book.Title,
-          TypeName: book.TypeName,
-          Status: book.Status,
-          Category: action,
-        };
-
-        cart.push(newItem);
-        const newCartString = JSON.stringify(cart);
-        sessionStorage.setItem("shoppingCart", newCartString);
-        window.dispatchEvent(new Event("cartUpdated"));
-        console.log("Item added, new cart:", cart);
-        alert(`${book.Title} added to ${action}`);
-      } else {
-        alert(`${book.Title} is already in the cart`);
-      }
-    } catch (error) {
-      console.error("Error updating cart:", error);
-      alert("There was an error adding the item to cart");
-    }
-  };
 
   if (loading) {
     return (
@@ -124,28 +86,10 @@ export default function BookDetail() {
         </div>
       </div>
 
-      {/* Action Buttons */}
       <div className="item-actions">
-        {/* Checkout/Hold Button Based on Status */}
-        {book.Status === "Available" ? (
-          <button
-            className="btn btn-primary"
-            onClick={() => handleAction("In Cart")}
-          >
-            Add to Cart
-          </button>
-        ) : book.Status === "Checked Out" ? (
-          <button
-            className="btn btn-warning"
-            onClick={() => handleAction("On Hold")}
-          >
-            Place on Hold
-          </button>
-        ) : (
-          <button className="btn btn-disabled" disabled>
-            Unavailable
-          </button>
-        )}
+        <div className="item-actions">
+          <AddToCartButton item={book} />
+        </div>
       </div>
     </div>
   );

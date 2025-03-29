@@ -1,4 +1,5 @@
-import "../routes/contactus.css";
+import "./contactus.css"
+
 export default function contactus() {
   return (
     <div className="contact-container">

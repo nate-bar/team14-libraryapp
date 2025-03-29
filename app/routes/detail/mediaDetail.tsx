@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import "../ItemStyle.css";
 import { type Media } from "~/services/api";
 import { type CartItem } from "~/services/api";
+import AddToCartButton from "~/components/buttons/addtocartbutton";
 
 export default function MediaDetail() {
   const { itemId } = useParams<{ itemId: string }>();
@@ -12,7 +13,7 @@ export default function MediaDetail() {
 
   useEffect(() => {
     setLoading(true);
-    fetch(`/api/mediadetail/${itemId}`)
+    fetch(`/api/itemdetail/${itemId}`)
       .then((response) => {
         if (!response.ok) {
           throw new Error(`HTTP error! Status: ${response.status}`);
@@ -29,45 +30,6 @@ export default function MediaDetail() {
         setLoading(false);
       });
   }, [itemId]);
-
-  const handleAction = (action: "In Cart" | "On Hold") => {
-    if (!media) return;
-
-    try {
-      // Get current cart or initialize empty array
-      let cart: CartItem[] = [];
-      const cartData = sessionStorage.getItem("shoppingCart");
-
-      if (cartData) {
-        cart = JSON.parse(cartData);
-        console.log("Existing cart loaded:", cart);
-      }
-
-      // Check if item already exists
-      if (!cart.some((item) => item.ItemID === media.ItemID)) {
-        // Create a simplified item object
-        const newItem: CartItem = {
-          ItemID: media.ItemID,
-          Title: media.Title,
-          TypeName: media.TypeName,
-          Status: media.Status,
-          Category: action,
-        };
-
-        cart.push(newItem);
-        const newCartString = JSON.stringify(cart);
-        sessionStorage.setItem("shoppingCart", newCartString);
-        window.dispatchEvent(new Event("cartUpdated"));
-        console.log("Item added, new cart:", cart);
-        alert(`${media.Title} added to ${action}`);
-      } else {
-        alert(`${media.Title} is already in the cart`);
-      }
-    } catch (error) {
-      console.error("Error updating cart:", error);
-      alert("There was an error adding the item to cart");
-    }
-  };
 
   if (loading) {
     return (
@@ -126,28 +88,10 @@ export default function MediaDetail() {
         </div>
       </div>
 
-      {/* Action Buttons */}
       <div className="item-actions">
-        {/* Checkout/Hold Button Based on Status */}
-        {media.Status === "Available" ? (
-          <button
-            className="btn btn-primary"
-            onClick={() => handleAction("In Cart")}
-          >
-            Add to Cart
-          </button>
-        ) : media.Status === "Checked Out" ? (
-          <button
-            className="btn btn-warning"
-            onClick={() => handleAction("On Hold")}
-          >
-            Place on Hold
-          </button>
-        ) : (
-          <button className="btn btn-disabled" disabled>
-            Unavailable
-          </button>
-        )}
+        <div className="item-actions">
+          <AddToCartButton item={media} />
+        </div>
       </div>
     </div>
   );
