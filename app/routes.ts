@@ -12,6 +12,7 @@ export default [
     route("items", "routes/items.tsx"),
     route("search", "routes/search.tsx"),
     route("admin", "routes/admin.tsx"),
+    route("adminedit", "routes/adminedit.tsx"),
     route("FAQ", "routes/faq.tsx"),
     route("resources", "routes/resources.tsx"),
     route("contactus", "routes/contactus.tsx"),
@@ -29,3 +30,4 @@ export default [
     ]),
   ]),
 ] satisfies RouteConfig;
+

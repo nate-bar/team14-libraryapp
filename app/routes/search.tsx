@@ -48,7 +48,9 @@ const Search: React.FC = () => {
               type="text"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search..."
+
+              placeholder="Search by Title..."
+
               className="bg-white/90 border border-gray-300 text-black rounded-lg w-80 px-4 py-2 pl-10 focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-300"
             />
           </div>
@@ -62,9 +64,19 @@ const Search: React.FC = () => {
         <div className="mt-8">
           {results.length > 0 ? (
             results.map((item: any) => (
-              <div key={item.ItemID} className="text-white">
+
+              <div key={item.ItemID} className="text-white mb-4">
                 <h2 className="text-xl">{item.Title}</h2>
-                {/* Add additional item details here if needed */}
+                {item.PhotoBase64 ? (
+                  <img
+                    src={`data:image/jpeg;base64,${item.PhotoBase64}`}
+                    alt={item.Title}
+                    style={{ width: "150px", height: "auto", marginTop: "10px" }}
+                  />
+                ) : (
+                  <p>No Photo Available</p>
+                )}
+
               </div>
             ))
           ) : (
@@ -76,4 +88,6 @@ const Search: React.FC = () => {
   );
 };
 
+
 export default Search;
+
