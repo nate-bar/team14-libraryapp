@@ -101,7 +101,8 @@ const UsingFetch = () => {
   };
 
   // Helper function to get genre name by ID
-  const getGenreName = (genreId: number) => {
+  const getGenreName = (genreId: number | null) => {
+    if (genreId === null) return "N/A"; // Handle null GenreID
     const genre = genres.find((g) => g.id === genreId);
     return genre ? genre.name : "N/A";
   };
@@ -120,6 +121,7 @@ const UsingFetch = () => {
           <option value="">All Types</option>
           <option value="Book">Book</option>
           <option value="Media">Media</option>
+          <option value="Device">Device</option>
         </select>
       </div>
 
@@ -157,7 +159,7 @@ const UsingFetch = () => {
                     </span>
                   </td>
                   <td className="border border-gray-300 px-4 py-2">
-                    {getGenreName(Number(item.GenreID))}
+                    {getGenreName(item.GenreID)}
                   </td>
                   <td className="border border-gray-300 px-4 py-2">
                     {item.PhotoBase64 ? (

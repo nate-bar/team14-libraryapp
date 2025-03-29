@@ -423,7 +423,18 @@ app.get("/api/items", (req, res) => {
         TO_BASE64(m.Photo) AS PhotoBase64,
         m.GenreID AS GenreID -- Include GenreID from media table
       FROM media m
-      JOIN items i ON m.MediaID = i.ItemID;
+      JOIN items i ON m.MediaID = i.ItemID
+
+      UNION ALL
+
+      SELECT 
+        d.DeviceID AS ItemID, 
+        d.DeviceName AS Title, 
+        'Device' AS TypeName, 
+        'Available' AS Status, 
+        NULL AS PhotoBase64, -- Devices may not have photos
+        NULL AS GenreID -- Devices do not have a GenreID
+      FROM itemdevice d;
     `;
 
     connection.query(query, (err, results) => {
