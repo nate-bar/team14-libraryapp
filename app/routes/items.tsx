@@ -1,283 +1,219 @@
 import React, { useEffect, useState } from "react";
-import { type Items } from "~/services/api"; // interface used to shape items
-import { useLocation } from "react-router";
-import { type CartItem } from "~/services/api";
-
-// Define possible item type categories
-type ItemCategory = "All" | "Books" | "Media" | "Devices";
+import { Link } from "react-router";
 
 const UsingFetch = () => {
-  const [items, setItems] = React.useState<Items[]>([]);
-  const [filteredItems, setFilteredItems] = useState<Items[]>([]);
-  const [selectedItems, setSelectedItems] = useState<Items[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [activeFilter, setActiveFilter] = useState<ItemCategory>("All");
-  const location = useLocation(); // Get the current location to read URL parameters
+  const [items, setItems] = useState<any[]>([]);
+  const [filteredItems, setFilteredItems] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [typeFilter, setTypeFilter] = useState(""); // State for the type dropdown filter
+  const [genreFilter, setGenreFilter] = useState(""); // State for the genre dropdown filter
 
+  // Genre list
+  const genres = [
+    { id: 101, name: "Adventure" },
+    { id: 102, name: "Art" },
+    { id: 103, name: "Autobiography" },
+    { id: 104, name: "Biography" },
+    { id: 105, name: "Childrens" },
+    { id: 106, name: "Classic" },
+    { id: 107, name: "Cooking" },
+    { id: 108, name: "Crime" },
+    { id: 109, name: "Detective" },
+    { id: 110, name: "Fable" },
+    { id: 111, name: "Fairy Tale" },
+    { id: 112, name: "Fantasy" },
+    { id: 113, name: "Graphic Novel" },
+    { id: 114, name: "Health & Fitness" },
+    { id: 115, name: "Historical Fiction" },
+    { id: 116, name: "Horror" },
+    { id: 117, name: "Humor" },
+    { id: 118, name: "Law" },
+    { id: 119, name: "Memoir" },
+    { id: 120, name: "Mythology" },
+    { id: 121, name: "Poetry" },
+    { id: 122, name: "Religion" },
+    { id: 123, name: "Romance" },
+    { id: 124, name: "Science Fiction" },
+    { id: 125, name: "Self-Help" },
+    { id: 126, name: "Short Story" },
+    { id: 127, name: "Suspense" },
+    { id: 128, name: "Thriller" },
+    { id: 129, name: "Young Adult" },
+    { id: 130, name: "Western" },
+    { id: 201, name: "Action" },
+    { id: 202, name: "Adventure" },
+    { id: 203, name: "Documentary" },
+    { id: 204, name: "Drama" },
+    { id: 205, name: "Historical" },
+    { id: 206, name: "Historical Fiction" },
+    { id: 207, name: "Horror" },
+    { id: 208, name: "Musical" },
+    { id: 209, name: "Noir" },
+    { id: 210, name: "Romantic Comedy" },
+    { id: 211, name: "Satire" },
+    { id: 212, name: "Sports" },
+    { id: 213, name: "Thriller" },
+    { id: 214, name: "Western" },
+  ];
+
+  // Fetch data from the /api/items endpoint
   const fetchData = () => {
-    setIsLoading(true);
-    setError(null);
     fetch("/api/items")
       .then((response) => {
         if (!response.ok) {
-          throw new Error(`HTTP error! Status: ${response.status}`);
+          throw new Error("Failed to fetch items");
         }
         return response.json();
       })
       .then((data) => {
-        setItems(data);
-        setFilteredItems(data);
-        setIsLoading(false);
+        if (Array.isArray(data)) {
+          setItems(data); // Set the fetched items
+          setFilteredItems(data); // Initialize filtered items
+        } else {
+          console.error("API did not return an array:", data);
+          setItems([]);
+          setFilteredItems([]);
+        }
       })
-      .catch((error) => {
-        setError(`Failed to fetch items: ${error.message}`);
-        setIsLoading(false);
+      .catch((err) => {
+        console.error("Error fetching items:", err);
+        setItems([]);
+        setFilteredItems([]);
+      })
+      .finally(() => {
+        setLoading(false);
       });
   };
 
+  // Fetch items on component mount
   useEffect(() => {
     fetchData();
   }, []);
 
-  // Extract search query from URL when component mounts or URL changes
-  useEffect(() => {
-    const params = new URLSearchParams(location.search);
-    const query = params.get("q");
-    if (query) {
-      setSearchTerm(query);
-    }
-  }, [location.search]);
+  // Handle type dropdown filter change
+  const handleTypeFilterChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const selectedType = e.target.value;
+    setTypeFilter(selectedType);
+    setGenreFilter(""); // Reset genre filter when type changes
 
-  // Filter items based on search term and active category filter
-  useEffect(() => {
-    let results = [...items];
-
-    // First apply category filter
-    if (activeFilter !== "All") {
-      results = results.filter((item) =>
-        item.TypeName.toLowerCase().includes(activeFilter.toLowerCase())
+    if (selectedType === "") {
+      setFilteredItems(items); // Show all items if no type is selected
+    } else {
+      setFilteredItems(
+        items.filter((item) => item.TypeName === selectedType)
       );
     }
+  };
 
-    // Then apply search term filter
-    if (searchTerm.trim() !== "") {
-      const lowercasedSearch = searchTerm.toLowerCase();
-      results = results.filter((item) => {
-        return (
-          item.Title.toLowerCase().includes(lowercasedSearch) ||
-          item.TypeName.toLowerCase().includes(lowercasedSearch) ||
-          item.Status.toLowerCase().includes(lowercasedSearch)
-        );
-      });
-    }
+  // Handle genre dropdown filter change
+  const handleGenreFilterChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const selectedGenre = e.target.value;
+    setGenreFilter(selectedGenre);
 
-    setFilteredItems(results);
-  }, [searchTerm, activeFilter, items]);
-
-  const handleSelectItem = (item: Items) => {
-    setSelectedItems((prev) => {
-      // Check if item is already selected
-      const isSelected = prev.some(
-        (selectedItem) => selectedItem.ItemID === item.ItemID
+    if (selectedGenre === "") {
+      setFilteredItems(
+        items.filter((item) => item.TypeName === typeFilter)
       );
-
-      if (isSelected) {
-        // Remove item if already selected
-        return prev.filter(
-          (selectedItem) => selectedItem.ItemID !== item.ItemID
-        );
-      } else {
-        // Add item if not selected
-        return [...prev, item];
-      }
-    });
-  };
-
-  const isItemSelected = (itemId: number) => {
-    return selectedItems.some((item) => item.ItemID === itemId);
-  };
-
-  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchTerm(e.target.value);
-  };
-
-  const handleFilterChange = (category: ItemCategory) => {
-    setActiveFilter(category);
-  };
-
-  // Function to add selected items to cart
-  const handleAddToCart = () => {
-    if (selectedItems.length === 0) {
-      alert("Please select at least one item");
-      return;
+    } else {
+      setFilteredItems(
+        items.filter(
+          (item) =>
+            item.TypeName === typeFilter && item.GenreID === parseInt(selectedGenre)
+        )
+      );
     }
+  };
 
-    try {
-      // Get current cart or initialize empty array
-      let cart: CartItem[] = [];
-      const cartData = sessionStorage.getItem("shoppingCart");
-
-      if (cartData) {
-        cart = JSON.parse(cartData);
-      }
-
-      // Track newly added items and unavailable items
-      let newItemsCount = 0;
-      let unavailableItems = 0;
-
-      // Add each selected item to cart if available and not already present
-      selectedItems.forEach((item) => {
-        if (item.Status !== "Available") {
-          unavailableItems++;
-          return;
-        }
-
-        if (!cart.some((cartItem) => cartItem.ItemID === item.ItemID)) {
-          cart.push({
-            ItemID: item.ItemID,
-            Title: item.Title,
-            TypeName: item.TypeName,
-            Status: item.Status,
-            Category: "In Cart",
-          });
-          newItemsCount++;
-        }
-      });
-
-      // Save updated cart to sessionStorage
-      sessionStorage.setItem("shoppingCart", JSON.stringify(cart));
-
-      // Dispatch event to update navbar cart count
-      window.dispatchEvent(new Event("cartUpdated"));
-
-      // Clear selection after adding to cart
-      setSelectedItems([]);
-
-      // Provide appropriate feedback
-      if (unavailableItems > 0) {
-        if (newItemsCount > 0) {
-          alert(
-            `${newItemsCount} items added to cart. ${unavailableItems} unavailable items were not added.`
-          );
-        } else {
-          alert(
-            `No items added. ${unavailableItems} selected items are unavailable.`
-          );
-        }
-      } else if (newItemsCount > 0) {
-        alert(`${newItemsCount} items added to cart`);
-      } else {
-        alert("Selected items are already in your cart");
-      }
-    } catch (error) {
-      console.error("Error adding items to cart:", error);
-      alert("There was an error adding items to cart");
-    }
+  // Helper function to get genre name by ID
+  const getGenreName = (genreId: number | null) => {
+    if (genreId === null) return "N/A"; // Handle null GenreID
+    const genre = genres.find((g) => g.id === genreId);
+    return genre ? genre.name : "N/A";
   };
 
   return (
-    <div style={{ paddingLeft: "5%", paddingRight: "5%" }}>
-      {error && (
-        <div style={{ color: "red", marginBottom: "10px" }}>
-          <p>{error}</p>
-        </div>
-      )}
-      <div style={{ marginBottom: "10px" }}>
-        <input
-          type="text"
-          placeholder="Advanced search..."
-          value={searchTerm}
-          onChange={handleSearchChange}
-          style={{ width: "100%", padding: "5px" }}
-        />
-      </div>
+    <div className="container mx-auto p-6">
+      <h1 className="text-4xl font-bold text-center mb-8 text-gray-800">
+        Library Items
+      </h1>
 
-      <div style={{ marginBottom: "10px" }}>
-        <span>Filter by type: </span>
-        {["All", "Book", "Media", "Device"].map((category) => (
-          <button
-            key={category}
-            onClick={() => handleFilterChange(category as ItemCategory)}
-            style={{
-              marginRight: "5px",
-              padding: "3px 8px",
-              backgroundColor: activeFilter === category ? "#eee" : "white",
-            }}
+      {/* Dropdown Filters */}
+      <div className="flex justify-center gap-4 mb-8">
+        {/* Type Filter */}
+        <select
+          value={typeFilter}
+          onChange={handleTypeFilterChange}
+          className="w-64 p-3 text-sm border border-gray-300 rounded-lg shadow focus:outline-none focus:ring-2 focus:ring-blue-500"
+        >
+          <option value="">All Types</option>
+          <option value="Book">Book</option>
+          <option value="Media">Media</option>
+          <option value="Device">Device</option>
+        </select>
+
+        {/* Genre Filter (only show if "Book" or "Media" is selected) */}
+        {(typeFilter === "Book" || typeFilter === "Media") && (
+          <select
+            value={genreFilter}
+            onChange={handleGenreFilterChange}
+            className="w-64 p-3 text-sm border border-gray-300 rounded-lg shadow focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
-            {category}
-          </button>
-        ))}
+            <option value="">All Genres</option>
+            {genres.map((genre) => (
+              <option key={genre.id} value={genre.id}>
+                {genre.name}
+              </option>
+            ))}
+          </select>
+        )}
       </div>
 
-      <div style={{ marginBottom: "10px" }}>
-        <span style={{ marginRight: "10px" }}>
-          {selectedItems.length} items selected
-        </span>
-        <button onClick={handleAddToCart} disabled={selectedItems.length === 0}>
-          Add to Cart
-        </button>
-      </div>
-
-      {isLoading ? (
-        <div>Loading...</div>
-      ) : (
-        <>
-          {filteredItems.length > 0 ? (
-            <table style={{ width: "100%", borderCollapse: "collapse" }}>
-              <thead>
-                <tr>
-                  <th style={{ textAlign: "left" }}>Select</th>
-                  <th style={{ textAlign: "left" }}>Title</th>
-                  <th style={{ textAlign: "left" }}>Type</th>
-                  <th style={{ textAlign: "left" }}>Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredItems.map((item) => (
-                  <tr
-                    key={item.ItemID}
-                    style={{
-                      backgroundColor: isItemSelected(item.ItemID)
-                        ? "#f0f0ff"
-                        : "transparent",
-                    }}
-                  >
-                    <td>
-                      <input
-                        type="checkbox"
-                        checked={isItemSelected(item.ItemID)}
-                        onChange={() => handleSelectItem(item)}
-                        disabled={item.Status !== "Available"}
-                        title={
-                          item.Status !== "Available"
-                            ? "This item is not available"
-                            : ""
-                        }
-                      />
-                    </td>
-                    <td>{item.Title}</td>
-                    <td>{item.TypeName}</td>
-                    <td>{item.Status}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          ) : (
-            <div>No items found matching your criteria</div>
-          )}
-
-          {items.length > 0 && (
-            <div style={{ marginTop: "10px", fontSize: "small" }}>
-              Showing {filteredItems.length} of {items.length} items
-              {activeFilter !== "All" && (
-                <span> (filtered by {activeFilter})</span>
+      {/* Display items */}
+      {loading ? (
+        <p className="text-center text-gray-500 text-lg">Loading items...</p>
+      ) : filteredItems.length > 0 ? (
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+          {filteredItems.map((item) => (
+            <Link
+              key={item.ItemID}
+              to={`/${item.TypeName}/${item.ItemID}`}
+              className="bg-white p-4 rounded-lg shadow-lg flex flex-col items-center"
+            >
+              <h2 className="text-lg font-bold mb-2 text-center">
+                {item.Title}
+              </h2>
+              {item.PhotoBase64 ? (
+                <img
+                  src={`data:image/jpeg;base64,${item.PhotoBase64}`}
+                  alt={item.Title}
+                  className="w-full h-48 object-cover rounded-lg mb-2"
+                />
+              ) : (
+                <p className="text-gray-500">No Photo Available</p>
               )}
-              {searchTerm && <span> (search: "{searchTerm}")</span>}
-            </div>
-          )}
-        </>
+              <p className="text-sm text-gray-700">
+                <strong>Type:</strong> {item.TypeName}
+              </p>
+              <p className="text-sm text-gray-700">
+                <strong>Status:</strong>{" "}
+                <span
+                  className={`px-2 py-1 rounded ${
+                    item.Status === "Available"
+                      ? "bg-green-100 text-green-800"
+                      : "bg-red-100 text-red-800"
+                  }`}
+                >
+                  {item.Status}
+                </span>
+              </p>
+              <p className="text-sm text-gray-700">
+                <strong>Genre:</strong> {getGenreName(item.GenreID)}
+              </p>
+            </Link>
+          ))}
+        </div>
+      ) : (
+        <p className="text-center text-gray-500 text-lg">No items found.</p>
       )}
     </div>
   );

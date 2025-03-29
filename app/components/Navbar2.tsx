@@ -70,7 +70,7 @@ export function NavBar2() {
   const handleSearch = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (searchQuery.trim() !== "") {
-      navigate(`/items?q=${encodeURIComponent(searchQuery)}`);
+      navigate(`/search?q=${encodeURIComponent(searchQuery)}`);
       setShowResults(false);
     }
   };

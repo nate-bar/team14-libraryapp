@@ -93,4 +93,5 @@ export interface Items {
   Title: string;
   TypeName: string;
   Status: string;
+  Photo: Base64URLString;
 }
