@@ -93,5 +93,12 @@ export interface Items {
   Title: string;
   TypeName: string;
   Status: string;
-  Photo: Base64URLString;
+  GenreID?: number;  // Optional if not all items have genres
+  GenreName?: string; // Optional if not all items have genres
+  PhotoBase64?: string; // Optional for item images
+}
+
+export interface Genres {
+  GenreID: number;
+  GenreName: string;
 }

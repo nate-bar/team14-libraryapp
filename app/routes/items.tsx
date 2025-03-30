@@ -1,60 +1,28 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router";
+import { type Genres } from "~/services/api";
+import { type Items } from "~/services/api";
 
 const UsingFetch = () => {
-  const [items, setItems] = useState<any[]>([]);
-  const [filteredItems, setFilteredItems] = useState<any[]>([]);
+  const [genres, setGenres] = useState<Genres[]>([]);
+  const [items, setItems] = useState<Items[]>([]);
+  const [filteredItems, setFilteredItems] = useState<Items[]>([]);
   const [loading, setLoading] = useState(true);
   const [typeFilter, setTypeFilter] = useState(""); // State for the type dropdown filter
   const [genreFilter, setGenreFilter] = useState(""); // State for the genre dropdown filter
 
-  // Genre list
-  const genres = [
-    { id: 101, name: "Adventure" },
-    { id: 102, name: "Art" },
-    { id: 103, name: "Autobiography" },
-    { id: 104, name: "Biography" },
-    { id: 105, name: "Childrens" },
-    { id: 106, name: "Classic" },
-    { id: 107, name: "Cooking" },
-    { id: 108, name: "Crime" },
-    { id: 109, name: "Detective" },
-    { id: 110, name: "Fable" },
-    { id: 111, name: "Fairy Tale" },
-    { id: 112, name: "Fantasy" },
-    { id: 113, name: "Graphic Novel" },
-    { id: 114, name: "Health & Fitness" },
-    { id: 115, name: "Historical Fiction" },
-    { id: 116, name: "Horror" },
-    { id: 117, name: "Humor" },
-    { id: 118, name: "Law" },
-    { id: 119, name: "Memoir" },
-    { id: 120, name: "Mythology" },
-    { id: 121, name: "Poetry" },
-    { id: 122, name: "Religion" },
-    { id: 123, name: "Romance" },
-    { id: 124, name: "Science Fiction" },
-    { id: 125, name: "Self-Help" },
-    { id: 126, name: "Short Story" },
-    { id: 127, name: "Suspense" },
-    { id: 128, name: "Thriller" },
-    { id: 129, name: "Young Adult" },
-    { id: 130, name: "Western" },
-    { id: 201, name: "Action" },
-    { id: 202, name: "Adventure" },
-    { id: 203, name: "Documentary" },
-    { id: 204, name: "Drama" },
-    { id: 205, name: "Historical" },
-    { id: 206, name: "Historical Fiction" },
-    { id: 207, name: "Horror" },
-    { id: 208, name: "Musical" },
-    { id: 209, name: "Noir" },
-    { id: 210, name: "Romantic Comedy" },
-    { id: 211, name: "Satire" },
-    { id: 212, name: "Sports" },
-    { id: 213, name: "Thriller" },
-    { id: 214, name: "Western" },
-  ];
+  const fetchGenres = () => {
+    fetch("/api/genres")
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error("Failed to fetch genres");
+        }
+        return response.json();
+      })
+      .then((data) => {
+        setGenres(data);
+      })
+  }
 
   // Fetch data from the /api/items endpoint
   const fetchData = () => {
@@ -88,6 +56,7 @@ const UsingFetch = () => {
   // Fetch items on component mount
   useEffect(() => {
     fetchData();
+    fetchGenres();
   }, []);
 
   // Handle type dropdown filter change
@@ -124,12 +93,7 @@ const UsingFetch = () => {
     }
   };
 
-  // Helper function to get genre name by ID
-  const getGenreName = (genreId: number | null) => {
-    if (genreId === null) return "N/A"; // Handle null GenreID
-    const genre = genres.find((g) => g.id === genreId);
-    return genre ? genre.name : "N/A";
-  };
+  
 
   return (
     <div className="container mx-auto p-6">
@@ -160,8 +124,8 @@ const UsingFetch = () => {
           >
             <option value="">All Genres</option>
             {genres.map((genre) => (
-              <option key={genre.id} value={genre.id}>
-                {genre.name}
+              <option key={genre.GenreID} value={genre.GenreID}>
+                {genre.GenreName}
               </option>
             ))}
           </select>
@@ -207,7 +171,7 @@ const UsingFetch = () => {
                 </span>
               </p>
               <p className="text-sm text-gray-700">
-                <strong>Genre:</strong> {getGenreName(item.GenreID)}
+                <strong>Genre:</strong> {item.GenreName}
               </p>
             </Link>
           ))}
