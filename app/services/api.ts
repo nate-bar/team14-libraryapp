@@ -69,12 +69,15 @@ export interface Device {
 export interface AccountSignup {
   email: string;
   password: string;
-  group: string;
+  GroupID: string;          // previously named `group` in form state
   firstName: string;
   middleName?: string;
   lastName: string;
   address: string;
+  birthdate: string;        // ISO string (e.g., "2002-08-15")
+  phoneNumber: string;
 }
+
 
 // login interface
 export interface AccountLogin {
