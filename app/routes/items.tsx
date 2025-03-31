@@ -21,8 +21,8 @@ const UsingFetch = () => {
       })
       .then((data) => {
         setGenres(data);
-      })
-  }
+      });
+  };
 
   // Fetch data from the /api/items endpoint
   const fetchData = () => {
@@ -68,9 +68,7 @@ const UsingFetch = () => {
     if (selectedType === "") {
       setFilteredItems(items); // Show all items if no type is selected
     } else {
-      setFilteredItems(
-        items.filter((item) => item.TypeName === selectedType)
-      );
+      setFilteredItems(items.filter((item) => item.TypeName === selectedType));
     }
   };
 
@@ -80,23 +78,20 @@ const UsingFetch = () => {
     setGenreFilter(selectedGenre);
 
     if (selectedGenre === "") {
-      setFilteredItems(
-        items.filter((item) => item.TypeName === typeFilter)
-      );
+      setFilteredItems(items.filter((item) => item.TypeName === typeFilter));
     } else {
       setFilteredItems(
         items.filter(
           (item) =>
-            item.TypeName === typeFilter && item.GenreID === parseInt(selectedGenre)
+            item.TypeName === typeFilter &&
+            item.GenreID === parseInt(selectedGenre)
         )
       );
     }
   };
 
-  
-
   return (
-    <div className="container mx-auto p-6">
+    <div className="container mx-auto p-6 pb-24">
       <h1 className="text-4xl font-bold text-center mb-8 text-gray-800">
         Library Items
       </h1>
@@ -146,11 +141,11 @@ const UsingFetch = () => {
               <h2 className="text-lg font-bold mb-2 text-center">
                 {item.Title}
               </h2>
-              {item.PhotoBase64 ? (
+              {item.Photo ? (
                 <img
-                  src={`data:image/jpeg;base64,${item.PhotoBase64}`}
+                  src={`data:image/jpeg;base64,${item.Photo}`}
                   alt={item.Title}
-                  className="w-full h-48 object-cover rounded-lg mb-2"
+                  className="w-full h-48 object-contain rounded-lg mb-2"
                 />
               ) : (
                 <p className="text-gray-500">No Photo Available</p>

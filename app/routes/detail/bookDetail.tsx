@@ -62,6 +62,15 @@ export default function BookDetail() {
 
       <div className="item-info">
         <div className="info-section">
+          {book.Photo ? (
+            <img
+              src={`data:image/jpeg;base64,${book.Photo}`}
+              alt={book.Title}
+              className="w-full h-48 object-contain rounded-lg mb-2"
+            />
+          ) : (
+            <p className="text-gray-500">No Photo Available</p>
+          )}
           <p>
             <strong>Author:</strong> {book.Authors}
           </p>

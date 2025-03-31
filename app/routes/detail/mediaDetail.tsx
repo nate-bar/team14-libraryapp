@@ -61,6 +61,15 @@ export default function MediaDetail() {
 
       <div className="item-info">
         <div className="info-section">
+          {media.Photo ? (
+            <img
+              src={`data:image/jpeg;base64,${media.Photo}`}
+              alt={media.Title}
+              className="w-full h-48 object-contain rounded-lg mb-2"
+            />
+          ) : (
+            <p className="text-gray-500">No Photo Available</p>
+          )}
           <p>
             <strong>Director:</strong> {media.Director}
           </p>

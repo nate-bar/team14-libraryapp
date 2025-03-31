@@ -52,8 +52,7 @@ const pool = mysql.createPool({
 /*
 //---------------------CODE FOR API'S HERE--------------------
 */
-
-
+/*
 app.get("/api/search", (req, res) => {
   const query = req.query.q;
 
@@ -66,7 +65,9 @@ app.get("/api/search", (req, res) => {
   pool.getConnection((err, connection) => {
     if (err) {
       console.error("Error getting connection:", err);
-      return res.status(500).json({ success: false, message: "Database connection error" });
+      return res
+        .status(500)
+        .json({ success: false, message: "Database connection error" });
     }
 
     const searchQuery = `
@@ -103,21 +104,25 @@ app.get("/api/search", (req, res) => {
       WHERE d.DeviceName Like ?;
       `;
 
-      connection.query(searchQuery, [`%${query}%`, `%${query}%`, `%${query}%`], (err, results) => {
+    connection.query(
+      searchQuery,
+      [`%${query}%`, `%${query}%`, `%${query}%`],
+      (err, results) => {
         connection.release();
         if (err) {
           console.error("Error executing search query:", err.stack);
-          return res.status(500).json({ success: false, message: "Error searching items" });
+          return res
+            .status(500)
+            .json({ success: false, message: "Error searching items" });
         }
 
         res.json(results);
-      });
+      }
+    );
   });
 });
-
-
-/*
-app.get("/api/search1", (req, res) => {
+*/
+app.get("/api/search", (req, res) => {
   const query = req.query.q;
 
   if (!query) {
@@ -149,19 +154,17 @@ app.get("/api/search1", (req, res) => {
     );
   });
 });
-*/
 
 app.get("/api/genres", (req, res) => {
   pool.query(`SELECT * FROM genres`, (err, results) => {
     if (err) {
-      console.error("Error executing query:", + err.stack);
+      console.error("Error executing query:", +err.stack);
       res.status(500).send("Error fetching genres");
       return;
     }
     res.json(results);
-  })
-})
-
+  });
+});
 
 const checkLimits = (memberID, itemIDs, connection) => {
   return new Promise((resolve, reject) => {
@@ -516,6 +519,7 @@ app.post("/api/checkout", (req, res) => {
   }
 });
 
+/*
 app.get("/api/items", (req, res) => {
   pool.getConnection((err, connection) => {
     if (err) {
@@ -568,9 +572,9 @@ app.get("/api/items", (req, res) => {
     });
   });
 });
-
+*/
 // RETURNS ALL ITEMS AND THEIR TYPE
-app.get("/api/items1", (req, res) => {
+app.get("/api/items", (req, res) => {
   pool.getConnection((err, connection) => {
     if (err) {
       console.error("Error getting connection: ", err);
@@ -579,7 +583,22 @@ app.get("/api/items1", (req, res) => {
 
     // use connection for queries
     connection.query(
-      "SELECT Items.ItemID, Items.Title, itemtypes.TypeName, Items.Status, Items.LastUpdated, Items.CreatedAt, Items.TimesBorrowed FROM Items INNER JOIN ItemTypes ON ItemTypes.ItemID=Items.ItemID",
+      `SELECT 
+        i.ItemID, 
+        i.Title, 
+        it.TypeName, 
+        i.Status, 
+        i.LastUpdated, 
+        i.CreatedAt, 
+        i.TimesBorrowed, 
+        TO_BASE64(i.Photo) AS Photo, 
+        g.GenreID, 
+        g.GenreName 
+      FROM Items i
+      INNER JOIN ItemTypes it ON it.ItemID=i.ItemID
+      LEFT JOIN Books b ON b.ISBN = it.ISBN
+      LEFT JOIN Media m ON m.MediaID = it.MediaID
+      LEFT JOIN Genres g ON b.GenreID = g.GenreID OR m.GenreID = g.GenreID`,
       (err, results) => {
         connection.release();
         if (err) {
@@ -622,14 +641,10 @@ app.get("/api/borroweditems/:memberID", (req, res) => {
   });
 });
 
-
-
- 
-
 /***********************************
  *****RETURNS DETAILED INFORMATION**
  *****BASED ON ITEM TYPE************
-***********************************/
+ ***********************************/
 app.get("/api/itemdetail/:itemid", (req, res) => {
   const { itemid } = req.params;
 
@@ -662,14 +677,14 @@ app.get("/api/itemdetail/:itemid", (req, res) => {
         let q;
 
         if (currentType === "Book") {
-          q = `SELECT i.ItemID, i.Title, i.Status, it.TypeName, b.Authors, b.Publisher, b.PublicationYear, it.ISBN, g.GenreName, g.GenreID
+          q = `SELECT i.ItemID, TO_BASE64(i.Photo) AS Photo, i.Title, i.Status, it.TypeName, b.Authors, b.Publisher, b.PublicationYear, it.ISBN, g.GenreName, g.GenreID
        FROM Items i
        INNER JOIN ItemTypes it ON it.ItemID = i.ItemID
        INNER JOIN Books b ON it.ISBN = b.ISBN
        INNER JOIN Genres g ON b.GenreID = g.GenreID
        WHERE i.ItemID = ? AND it.TypeName = 'Book'`;
         } else if (currentType === "Media") {
-          q = `SELECT i.ItemID, i.Title, i.Status, it.TypeName, im.Director, im.Leads, im.ReleaseYear, it.MediaID, g.GenreName, g.GenreID, l.LanguageID, l.Language
+          q = `SELECT i.ItemID, TO_BASE64(i.Photo) AS Photo, i.Title, i.Status, it.TypeName, im.Director, im.Leads, im.ReleaseYear, it.MediaID, g.GenreName, g.GenreID, l.LanguageID, l.Language
        FROM Items i
        INNER JOIN ItemTypes it ON it.ItemID = i.ItemID
        INNER JOIN Media im ON it.MediaID = im.MediaID
@@ -677,7 +692,7 @@ app.get("/api/itemdetail/:itemid", (req, res) => {
        INNER JOIN Languages l ON im.LanguageID = l.LanguageID
        WHERE i.ItemID = ? AND it.TypeName = 'Media'`;
         } else if (currentType === "Device") {
-          q = `SELECT i.ItemID, i.Title, i.Status, it.TypeName, id.DeviceID, id.DeviceType, id.Manufacturer FROM Items i INNER JOIN ItemTypes it ON it.ItemID = i.ItemID
+          q = `SELECT i.ItemID, TO_BASE64(i.Photo) AS Photo, i.Title, i.Status, it.TypeName, id.DeviceID, id.DeviceType, id.Manufacturer FROM Items i INNER JOIN ItemTypes it ON it.ItemID = i.ItemID
       INNER JOIN ItemDevice id ON it.DeviceID = id.DeviceID
       WHERE i.ItemID = ? AND it.TypeName = 'Device'`;
         } else {

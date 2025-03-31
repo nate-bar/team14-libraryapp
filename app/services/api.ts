@@ -5,6 +5,20 @@ export interface Member {
   password: string;
 }
 
+/*******************************************
+ **************ITEM INTERFACE,***************
+ *******REPRESENTS ITEM IN Items TABLE*******
+ *******************************************/
+export interface Items {
+  ItemID: number;
+  Title: string;
+  TypeName: string;
+  Status: string;
+  GenreID?: number; // Optional if not all items have genres
+  GenreName?: string; // Optional if not all items have genres
+  Photo?: string; // Optional for item images
+}
+
 export interface CartItem {
   ItemID: number;
   Title: string;
@@ -23,6 +37,7 @@ export interface Book {
   PublicationYear: number;
   ISBN: string;
   GenreName: string;
+  Photo?: string;
 }
 
 export interface Media {
@@ -86,16 +101,6 @@ export interface AuthData {
   lastName: string | null;
   address: string | null;
   middleName: string | null;
-}
-
-export interface Items {
-  ItemID: number;
-  Title: string;
-  TypeName: string;
-  Status: string;
-  GenreID?: number;  // Optional if not all items have genres
-  GenreName?: string; // Optional if not all items have genres
-  PhotoBase64?: string; // Optional for item images
 }
 
 export interface Genres {

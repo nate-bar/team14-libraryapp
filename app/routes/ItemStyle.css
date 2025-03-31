@@ -62,4 +62,9 @@
     color: white;
     cursor: not-allowed;
   }
+
+  .page-container {
+    min-height: calc(100vh - 150px); /* Adjust based on your footer height */
+    padding-bottom: 2rem; /* Add some space before footer */
+  }
   

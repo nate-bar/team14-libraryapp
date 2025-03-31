@@ -29,7 +29,7 @@ export default function Layout() {
         middleName={authData.middleName}
       />
       <NavBar2 />
-      <main className="pb-16">
+      <main>
         <Outlet context={authData} />
       </main>
       <Footer />
