@@ -49,6 +49,18 @@ const pool = mysql.createPool({
   connectionLimit: 10, // try like 10
 });
 
+// RETURNS ALL MEMBERS
+app.get("/api/members", (req, res) => {
+  pool.query("SELECT * FROM Members", (err, results) => {
+    if (err) {
+      console.error("Error executing query: " + err.stack);
+      res.status(500).send("Error fetching users");
+      return;
+    }
+    res.json(results);
+  });
+});
+
 /*
 //---------------------CODE FOR API'S HERE--------------------
 */
