@@ -370,58 +370,6 @@ app.delete("/api/usersdelete/:userId", (req, res) => {
     });
   });
 });
-app.get("/api/items", (req, res) => {
-  pool.getConnection((err, connection) => {
-    if (err) {
-      console.error("Error getting connection: ", err);
-      return res.status(500).send("Error connecting to the database");
-    }
-
-    const query = `
-      SELECT 
-        b.ISBN AS ItemID, 
-        b.Title, 
-        'Book' AS TypeName, 
-        'Available' AS Status, 
-        TO_BASE64(b.Photo) AS PhotoBase64,
-        b.GenreID AS GenreID -- Include GenreID from books table
-      FROM books b
-
-      UNION ALL
-
-      SELECT 
-        m.MediaID AS ItemID, 
-        i.Title, 
-        'Media' AS TypeName, 
-        i.Status, 
-        TO_BASE64(m.Photo) AS PhotoBase64,
-        m.GenreID AS GenreID -- Include GenreID from media table
-      FROM media m
-      JOIN items i ON m.MediaID = i.ItemID
-
-      UNION ALL
-
-      SELECT 
-        d.DeviceID AS ItemID, 
-        d.DeviceName AS Title, 
-        'Device' AS TypeName, 
-        'Available' AS Status, 
-        NULL AS PhotoBase64, -- Devices may not have photos
-        NULL AS GenreID -- Devices do not have a GenreID
-      FROM itemdevice d;
-    `;
-
-    connection.query(query, (err, results) => {
-      connection.release(); // Release the connection back to the pool
-      if (err) {
-        console.error("Error executing query: ", err.stack);
-        return res.status(500).send("Error fetching items");
-      }
-
-      res.json(results);
-    });
-  });
-});
 
 // -------------------------------------------------------------------------------------------------------
 app.get("/api/search", (req, res) => {
