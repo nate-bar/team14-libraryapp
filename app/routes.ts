@@ -11,7 +11,6 @@ export default [
     route("about", "routes/info/about.tsx"),
     route("items", "routes/items.tsx"),
     route("search", "routes/search.tsx"),
-    route("admin", "routes/admin/admin.tsx"),
     route("FAQ", "routes/info/faq.tsx"),
     route("resources", "routes/info/resources.tsx"),
     route("contactus", "routes/info/contactus.tsx"),
