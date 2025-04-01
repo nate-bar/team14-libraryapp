@@ -1,3 +1,5 @@
+//note to self - FIGURE OUT WHAT THE FUCK IS WRONG W CREATING A FOLDER UGH
+
 import "./dashboard.css";
 import { type AuthData } from "~/services/api";
 import { useOutletContext } from "react-router";
