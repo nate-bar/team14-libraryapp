@@ -564,7 +564,7 @@ const checkLimits = (memberID, itemIDs, connection) => {
   });
 };
 
-app.post("/api/return", (req, res) => {
+app.post("/profile/api/return", (req, res) => {
   try {
     const { items } = req.body;
 

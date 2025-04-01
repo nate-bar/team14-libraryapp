@@ -1,0 +1,55 @@
+.bg-dashboard {
+  position: relative;
+  width: 1920px;
+  height: 1080px;
+
+  background: linear-gradient(
+    137.19deg,
+    #01497c -25.37%,
+    rgba(118, 198, 222, 0.8) 22.69%,
+    #f4f8f7 60.7%,
+    #e4c9a8 88.64%
+  );
+}
+
+.bg-nav3 {
+  /* Rectangle 12 */
+  background-size: 150% auto;
+  background-position: center 45%;
+  background-repeat: no-repeat;
+
+  display: flex;
+  align-items: center;
+
+  padding: 10px 20px;
+  margin: 10px auto;
+  max-width: 90%;
+  width: auto;
+  height: 50px;
+  left: 16px;
+  margin-top: 20px;
+
+  background: #01497c;
+  box-shadow: 10px 10px 4px rgba(0, 0, 0, 0.25);
+  border-radius: 20px;
+}
+
+.text-nav3 {
+  font-size: 20px;
+  font-weight: bold;
+  font-family: "Mitr", sans-serif;
+  color: #d9d9d9;
+  letter-spacing: 1px;
+}
+
+.settings-nav3 {
+  text-align: right;
+  margin-right: auto;
+  width: fit-content;
+}
+
+.mailbox-nav3 {
+  text-align: right;
+  margin-right: auto;
+  width: fit-content;
+}

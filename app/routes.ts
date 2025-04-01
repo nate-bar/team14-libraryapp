@@ -22,11 +22,13 @@ export default [
     route("login", "routes/login/login.tsx"),
     route("report", "routes/admin/report.tsx"),
     route("adminuserdelete", "routes/admin/adminuserdelete.tsx"),
-    route("profile", "routes/profile/profile.tsx", [
-      route("settings", "routes/profile/settings.tsx"),
-      route("loans", "routes/profile/loans.tsx"),
-    ]),
     route("admin", "routes/admin/admin.tsx"),
     route("adminedit", "routes/admin/adminedit.tsx"),
+    route("profile", "routes/profile/profile.tsx", [
+      route("dashboard", "routes/profile/dashboard.tsx"),
+      route("myitems", "routes/profile/myitems.tsx"),
+      //route("mailbox", "routes/mailbox.tsx"),
+      //route("settings", "routes/settings.tsx"),
+    ]),
   ]),
 ] satisfies RouteConfig;
