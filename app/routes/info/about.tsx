@@ -33,7 +33,7 @@ export default function AboutPage() {
         <h2>Meet the Team</h2>
         <ul className="ul1">
           <li><strong>Ling Wang</strong> – Developer</li>
-          <li><strong>Natha</strong> – Developer</li>
+          <li><strong>Nathan</strong> – Developer</li>
           <li><strong>John </strong> – Developer</li>
           <li><strong>Daniel </strong> – Developer</li>
           <li><strong>Diana </strong> – Developer</li>

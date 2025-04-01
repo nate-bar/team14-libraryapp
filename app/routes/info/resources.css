@@ -12,7 +12,7 @@
 .resources-title {
   font-size: 36px;
   text-align: center;
-  color: #1d4ed8;
+  color: #04197c;
   margin-bottom: 20px;
 }
 
@@ -32,7 +32,7 @@
 .resource-card {
   background-color: #f8fafc;
   border: 1px solid #e2e8f0;
-  border-left: 6px solid #3b82f6;
+  border-left: 6px solid #04197c;
   padding: 24px;
   border-radius: 12px;
   transition: transform 0.2s ease;
