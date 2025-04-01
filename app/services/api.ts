@@ -53,6 +53,7 @@ export interface Media {
   Language: string;
   Format: string;
   Rating: number;
+  Photo?: string;
 }
 
 export interface Device {
@@ -63,6 +64,7 @@ export interface Device {
   DeviceID: number;
   DeviceType: string;
   Manufacturer: string;
+  Photo?: string;
 }
 
 // sign up interface

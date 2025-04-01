@@ -29,7 +29,7 @@ export default function ProfilePage() {
   const fetchData = () => {
     setIsLoading(true);
     setError(null);
-    fetch(`api/borroweditems/${memberID}`)
+    fetch(`/profile/api/borroweditems/${memberID}`)
       .then((response) => {
         if (!response.ok) {
           throw new Error(`HTTP error! Status: ${response.status}`);

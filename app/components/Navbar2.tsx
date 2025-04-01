@@ -76,7 +76,7 @@ export function NavBar2() {
   };
 
   return (
-    <div className="bg-nav2">
+    <div className="bg-nav2 w-full">
       {/* Navigation Links */}
       <div className="navbar-left w-full flex justify-between items-center">
         <ul className="flex space-x-10">

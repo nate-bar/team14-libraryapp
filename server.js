@@ -122,6 +122,308 @@ app.get("/api/search", (req, res) => {
   });
 });
 */
+
+// -----------------------------------------FROM JOHNS BRANCH 3.0-----------------------------------------
+// Define the /api/admin/add-media route
+app.get("/api/users", (req, res) => {
+  pool.getConnection((err, connection) => {
+    if (err) {
+      console.error("Error getting connection:", err);
+      return res.status(500).json({ error: "Database connection error." });
+    }
+
+    const query = "SELECT * FROM user_view";
+
+    connection.query(query, (err, results) => {
+      connection.release(); // Release the connection back to the pool
+      if (err) {
+        console.error("Error executing query:", err);
+        return res.status(500).json({ error: "Error fetching users." });
+      }
+
+      res.json(results);
+    });
+  });
+});
+
+app.get("/api/borrow-summary", (req, res) => {
+  pool.getConnection((err, connection) => {
+    if (err) {
+      console.error("Error getting connection:", err);
+      return res.status(500).json({ error: "Database connection error." });
+    }
+
+    const query = "SELECT * FROM borrow_summary_view";
+
+    connection.query(query, (err, results) => {
+      connection.release(); // Release the connection back to the pool
+      if (err) {
+        console.error("Error executing query:", err);
+        return res
+          .status(500)
+          .json({ error: "Error fetching borrow summary." });
+      }
+
+      res.json(results);
+    });
+  });
+});
+
+app.post("/api/admin/add-media", upload.single("photo"), (req, res) => {
+  const {
+    title,
+    genreId,
+    languageId,
+    director,
+    leads,
+    releaseYear,
+    format,
+    rating,
+  } = req.body;
+  const photo = req.file ? req.file.buffer : null;
+
+  // Validate required fields
+  if (!title || !languageId) {
+    return res
+      .status(400)
+      .json({ error: "Title and Language ID are required." });
+  }
+
+  // Obtain a connection for transaction control
+  pool.getConnection((err, connection) => {
+    if (err) {
+      console.error("Connection error:", err);
+      return res.status(500).json({ error: "Database connection error." });
+    }
+
+    connection.beginTransaction((err) => {
+      if (err) {
+        connection.release();
+        return res.status(500).json({ error: "Transaction initiation error." });
+      }
+
+      // Insert into the Items table
+      const itemQuery = `
+        INSERT INTO Items 
+          (Title, Cost, TimesBorrowed, CreatedAt, CreatedBy, LastUpdated, Status)
+        VALUES (?, 0, 0, NOW(), ?, NOW(), 'Available');
+      `;
+      const createdBy = req.user ? req.user.id : null; // Replace with actual user ID if available
+      const itemParams = [title, createdBy];
+
+      connection.query(itemQuery, itemParams, (err, itemResult) => {
+        if (err) {
+          return connection.rollback(() => {
+            connection.release();
+            console.error("Error inserting item:", err);
+            res.status(500).json({ error: "Failed to add item." });
+          });
+        }
+
+        const itemId = itemResult.insertId;
+
+        // Insert into the Media table
+        const mediaQuery = `
+          INSERT INTO Media 
+            (MediaID, Director, Leads, ReleaseYear, GenreID, LanguageID, Format, Rating, Photo)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);
+        `;
+        const mediaParams = [
+          itemId,
+          director || null,
+          leads || null,
+          releaseYear || null,
+          genreId || null,
+          languageId,
+          format || null,
+          rating || null,
+          photo,
+        ];
+
+        connection.query(mediaQuery, mediaParams, (err) => {
+          if (err) {
+            return connection.rollback(() => {
+              connection.release();
+              console.error("Error inserting media:", err);
+              res.status(500).json({ error: "Failed to add media." });
+            });
+          }
+
+          // Insert into the ItemTypes table
+          const itemTypeQuery = `
+            INSERT INTO ItemTypes 
+              (ItemID, TypeName, MediaID)
+            VALUES (?, 'Media', ?);
+          `;
+          const itemTypeParams = [itemId, itemId];
+
+          connection.query(itemTypeQuery, itemTypeParams, (err) => {
+            if (err) {
+              return connection.rollback(() => {
+                connection.release();
+                console.error("Error inserting item type:", err);
+                res
+                  .status(500)
+                  .json({ error: "Failed to add item type record." });
+              });
+            }
+
+            // Commit the transaction
+            connection.commit((err) => {
+              if (err) {
+                return connection.rollback(() => {
+                  connection.release();
+                  console.error("Commit error:", err);
+                  res.status(500).json({ error: "Transaction commit error." });
+                });
+              }
+
+              connection.release();
+              res
+                .status(201)
+                .json({ success: true, message: "Media added successfully!" });
+            });
+          });
+        });
+      });
+    });
+  });
+});
+
+// Book view
+app.get("/api/book-details", (req, res) => {
+  pool.getConnection((err, connection) => {
+    if (err) {
+      console.error("Error getting connection:", err);
+      return res.status(500).json({ error: "Database connection error." });
+    }
+
+    const query = "SELECT * FROM book_details_view";
+
+    connection.query(query, (err, results) => {
+      connection.release(); // Release the connection back to the pool
+      if (err) {
+        console.error("Error executing query:", err);
+        return res.status(500).json({ error: "Error fetching book details." });
+      }
+
+      res.json(results);
+    });
+  });
+});
+
+// displays all users in the system
+app.get("/api/users", (req, res) => {
+  pool.getConnection((err, connection) => {
+    if (err) {
+      console.error("Error getting connection:", err);
+      return res.status(500).json({ error: "Database connection error." });
+    }
+
+    const query = `
+      SELECT 
+        MemberID, 
+        FirstName, 
+        MiddleName, 
+        LastName 
+      FROM Members
+    `;
+
+    connection.query(query, (err, results) => {
+      connection.release(); // Release the connection back to the pool
+      if (err) {
+        console.error("Error executing query:", err);
+        return res.status(500).json({ error: "Error fetching users." });
+      }
+
+      res.json(results);
+    });
+  });
+});
+
+// deletes a user from the system
+app.delete("/api/usersdelete/:userId", (req, res) => {
+  const { userId } = req.params;
+
+  pool.getConnection((err, connection) => {
+    if (err) {
+      console.error("Error getting connection:", err);
+      return res.status(500).json({ error: "Database connection error." });
+    }
+
+    const query = "DELETE FROM Members WHERE MemberID = ?";
+
+    connection.query(query, [userId], (err, results) => {
+      connection.release(); // Release the connection back to the pool
+      if (err) {
+        console.error("Error executing query:", err);
+        return res.status(500).json({ error: "Error deleting user." });
+      }
+
+      if (results.affectedRows === 0) {
+        return res.status(404).json({ error: "User not found." });
+      }
+
+      res
+        .status(200)
+        .json({ success: true, message: "User deleted successfully." });
+    });
+  });
+});
+app.get("/api/items", (req, res) => {
+  pool.getConnection((err, connection) => {
+    if (err) {
+      console.error("Error getting connection: ", err);
+      return res.status(500).send("Error connecting to the database");
+    }
+
+    const query = `
+      SELECT 
+        b.ISBN AS ItemID, 
+        b.Title, 
+        'Book' AS TypeName, 
+        'Available' AS Status, 
+        TO_BASE64(b.Photo) AS PhotoBase64,
+        b.GenreID AS GenreID -- Include GenreID from books table
+      FROM books b
+
+      UNION ALL
+
+      SELECT 
+        m.MediaID AS ItemID, 
+        i.Title, 
+        'Media' AS TypeName, 
+        i.Status, 
+        TO_BASE64(m.Photo) AS PhotoBase64,
+        m.GenreID AS GenreID -- Include GenreID from media table
+      FROM media m
+      JOIN items i ON m.MediaID = i.ItemID
+
+      UNION ALL
+
+      SELECT 
+        d.DeviceID AS ItemID, 
+        d.DeviceName AS Title, 
+        'Device' AS TypeName, 
+        'Available' AS Status, 
+        NULL AS PhotoBase64, -- Devices may not have photos
+        NULL AS GenreID -- Devices do not have a GenreID
+      FROM itemdevice d;
+    `;
+
+    connection.query(query, (err, results) => {
+      connection.release(); // Release the connection back to the pool
+      if (err) {
+        console.error("Error executing query: ", err.stack);
+        return res.status(500).send("Error fetching items");
+      }
+
+      res.json(results);
+    });
+  });
+});
+
+// -------------------------------------------------------------------------------------------------------
 app.get("/api/search", (req, res) => {
   const query = req.query.q;
 
@@ -612,7 +914,7 @@ app.get("/api/items", (req, res) => {
   });
 });
 
-app.get("/api/borroweditems/:memberID", (req, res) => {
+app.get("/profile/api/borroweditems/:memberID", (req, res) => {
   const { memberID } = req.params;
 
   pool.getConnection((err, connection) => {

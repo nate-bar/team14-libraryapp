@@ -6,8 +6,7 @@ import "../components/navbar.css";
 export function NavBar({ isLoggedIn, memberID, groupID, firstName }: AuthData) {
   const isAdmin = groupID === "Administrator";
   return (
-    <div className="bg-nav">
-      <div className="navbar-left">{/* Left side content */}</div>
+    <div className="bg-nav w-full">
       <div className="m-2.5 p-2.5">
         <ul className="flex space-x-10">
           <li className="text-nav">
@@ -43,7 +42,7 @@ export function NavBar({ isLoggedIn, memberID, groupID, firstName }: AuthData) {
               {" "}
               {/* Corrected here */}
               <li className="text-nav">
-                <Link to="/login">Login</Link>
+                <Link to="/login">Login/Signup</Link>
               </li>
             </ul>
           </div>
