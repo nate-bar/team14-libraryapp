@@ -42,7 +42,6 @@ export interface Book {
 
 export interface Media {
   ItemID: number;
-  Title: string;
   TypeName: string;
   Status: string;
   MediaID: number;
