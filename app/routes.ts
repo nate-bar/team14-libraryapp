@@ -9,7 +9,7 @@ export default [
   layout("routes/layout.tsx", [
     index("routes/home.tsx"),
     route("about", "routes/info/about.tsx"),
-    route("items", "routes/items.tsx"),
+    route("catalog", "routes/catalog.tsx"),
     route("search", "routes/search.tsx"),
     route("FAQ", "routes/info/faq.tsx"),
     route("resources", "routes/info/resources.tsx"),
@@ -20,15 +20,16 @@ export default [
     route("cart", "routes/CartPage.tsx"),
     route("signup", "routes/signup/signup.tsx"),
     route("login", "routes/login/login.tsx"),
-    route("report", "routes/admin/report.tsx"),
-    route("adminuserdelete", "routes/admin/adminuserdelete.tsx"),
-    route("admin", "routes/admin/admin.tsx"),
-    route("adminedit", "routes/admin/adminedit.tsx"),
     route("profile", "routes/profile/profile.tsx", [
       route("dashboard", "routes/profile/dashboard.tsx"),
       route("myitems", "routes/profile/myitems.tsx"),
       //route("mailbox", "routes/mailbox.tsx"),
       //route("settings", "routes/settings.tsx"),
+    ]),
+    route("admin", "routes/admin/admin.tsx", [
+      route("reports", "routes/admin/reports.tsx"),
+      route("edit", "routes/admin/edit.tsx"),
+      route("usermanagement", "routes/admin/usermanagement.tsx"),
     ]),
   ]),
 ] satisfies RouteConfig;
