@@ -254,7 +254,6 @@ app.post("/api/admin/add-book", upload.single("photo"), (req, res) => {
 
 app.post("/api/admin/add-media", upload.single("photo"), (req, res) => {
   const {
-    title,
     genreId,
     languageId,
     director,

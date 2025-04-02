@@ -27,26 +27,6 @@ export function NavBar({ isLoggedIn, memberID, groupID, firstName }: AuthData) {
           <div className="logged-in-content flex flex-row items-center gap-4">
             <h1 className="text-nav m-0">Welcome {firstName}</h1>
 
-            {isAdmin && (
-              <ul
-                className="admin-links flex flex-row gap-4 items-center m-0 p-0"
-                style={{ listStyleType: "none" }}
-              >
-                <li className="text-nav">
-                  <Link to="/adminuserdelete">Users</Link>
-                </li>
-                <li className="text-nav">
-                  <Link to="/admin">Add</Link>
-                </li>
-                <li className="text-nav">
-                  <Link to="/adminedit">Edit</Link>
-                </li>
-                <li className="text-nav">
-                  <Link to="/report">Reports</Link>
-                </li>
-              </ul>
-            )}
-
             <ul
               className="user-links flex items-center m-0 p-0"
               style={{ listStyleType: "none" }}

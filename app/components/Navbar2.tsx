@@ -84,7 +84,7 @@ export function NavBar2() {
             <Link to="/">Home</Link>
           </li>
           <li className="text-nav2">
-            <Link to="/items">Items</Link>
+            <Link to="/catalog">Catalog</Link>
           </li>
           <li className="text-nav2 relative">
             <Link to="/cart">
