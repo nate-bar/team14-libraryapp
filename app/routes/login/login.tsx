@@ -46,7 +46,7 @@ const LoginForm: React.FC = () => {
       });
 
       // Show success message
-      alert("Login successful! Redirecting to home page...");
+      //alert("Login successful! Redirecting to home page...");
 
       // Instead of trying to call createUserSession directly,
       // just navigate to the homepage - the session should
