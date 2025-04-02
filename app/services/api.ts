@@ -70,11 +70,13 @@ export interface Device {
 export interface AccountSignup {
   email: string;
   password: string;
-  group: string;
+  groupID: string;
   firstName: string;
-  middleName?: string;
+  middleName?: string; // making these optional fields I dont really want to be required to give out this info
   lastName: string;
-  address: string;
+  address?: string; // also its more of a reflection in the database, idk its like if its not not null in the database
+  phoneNumber: string; // we will keep required for phonenumber
+  birthDate: string; // and birth date cause maybe we can do something with that
 }
 
 // login interface
