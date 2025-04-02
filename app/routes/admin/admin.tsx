@@ -34,6 +34,16 @@ export default function Admin() {
             Reports
           </Link>
           <Link
+            to="/admin/additem"
+            className={`text-xl font-bold ${
+              isLinkActive("/admin/additem")
+                ? "text-blue-800 border-b-2 border-blue-600"
+                : "text-gray-800 hover:text-blue-500"
+            }`}
+          >
+            Add Item
+          </Link>
+          <Link
             to="/admin/edit"
             className={`text-xl font-bold ${
               isLinkActive("/admin/edit")

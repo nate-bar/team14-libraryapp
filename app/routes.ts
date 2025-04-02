@@ -30,6 +30,7 @@ export default [
       route("reports", "routes/admin/reports.tsx"),
       route("edit", "routes/admin/edit.tsx"),
       route("usermanagement", "routes/admin/usermanagement.tsx"),
+      route("additem", "routes/admin/additem.tsx"),
     ]),
   ]),
 ] satisfies RouteConfig;
