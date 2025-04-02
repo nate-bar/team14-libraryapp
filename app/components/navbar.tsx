@@ -13,15 +13,6 @@ export function NavBar({ isLoggedIn, memberID, groupID, firstName }: AuthData) {
           <li className="text-nav">
             <Link to="/">Symphony's Library</Link>
           </li>
-          <li className="text-lg flex items-center justify-center">
-            <Link to="/about">About</Link>
-          </li>
-          <li className="text-lg flex items-center justify-center">
-            <Link to="/items">Items</Link>
-          </li>
-          <li className="text-lg flex items-center justify-center">
-            <Link to="/api/members">Members</Link>
-          </li>
           {isLoggedIn && isAdmin && (
             <li className="text-nav">
               <Link to="/admin" className="text-white font-bold">

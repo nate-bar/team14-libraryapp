@@ -1,7 +1,7 @@
 import React, { useState } from "react";
-
+import "./admin.css";
 export default function AdminPage() {
-  const [formType, setFormType] = useState("book"); // Toggle between "book" and "media"
+  const [formType, setFormType] = useState("book"); // Toggle between "book" and "media" ande "itemdevice"
   const [formData, setFormData] = useState({
     isbn: "",
     title: "",
@@ -16,6 +16,10 @@ export default function AdminPage() {
     releaseYear: "",
     format: "",
     rating: "",
+    deviceId: "",
+    deviceName: "",
+    deviceType: "",
+    manufacturer: "",
   });
   const [message, setMessage] = useState("");
 
@@ -108,97 +112,136 @@ export default function AdminPage() {
       formDataToSend.append("releaseYear", formData.releaseYear || "");
       formDataToSend.append("format", formData.format || "");
       formDataToSend.append("rating", formData.rating || "");
-    }
-
-    try {
-      const endpoint =
-        formType === "book" ? "/api/admin/add-book" : "/api/admin/add-media";
-      const response = await fetch(endpoint, {
-        method: "POST",
-        body: formDataToSend,
+  } else if (formType === "device") {
+    formDataToSend.append("deviceId", formData.deviceId || "");
+    formDataToSend.append("deviceName", formData.deviceName || "");
+    formDataToSend.append("deviceType", formData.deviceType || "");
+    formDataToSend.append("manufacturer", formData.manufacturer || "");
+  }
+  try {
+    const endpoint =
+      formType === "book"
+        ? "/api/admin/add-book"
+        : formType === "media"
+        ? "/api/admin/add-media"
+        : "/api/admin/add-device";
+  
+    const response = await fetch(endpoint, {
+      method: "POST",
+      body: formDataToSend,
+    });
+  
+    const result = await response.json();
+    if (response.ok) {
+      setMessage(
+        `${formType.charAt(0).toUpperCase() + formType.slice(1)} added successfully!`
+      );
+      setFormData({
+        isbn: "",
+        title: "",
+        authors: "",
+        genreId: "",
+        publisher: "",
+        publicationYear: "",
+        languageId: "",
+        photo: null,
+        director: "",
+        leads: "",
+        releaseYear: "",
+        format: "",
+        rating: "",
+        deviceId: "",
+        deviceName: "",
+        deviceType: "",
+        manufacturer: "",
       });
-
-      const result = await response.json();
-      if (response.ok) {
-        setMessage(
-          `${formType === "book" ? "Book" : "Media"} added successfully!`
-        );
-        setFormData({
-          isbn: "",
-          title: "",
-          authors: "",
-          genreId: "",
-          publisher: "",
-          publicationYear: "",
-          languageId: "",
-          photo: null,
-          director: "",
-          leads: "",
-          releaseYear: "",
-          format: "",
-          rating: "",
-        });
-      } else {
-        setMessage(result.error || `Failed to add ${formType}.`);
-      }
-    } catch (error) {
-      console.error(`Error adding ${formType}:`, error);
-      setMessage(`An error occurred while adding the ${formType}.`);
+    } else {
+      setMessage(result.error || `Failed to add ${formType}.`);
     }
+  } catch (error) {
+    console.error(`Error adding ${formType}:`, error);
+    setMessage(`An error occurred while adding the ${formType}.`);
+  }  
   }
 
   return (
-    <div>
-      <h1>Admin Portal - Add {formType === "book" ? "Book" : "Media"}</h1>
-      {message && <p>{message}</p>}
-      <div>
-        <button onClick={() => setFormType("book")}>Add Book</button>
-        <button onClick={() => setFormType("media")}>Add Media</button>
+<div className="admin-container">
+      <h1 className="admin-header" >Admin Portal - Add {formType === "book" ? "Book" : "Media"}</h1>
+      {message && <p className="admin-message">{message}</p>}
+      <div className="admin-buttons">
+        <button className="admin-button" onClick={() => setFormType("book")}>Add Book</button>
+        <button className="admin-button" onClick={() => setFormType("media")}>Add Media</button>
+        <button className="admin-button" onClick={() => setFormType("device")}>Add Device</button>
       </div>
-      <form onSubmit={handleSubmit}>
-        <input
-          type="text"
-          name="title"
-          placeholder="Title"
-          value={formData.title}
-          onChange={handleChange}
-          required
-        />
-        <select
-          name="genreId"
-          value={formData.genreId}
-          onChange={handleChange}
-          required
-        >
-          <option value="">Select Genre</option>
-          {genres.map((genre) => (
-            <option key={genre.id} value={genre.id}>
-              {genre.name}
-            </option>
-          ))}
-        </select>
-        <select
-          name="languageId"
-          value={formData.languageId}
-          onChange={handleChange}
-          required
-        >
-          <option value="">Select Language</option>
-          {languages.map((language) => (
-            <option key={language.id} value={language.id}>
-              {language.name}
-            </option>
-          ))}
-        </select>
-        <input
-          type="file"
-          name="photo"
-          accept="image/*"
-          onChange={handleFileChange}
-        />
+      <form className="admin-form" onSubmit={handleSubmit}>
+      {(formType === "book" || formType === "media") && (
+  <>
+    <input
+      className="admin-input"
+      type="text"
+      name="title"
+      placeholder="Title"
+      value={formData.title}
+      onChange={handleChange}
+      required
+    />
+    <select
+      className="admin-select"
+      name="genreId"
+      value={formData.genreId}
+      onChange={handleChange}
+      required
+    >
+      <option value="">Select Genre</option>
+      {genres.map((genre) => (
+        <option key={genre.id} value={genre.id}>
+          {genre.name}
+        </option>
+      ))}
+    </select>
+    <select
+      className="admin-select"
+      name="languageId"
+      value={formData.languageId}
+      onChange={handleChange}
+      required
+    >
+      <option value="">Select Language</option>
+      {languages.map((language) => (
+        <option key={language.id} value={language.id}>
+          {language.name}
+        </option>
+      ))}
+    </select>
+  </>
+)}
+        <div className="admin-file-section">
+  <div className="admin-line" />
+  <div className="admin-file-wrapper">
+    <label htmlFor="photo-upload" className="admin-file-label">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.172 7l-3.586-3.586a2 2 0 00-2.828 0L5 7M7 7v10a2 2 0 002 2h6a2 2 0 002-2V7m-5 4v4" />
+      </svg>
+      Choose File
+    </label>
+    <input
+      id="photo-upload"
+      className="admin-file-input"
+      type="file"
+      name="photo"
+      accept="image/*"
+      onChange={handleFileChange}
+    />
+    {formData.photo && (
+      <span className="admin-file-name">{formData.photo.name}</span>
+    )}
+  </div>
+  <div className="admin-line" />
+</div>
+
         {formType === "book" && (
           <>
-            <input
+            <input className="admin-input"
               type="text"
               name="isbn"
               placeholder="ISBN"
@@ -206,7 +249,8 @@ export default function AdminPage() {
               onChange={handleChange}
               required
             />
-            <input
+            <input 
+            className="admin-input"
               type="text"
               name="authors"
               placeholder="Authors (Optional)"
@@ -214,6 +258,7 @@ export default function AdminPage() {
               onChange={handleChange}
             />
             <input
+            className="admin-input"
               type="text"
               name="publisher"
               placeholder="Publisher (Optional)"
@@ -221,6 +266,7 @@ export default function AdminPage() {
               onChange={handleChange}
             />
             <input
+            className="admin-input"
               type="text"
               name="publicationYear"
               placeholder="Publication Year (Optional)"
@@ -232,6 +278,7 @@ export default function AdminPage() {
         {formType === "media" && (
           <>
             <input
+            className="admin-input"
               type="text"
               name="director"
               placeholder="Director (Optional)"
@@ -239,6 +286,7 @@ export default function AdminPage() {
               onChange={handleChange}
             />
             <input
+            className="admin-input"
               type="text"
               name="leads"
               placeholder="Leads (Optional)"
@@ -246,6 +294,7 @@ export default function AdminPage() {
               onChange={handleChange}
             />
             <input
+            className="admin-input"
               type="text"
               name="releaseYear"
               placeholder="Release Year (Optional)"
@@ -253,6 +302,7 @@ export default function AdminPage() {
               onChange={handleChange}
             />
             <input
+            className="admin-input"
               type="text"
               name="format"
               placeholder="Format (Optional)"
@@ -260,6 +310,7 @@ export default function AdminPage() {
               onChange={handleChange}
             />
             <input
+            className="admin-input"
               type="text"
               name="rating"
               placeholder="Rating (Optional)"
@@ -268,9 +319,50 @@ export default function AdminPage() {
             />
           </>
         )}
-        <button type="submit">
-          Add {formType === "book" ? "Book" : "Media"}
-        </button>
+{formType === "device" && (
+  <>
+    <input
+      className="admin-input"
+      type="text"
+      name="deviceId"
+      placeholder="Device ID"
+      value={formData.deviceId}
+      onChange={handleChange}
+      required
+    />
+    <input
+      className="admin-input"
+      type="text"
+      name="deviceName"
+      placeholder="Device Name"
+      value={formData.deviceName}
+      onChange={handleChange}
+      required
+    />
+    <input
+      className="admin-input"
+      type="text"
+      name="deviceType"
+      placeholder="Device Type"
+      value={formData.deviceType}
+      onChange={handleChange}
+      required
+    />
+    <input
+      className="admin-input"
+      type="text"
+      name="manufacturer"
+      placeholder="Manufacturer"
+      value={formData.manufacturer}
+      onChange={handleChange}
+      required
+    />
+  </>
+)}
+<button className="admin-submit" type="submit">
+  Add {formType === "book" ? "Book" : formType === "media" ? "Media" : "Device"}
+</button>
+
       </form>
     </div>
   );

@@ -1,4 +1,3 @@
-// app/routes/signup/signup.tsx
 import React, { useState } from "react";
 import { useNavigate } from "react-router";
 import { type AccountSignup } from "~/services/api";
@@ -8,18 +7,18 @@ import "./signup.css";
 const SignupForm: React.FC = () => {
   const navigate = useNavigate();
 
-  // State to hold the input values (make sure AccountSignup has these fields defined)
   const [accountData, setAccountData] = useState<AccountSignup>({
     email: "",
     password: "",
-    group: "",
+    GroupID: "",
     firstName: "",
     middleName: "",
     lastName: "",
     address: "",
+    birthdate: "",
+    phoneNumber: "",
   });
 
-  // Handle change for input fields
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ): void => {
@@ -30,15 +29,32 @@ const SignupForm: React.FC = () => {
     }));
   };
 
-  // Handle form submission
+  const validateForm = (): string | null => {
+    const { email, password, phoneNumber, birthdate } = accountData;
+
+    if (!email || !/^\S+@\S+\.\S+$/.test(email)) return "Enter a valid email.";
+    if (!password || password.length < 6)
+      return "Password must be at least 6 characters.";
+    if (!phoneNumber || !/^\d{3}-\d{3}-\d{4}$/.test(phoneNumber))
+      return "Enter a valid phone number (e.g. 123-456-7890).";
+    if (!birthdate) return "Birthdate is required.";
+
+    return null;
+  };
+
   const handleSubmit = async (
     e: React.FormEvent<HTMLFormElement>
   ): Promise<void> => {
     e.preventDefault();
     console.log("Form submitted:", accountData);
 
+    const validationError = validateForm();
+    if (validationError) {
+      alert(validationError);
+      return;
+    }
+
     try {
-      // HERE IS WHERE WE CALL createAccount FUNCTION FROM signup/queries.ts
       const result = await createAccount(accountData);
 
       if (!result.success) {
@@ -52,17 +68,16 @@ const SignupForm: React.FC = () => {
       setAccountData({
         email: "",
         password: "",
-        group: "Student",
+        GroupID: "",
         firstName: "",
         middleName: "",
         lastName: "",
         address: "",
+        birthdate: "",
+        phoneNumber: "",
       });
 
-      // Show success message
       alert("Registration successful! Redirecting to login page...");
-
-      // Redirect to login page
       navigate("/login");
     } catch (error) {
       console.error("Error submitting form:", error);
@@ -76,14 +91,10 @@ const SignupForm: React.FC = () => {
         <h1 className="text-2xl font-bold mb-6 text-center">Signup Form</h1>
 
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Group: First Name, Middle Name, Last Name (stacked vertically) */}
+          {/* Name Fields */}
           <div className="form-group">
-            {/* First Name Field */}
             <div>
-              <label
-                htmlFor="firstName"
-                className="block text-gray-700 font-medium mb-1"
-              >
+              <label htmlFor="firstName" className="block text-gray-700 font-medium mb-1">
                 First Name
               </label>
               <input
@@ -96,12 +107,9 @@ const SignupForm: React.FC = () => {
                 placeholder="Eg. Abigail"
               />
             </div>
-            {/* Middle Name Field */}
+
             <div>
-              <label
-                htmlFor="middleName"
-                className="block text-gray-700 font-medium mb-1"
-              >
+              <label htmlFor="middleName" className="block text-gray-700 font-medium mb-1">
                 Middle Name
               </label>
               <input
@@ -114,12 +122,9 @@ const SignupForm: React.FC = () => {
                 placeholder="Eg. Jane"
               />
             </div>
-            {/* Last Name Field */}
+
             <div>
-              <label
-                htmlFor="lastName"
-                className="block text-gray-700 font-medium mb-1"
-              >
+              <label htmlFor="lastName" className="block text-gray-700 font-medium mb-1">
                 Last Name
               </label>
               <input
@@ -134,31 +139,24 @@ const SignupForm: React.FC = () => {
             </div>
           </div>
 
-          {/* Row Group: Birthdate and Address (side by side) */}
+          {/* Birthdate & Address */}
           <div className="row-group">
-            {/*<div>
-              <label
-                htmlFor="Bdate"
-                className="block text-gray-700 font-medium mb-1"
-              >
+            <div>
+              <label htmlFor="birthdate" className="block text-gray-700 font-medium mb-1">
                 Birthdate
               </label>
               <input
                 type="date"
-                id="Bdate"
-                name="Bdate"
-                value={accountData.Bdate}
+                id="birthdate"
+                name="birthdate"
+                value={accountData.birthdate}
                 onChange={handleInputChange}
                 className="input-field"
-                placeholder="YYYY-MM-DD"
               />
             </div>
-            */}
+
             <div>
-              <label
-                htmlFor="address"
-                className="block text-gray-700 font-medium mb-1"
-              >
+              <label htmlFor="address" className="block text-gray-700 font-medium mb-1">
                 Address
               </label>
               <input
@@ -173,13 +171,26 @@ const SignupForm: React.FC = () => {
             </div>
           </div>
 
-          {/* Row Group: Email and Password (side by side) */}
+          {/* Phone Number */}
+          <div>
+            <label htmlFor="phoneNumber" className="block text-gray-700 font-medium mb-1">
+              Phone Number
+            </label>
+            <input
+              type="tel"
+              id="phoneNumber"
+              name="phoneNumber"
+              value={accountData.phoneNumber}
+              onChange={handleInputChange}
+              className="input-field"
+              placeholder="Eg. 123-456-7890"
+            />
+          </div>
+
+          {/* Email and Password */}
           <div className="row-group">
             <div>
-              <label
-                htmlFor="email"
-                className="block text-gray-700 font-medium mb-1"
-              >
+              <label htmlFor="email" className="block text-gray-700 font-medium mb-1">
                 Email
               </label>
               <input
@@ -192,11 +203,9 @@ const SignupForm: React.FC = () => {
                 placeholder="Eg. Abigail.Sanders@gmail.com"
               />
             </div>
+
             <div>
-              <label
-                htmlFor="password"
-                className="block text-gray-700 font-medium mb-1"
-              >
+              <label htmlFor="password" className="block text-gray-700 font-medium mb-1">
                 Password
               </label>
               <input
@@ -211,17 +220,14 @@ const SignupForm: React.FC = () => {
             </div>
           </div>
 
-          {/* Group Selection Dropdown */}
+          {/* Group Selection */}
           <div>
-            <label
-              htmlFor="group"
-              className="block text-gray-700 font-medium mb-1"
-            >
+            <label htmlFor="GroupID" className="block text-gray-700 font-medium mb-1">
               I am a
             </label>
             <select
-              id="group"
-              name="group"
+              id="GroupID"
+              name="GroupID"
               value={accountData.group}
               onChange={handleInputChange}
               className="custom-select"
@@ -229,6 +235,7 @@ const SignupForm: React.FC = () => {
             >
               <option value="Student">Student</option>
               <option value="Faculty">Faculty</option>
+              <option value="Administrator">Administrator</option>
             </select>
           </div>
 
