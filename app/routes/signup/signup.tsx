@@ -10,13 +10,22 @@ const SignupForm: React.FC = () => {
   const [accountData, setAccountData] = useState<AccountSignup>({
     email: "",
     password: "",
-    GroupID: "",
+    groupID: "",
     firstName: "",
     middleName: "",
     lastName: "",
     address: "",
-    birthdate: "",
+    birthDate: "",
     phoneNumber: "",
+  });
+
+  const [errors, setErrors] = useState({
+    email: "",
+    password: "",
+    birthDate: "",
+    phoneNumber: "",
+    firstName: "",
+    lastName: "",
   });
 
   const handleInputChange = (
@@ -29,17 +38,36 @@ const SignupForm: React.FC = () => {
     }));
   };
 
-  const validateForm = (): string | null => {
-    const { email, password, phoneNumber, birthdate } = accountData;
+  const validateForm = (): boolean => {
+    const newErrors = {
+      email: "",
+      password: "",
+      phoneNumber: "",
+      birthDate: "",
+      firstName: "",
+      lastName: "",
+    };
+    const { email, password, phoneNumber, birthDate, firstName, lastName } =
+      accountData;
 
-    if (!email || !/^\S+@\S+\.\S+$/.test(email)) return "Enter a valid email.";
-    if (!password || password.length < 6)
-      return "Password must be at least 6 characters.";
+    // we need to validate all this in the backend too, and basically return an error if anythings wrong
+    // this is really for checking if the values are there so we can handle the error in the front end
+    // instead of the server returning an error message
+    if (!email || !/^\S+@\S+\.\S+$/.test(email))
+      // good validation
+      newErrors.email = "Enter a valid email.";
+    if (!password || password.length < 8)
+      // idk why changing this to 8
+      newErrors.password = "Password must be at least 8 characters.";
     if (!phoneNumber || !/^\d{3}-\d{3}-\d{4}$/.test(phoneNumber))
-      return "Enter a valid phone number (e.g. 123-456-7890).";
-    if (!birthdate) return "Birthdate is required.";
+      // good validation
+      newErrors.phoneNumber = "Enter a valid phone number (e.g. 123-456-7890).";
+    if (!birthDate) newErrors.birthDate = "Birthdate is required.";
+    if (!firstName) newErrors.firstName = "First name is required";
+    if (!lastName) newErrors.lastName = "Last name is required";
 
-    return null;
+    setErrors(newErrors);
+    return !Object.values(newErrors).some((error) => error);
   };
 
   const handleSubmit = async (
@@ -49,8 +77,8 @@ const SignupForm: React.FC = () => {
     console.log("Form submitted:", accountData);
 
     const validationError = validateForm();
-    if (validationError) {
-      alert(validationError);
+    if (!validationError) {
+      //alert(validationError);
       return;
     }
 
@@ -68,12 +96,12 @@ const SignupForm: React.FC = () => {
       setAccountData({
         email: "",
         password: "",
-        GroupID: "",
+        groupID: "",
         firstName: "",
         middleName: "",
         lastName: "",
         address: "",
-        birthdate: "",
+        birthDate: "",
         phoneNumber: "",
       });
 
@@ -94,7 +122,10 @@ const SignupForm: React.FC = () => {
           {/* Name Fields */}
           <div className="form-group">
             <div>
-              <label htmlFor="firstName" className="block text-gray-700 font-medium mb-1">
+              <label
+                htmlFor="firstName"
+                className="block text-gray-700 font-medium mb-1"
+              >
                 First Name
               </label>
               <input
@@ -103,13 +134,21 @@ const SignupForm: React.FC = () => {
                 name="firstName"
                 value={accountData.firstName}
                 onChange={handleInputChange}
-                className="input-field"
+                className={`input-field ${
+                  errors.firstName ? "error-field" : ""
+                }`}
                 placeholder="Eg. Abigail"
               />
+              {errors.firstName && (
+                <div className="error-message">{errors.firstName}</div>
+              )}
             </div>
 
             <div>
-              <label htmlFor="middleName" className="block text-gray-700 font-medium mb-1">
+              <label
+                htmlFor="middleName"
+                className="block text-gray-700 font-medium mb-1"
+              >
                 Middle Name
               </label>
               <input
@@ -124,7 +163,10 @@ const SignupForm: React.FC = () => {
             </div>
 
             <div>
-              <label htmlFor="lastName" className="block text-gray-700 font-medium mb-1">
+              <label
+                htmlFor="lastName"
+                className="block text-gray-700 font-medium mb-1"
+              >
                 Last Name
               </label>
               <input
@@ -133,30 +175,46 @@ const SignupForm: React.FC = () => {
                 name="lastName"
                 value={accountData.lastName}
                 onChange={handleInputChange}
-                className="input-field"
+                className={`input-field ${
+                  errors.lastName ? "error-field" : ""
+                }`}
                 placeholder="Eg. Sanders"
               />
+              {errors.lastName && (
+                <div className="error-message">{errors.lastName}</div>
+              )}
             </div>
           </div>
 
           {/* Birthdate & Address */}
           <div className="row-group">
             <div>
-              <label htmlFor="birthdate" className="block text-gray-700 font-medium mb-1">
+              <label
+                htmlFor="birthDate"
+                className="block text-gray-700 font-medium mb-1"
+              >
                 Birthdate
               </label>
               <input
                 type="date"
-                id="birthdate"
-                name="birthdate"
-                value={accountData.birthdate}
+                id="birthDate"
+                name="birthDate"
+                value={accountData.birthDate}
                 onChange={handleInputChange}
-                className="input-field"
+                className={`input-field ${
+                  errors.birthDate ? "error-field" : ""
+                }`}
               />
+              {errors.birthDate && (
+                <div className="error-message">{errors.birthDate}</div>
+              )}
             </div>
 
             <div>
-              <label htmlFor="address" className="block text-gray-700 font-medium mb-1">
+              <label
+                htmlFor="address"
+                className="block text-gray-700 font-medium mb-1"
+              >
                 Address
               </label>
               <input
@@ -173,7 +231,10 @@ const SignupForm: React.FC = () => {
 
           {/* Phone Number */}
           <div>
-            <label htmlFor="phoneNumber" className="block text-gray-700 font-medium mb-1">
+            <label
+              htmlFor="phoneNumber"
+              className="block text-gray-700 font-medium mb-1"
+            >
               Phone Number
             </label>
             <input
@@ -182,15 +243,23 @@ const SignupForm: React.FC = () => {
               name="phoneNumber"
               value={accountData.phoneNumber}
               onChange={handleInputChange}
-              className="input-field"
+              className={`input-field ${
+                errors.phoneNumber ? "error-field" : ""
+              }`}
               placeholder="Eg. 123-456-7890"
             />
+            {errors.phoneNumber && (
+              <div className="error-message">{errors.phoneNumber}</div>
+            )}
           </div>
 
           {/* Email and Password */}
           <div className="row-group">
             <div>
-              <label htmlFor="email" className="block text-gray-700 font-medium mb-1">
+              <label
+                htmlFor="email"
+                className="block text-gray-700 font-medium mb-1"
+              >
                 Email
               </label>
               <input
@@ -199,13 +268,19 @@ const SignupForm: React.FC = () => {
                 name="email"
                 value={accountData.email}
                 onChange={handleInputChange}
-                className="input-field"
+                className={`input-field ${errors.email ? "error-field" : ""}`}
                 placeholder="Eg. Abigail.Sanders@gmail.com"
               />
+              {errors.email && (
+                <div className="error-message">{errors.email}</div>
+              )}
             </div>
 
             <div>
-              <label htmlFor="password" className="block text-gray-700 font-medium mb-1">
+              <label
+                htmlFor="password"
+                className="block text-gray-700 font-medium mb-1"
+              >
                 Password
               </label>
               <input
@@ -214,28 +289,39 @@ const SignupForm: React.FC = () => {
                 name="password"
                 value={accountData.password}
                 onChange={handleInputChange}
-                className="input-field"
+                className={`input-field ${
+                  errors.password ? "error-field" : ""
+                }`}
                 placeholder="Enter your password..."
               />
+              {errors.password && (
+                <div className="error-message">{errors.password}</div>
+              )}
             </div>
           </div>
 
           {/* Group Selection */}
           <div>
-            <label htmlFor="GroupID" className="block text-gray-700 font-medium mb-1">
+            <label
+              htmlFor="groupID"
+              className="block text-gray-700 font-medium mb-1"
+            >
               I am a
             </label>
             <select
-              id="GroupID"
-              name="GroupID"
-              value={accountData.group}
+              id="groupID"
+              name="groupID"
+              value={accountData.groupID}
               onChange={handleInputChange}
               className="custom-select"
               required
             >
               <option value="Student">Student</option>
               <option value="Faculty">Faculty</option>
-              <option value="Administrator">Administrator</option>
+              {/*<option value="Administrator">Administrator</option>{" "}
+              commenting this out because I dont really want people
+              to make administrator accounts because they can like delete/add stuff to the database
+              but uncomment if you need to make an admin account*/}
             </select>
           </div>
 
