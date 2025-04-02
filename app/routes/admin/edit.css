@@ -1,0 +1,78 @@
+/* AdminEditPage.css */
+
+.admin-edit-container {
+    max-width: 1200px;
+    margin: 2rem auto;
+    padding: 2rem;
+    background-color: #fff;
+    border-radius: 12px;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+    font-family: 'Segoe UI', sans-serif;
+  }
+  
+  .admin-edit-message {
+    margin-bottom: 1rem;
+    color: #155724;
+    background-color: #d4edda;
+    padding: 0.75rem 1rem;
+    border-left: 4px solid #28a745;
+    border-radius: 6px;
+    font-size: 0.95rem;
+  }
+  
+  .admin-edit-table {
+    width: 100%;
+    border-collapse: collapse;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 1px 5px rgba(0, 0, 0, 0.1);
+  }
+  
+  .admin-edit-table th,
+  .admin-edit-table td {
+    padding: 12px 16px;
+    text-align: left;
+    font-size: 0.95rem;
+  }
+  
+  .admin-edit-table th {
+    background-color: #f5f5f5;
+    font-weight: 600;
+    color: #333;
+  }
+
+  .admin-edit-table td {
+    border-top: 1px solid #eee;
+  }
+  
+  .admin-edit-photo {
+    width: 80px;
+    height: auto;
+    object-fit: cover;
+    border-radius: 4px;
+    box-shadow: 0 0 4px rgba(0, 0, 0, 0.1);
+  }
+  
+  .admin-edit-delete-btn {
+    background-color: #76c6de;
+    color: #fff;
+    padding: 0.4rem 0.75rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: background-color 0.2s ease;
+  }
+  
+  .admin-edit-delete-btn:hover {
+    background-color: #e4c9a8
+    ;
+  }
+  
+  .admin-edit-empty {
+    text-align: center;
+    padding: 1rem;
+    font-style: italic;
+    color: #777;
+  }
+  

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-
+import "./edit.css";
 interface Item {
   ItemID: string;
   Title: string;
@@ -48,13 +48,12 @@ export default function AdminEditPage() {
       setMessage("Error deleting item.");
     }
   }
-
   return (
-    <div>
-      {message && <p>{message}</p>}
-      <table border={1} cellPadding={5} cellSpacing={0}>
+    <div className="admin-edit-container">
+      {message && <p className="admin-edit-message">{message}</p>}
+      <table className="admin-edit-table">
         <thead>
-          <tr>
+          <tr className="admin-bar">
             <th>Photo</th>
             <th>Title</th>
             <th>Item ID</th>
@@ -69,17 +68,13 @@ export default function AdminEditPage() {
               <tr key={item.ItemID}>
                 <td>
                   <img
+                    className="admin-edit-photo"
                     src={
                       item.PhotoBase64
                         ? `data:image/jpeg;base64,${item.PhotoBase64}`
-                        : "/placeholder.jpg" // Fallback image if PhotoBase64 is null
+                        : "/placeholder.jpg"
                     }
                     alt={item.Title}
-                    style={{
-                      width: "80px",
-                      height: "auto",
-                      objectFit: "cover",
-                    }}
                   />
                 </td>
                 <td>{item.Title}</td>
@@ -87,7 +82,10 @@ export default function AdminEditPage() {
                 <td>{item.TypeName}</td>
                 <td>{item.Status}</td>
                 <td>
-                  <button onClick={() => handleDelete(item.ItemID)}>
+                  <button
+                    className="admin-edit-delete-btn"
+                    onClick={() => handleDelete(item.ItemID)}
+                  >
                     Delete
                   </button>
                 </td>
@@ -95,7 +93,9 @@ export default function AdminEditPage() {
             ))
           ) : (
             <tr>
-              <td colSpan={6}>No items found.</td>
+              <td className="admin-edit-empty" colSpan={6}>
+                No items found.
+              </td>
             </tr>
           )}
         </tbody>

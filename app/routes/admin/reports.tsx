@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-
+import "./reports.css";
 const Report = () => {
   const [data, setData] = useState([]); // Holds the fetched data
   const [error, setError] = useState("");
@@ -35,13 +35,12 @@ const Report = () => {
   }, [selectedReport]); // Re-fetch data when the selected report changes
 
   return (
-    <div className="container mx-auto p-6">
-
+    <div className="report-container">
       {/* Dropdown for selecting reports */}
       <div className="mb-6">
         <label
           htmlFor="reportSelect"
-          className="block text-gray-700 font-medium mb-2"
+          className="report-select-label"
         >
           Select Report:
         </label>
@@ -49,7 +48,7 @@ const Report = () => {
           id="reportSelect"
           value={selectedReport}
           onChange={(e) => setSelectedReport(e.target.value)}
-          className="w-full p-3 border border-gray-300 rounded shadow focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="report-select"
         >
           <option value="userReport">User Report</option>
           <option value="Report2">Borrow Summary Report</option>
@@ -57,11 +56,11 @@ const Report = () => {
         </select>
       </div>
 
-      {error && <p className="text-red-500 text-center mb-4">{error}</p>}
+      {error && <p className="report-error">{error}</p>}
 
       {data.length > 0 ? (
         <div className="overflow-x-auto">
-          <table className="table-auto w-full border-collapse border border-gray-300 shadow-lg">
+          <table className="report-table">
             <thead className="bg-gray-100">
               <tr>
                 {/* Adjust table headers dynamically based on the selected report */}
@@ -250,7 +249,8 @@ const Report = () => {
           </table>
         </div>
       ) : (
-        <p className="text-center text-gray-500">
+        <p className="report-empty"
+        >
           No data found for the selected report.
         </p>
       )}
