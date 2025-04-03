@@ -12,6 +12,11 @@ export function NavBar2() {
   const searchRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
 
+  const triggerFilterReset = () => {
+    // Dispatch a custom event that the catalog page can listen for
+    window.dispatchEvent(new Event("resetCatalogFilters"));
+  };
+
   // Fetch items from API
   useEffect(() => {
     fetch("/api/items")
@@ -84,7 +89,9 @@ export function NavBar2() {
             <Link to="/">Home</Link>
           </li>
           <li className="text-nav2">
-            <Link to="/catalog">Catalog</Link>
+            <Link to="/catalog" onClick={triggerFilterReset}>
+              Catalog
+            </Link>
           </li>
           <li className="text-nav2 relative">
             <Link to="/cart">

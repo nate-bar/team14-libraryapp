@@ -11,16 +11,40 @@ const UsingFetch = () => {
   const [typeFilter, setTypeFilter] = useState(""); // State for the type dropdown filter
   const [genreFilter, setGenreFilter] = useState(""); // State for the genre dropdown filter
 
-  const fetchGenres = () => {
-    fetch("/api/genres")
+  const resetFilters = () => {
+    setTypeFilter("");
+    setGenreFilter("");
+    setFilteredItems(items);
+    setGenres([]);
+  };
+
+  const fetchGenres = (type: string) => {
+    let endpoint = "";
+    switch (type) {
+      case "Book":
+        endpoint = "/api/bookgenres";
+        break;
+      case "Media":
+        endpoint = "/api/mediagenres";
+        break;
+      default:
+        setGenres([]);
+        return;
+    }
+
+    fetch(endpoint)
       .then((response) => {
         if (!response.ok) {
-          throw new Error("Failed to fetch genres");
+          throw new Error(`Failed to fetch ${type} genres`);
         }
         return response.json();
       })
       .then((data) => {
         setGenres(data);
+      })
+      .catch((error) => {
+        console.error(`Error fetching ${type} genres:`, error);
+        setGenres([]);
       });
   };
 
@@ -56,14 +80,32 @@ const UsingFetch = () => {
   // Fetch items on component mount
   useEffect(() => {
     fetchData();
-    fetchGenres();
   }, []);
+
+  useEffect(() => {
+    const handleFilterReset = () => {
+      resetFilters();
+    };
+
+    window.addEventListener("resetCatalogFilters", handleFilterReset);
+
+    // Cleanup listener
+    return () => {
+      window.removeEventListener("resetCatalogFilters", handleFilterReset);
+    };
+  }, [items]);
 
   // Handle type dropdown filter change
   const handleTypeFilterChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const selectedType = e.target.value;
     setTypeFilter(selectedType);
     setGenreFilter(""); // Reset genre filter when type changes
+
+    if (selectedType === "Book" || selectedType === "Media") {
+      fetchGenres(selectedType);
+    } else {
+      setGenres([]); // Clear genres for other types
+    }
 
     if (selectedType === "") {
       setFilteredItems(items); // Show all items if no type is selected
@@ -148,7 +190,35 @@ const UsingFetch = () => {
                   className="w-full h-48 object-contain rounded-lg mb-2"
                 />
               ) : (
-                <p className="text-gray-500">No Photo Available</p>
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 200 200"
+                  className="w-full h-48 object-contain rounded-lg mb-2"
+                  style={{ backgroundColor: "#f0f0f0" }}
+                >
+                  <rect width="200" height="200" fill="#e0e0e0" />
+                  <path
+                    d="M50 75 L150 75 Q175 75, 175 100 L175 125 Q175 150, 150 150 L50 150 Q25 150, 25 125 L25 100 Q25 75, 50 75 Z"
+                    fill="white"
+                    stroke="#a0a0a0"
+                    stroke-width="2"
+                  />
+                  <text
+                    x="100"
+                    y="110"
+                    font-family="Arial, sans-serif"
+                    font-size="16"
+                    text-anchor="middle"
+                    fill="#a0a0a0"
+                  >
+                    No Image
+                  </text>
+                  <path
+                    d="M70 85 L130 135 M130 85 L70 135"
+                    stroke="#a0a0a0"
+                    stroke-width="2"
+                  />
+                </svg>
               )}
               <p className="text-sm text-gray-700">
                 <strong>Type:</strong> {item.TypeName}

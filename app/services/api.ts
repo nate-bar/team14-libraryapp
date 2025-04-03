@@ -28,42 +28,37 @@ export interface CartItem {
 }
 
 export interface Book {
-  ItemID: number;
-  Title: string;
-  TypeName: string;
-  Status: string;
-  Authors: string;
-  Publisher: string;
-  PublicationYear: number;
-  ISBN: string;
-  GenreName: string;
-  Photo?: string;
+  isbn: string;
+  title: string;
+  typename: string;
+  authors: string;
+  publisher: string;
+  publicationyear: number;
+  genreid: number;
+  languageid: number;
+  photo?: File | Blob | null;
 }
 
 export interface Media {
-  ItemID: number;
-  TypeName: string;
-  Status: string;
-  MediaID: number;
-  Director: string;
-  Leads: string;
-  ReleaseYear: number;
-  GenreName: string;
-  Language: string;
-  Format: string;
-  Rating: number;
-  Photo?: string;
+  title: string;
+  typename: string;
+  director: string;
+  leads: string;
+  releaseyear: number;
+  format: string;
+  rating: number;
+  languageid: number;
+  genreid: number;
+  photo?: File | Blob | null;
 }
 
 export interface Device {
-  ItemID: number;
-  Title: string;
-  TypeName: string;
-  Status: string;
-  DeviceID: number;
-  DeviceType: string;
-  Manufacturer: string;
-  Photo?: string;
+  title: string;
+  typename: string;
+  devicename: string;
+  devicetype: string;
+  manufacturer: string;
+  photo?: File | Blob | null;
 }
 
 // sign up interface
@@ -109,4 +104,9 @@ export interface AuthData {
 export interface Genres {
   GenreID: number;
   GenreName: string;
+}
+
+export interface Languages {
+  LanguageID: number;
+  Language: string;
 }
