@@ -4,8 +4,11 @@ import { type Genres } from "~/services/api";
 import { type Languages } from "~/services/api";
 import { type Media } from "~/services/api";
 import Compressor from "compressorjs";
+import { useOutletContext } from "react-router";
+import { type AuthData } from "~/services/api";
 
 const MediaForm: React.FC = () => {
+  const { email } = useOutletContext<AuthData>();
   const [genres, setGenres] = useState<Genres[]>([]);
   const [languages, setLanguages] = useState<Languages[]>([]);
   const [fileName, setFileName] = useState<string>("");
@@ -20,6 +23,7 @@ const MediaForm: React.FC = () => {
     genreid: 0,
     languageid: 0,
     photo: null as File | null,
+    createdby: email,
   });
 
   const fetchGenres = () => {
@@ -195,6 +199,7 @@ const MediaForm: React.FC = () => {
         photo: null,
         format: "",
         rating: 0,
+        createdby: email,
       });
       alert("Media entered successfully!");
     } catch (error) {

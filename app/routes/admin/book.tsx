@@ -4,8 +4,11 @@ import { addBook } from "./queries";
 import { type Genres } from "~/services/api";
 import { type Languages } from "~/services/api";
 import Compressor from "compressorjs";
+import { type AuthData } from "~/services/api";
+import { useOutletContext } from "react-router";
 
 const BookForm: React.FC = () => {
+  const { email } = useOutletContext<AuthData>();
   const [genres, setGenres] = useState<Genres[]>([]);
   const [languages, setLanguages] = useState<Languages[]>([]);
   const [fileName, setFileName] = useState<string>("");
@@ -19,6 +22,7 @@ const BookForm: React.FC = () => {
     genreid: 0,
     languageid: 0,
     photo: null as File | null,
+    createdby: email,
   });
 
   const fetchGenres = () => {
@@ -196,6 +200,7 @@ const BookForm: React.FC = () => {
         genreid: 0,
         languageid: 0,
         photo: null,
+        createdby: email,
       });
       alert("Book entered successfully!");
     } catch (error) {

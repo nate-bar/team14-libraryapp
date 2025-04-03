@@ -75,7 +75,7 @@ export default function Admin() {
         </div>
       </nav>
       <main className="p-4">
-        <Outlet />
+        <Outlet context={authData} />
       </main>
     </>
   );

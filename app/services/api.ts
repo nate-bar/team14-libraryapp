@@ -37,6 +37,7 @@ export interface Book {
   genreid: number;
   languageid: number;
   photo?: File | Blob | null;
+  createdby: string;
 }
 
 export interface Media {
@@ -50,6 +51,7 @@ export interface Media {
   languageid: number;
   genreid: number;
   photo?: File | Blob | null;
+  createdby: string;
 }
 
 export interface Device {
@@ -59,6 +61,7 @@ export interface Device {
   devicetype: string;
   manufacturer: string;
   photo?: File | Blob | null;
+  createdby: string;
 }
 
 // sign up interface
@@ -93,12 +96,13 @@ export interface ApiResponse {
 // now go to layouyt and fix any errors
 export interface AuthData {
   isLoggedIn: boolean;
-  memberID: number | null;
-  groupID: string | null;
-  firstName: string | null;
-  lastName: string | null;
+  memberID: number;
+  groupID: string;
+  firstName: string;
+  lastName: string;
   address: string | null;
   middleName: string | null;
+  email: string;
 }
 
 export interface Genres {

@@ -2,8 +2,11 @@ import { type Device } from "~/services/api";
 import React, { useState } from "react";
 import { addDevice } from "./queries";
 import Compressor from "compressorjs";
+import { type AuthData } from "~/services/api";
+import { useOutletContext } from "react-router";
 
 const DeviceForm: React.FC = () => {
+  const { email } = useOutletContext<AuthData>();
   const [fileName, setFileName] = useState<string>("");
   const [deviceData, setDeviceData] = useState<Device>({
     title: "",
@@ -12,6 +15,7 @@ const DeviceForm: React.FC = () => {
     devicetype: "",
     manufacturer: "",
     photo: null as File | null,
+    createdby: email,
   });
 
   const [errors, setErrors] = useState({
@@ -132,6 +136,7 @@ const DeviceForm: React.FC = () => {
         devicetype: "",
         manufacturer: "",
         photo: null,
+        createdby: email,
       });
       alert("Device entered successfully!");
     } catch (error) {

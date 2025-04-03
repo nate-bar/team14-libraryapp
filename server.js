@@ -196,6 +196,7 @@ app.post("/api/insert/:typename", upload.single("photo"), (req, res) => {
       publicationYear: item.publicationyear,
       genreId: item.genreid,
       languageId: item.languageid,
+      createdby: item.createdby,
     });
     console.log("Photo:", photo ? "Received" : "No photo");
 
@@ -218,8 +219,8 @@ app.post("/api/insert/:typename", upload.single("photo"), (req, res) => {
         }
 
         connection.query(
-          `INSERT INTO Items (Title, Photo) VALUES (?, ?)`,
-          [item.title, photo],
+          `INSERT INTO Items (Title, Photo, CreatedBy) VALUES (?, ?, ?)`,
+          [item.title, photo, item.createdby],
           (itemErr, itemsResult) => {
             if (itemErr) {
               console.error("Items Insert Error:", {
@@ -332,6 +333,7 @@ app.post("/api/insert/:typename", upload.single("photo"), (req, res) => {
       languageid: item.languageid,
       format: item.format,
       rating: item.rating,
+      createdby: item.createdby,
     });
     console.log("Photo:", photo ? "Received" : "No photo");
 
@@ -354,8 +356,8 @@ app.post("/api/insert/:typename", upload.single("photo"), (req, res) => {
         }
 
         connection.query(
-          `INSERT INTO Items (Title, Photo) VALUES (?, ?)`,
-          [item.title, photo],
+          `INSERT INTO Items (Title, Photo, CreatedBy) VALUES (?, ?, ?)`,
+          [item.title, photo, item.createdby],
           (itemErr, itemsResult) => {
             if (itemErr) {
               console.error("Items Insert Error:", {
@@ -467,6 +469,7 @@ app.post("/api/insert/:typename", upload.single("photo"), (req, res) => {
       devicename: item.devicename,
       devicetype: item.devicetype,
       manufacturer: item.manufacturer,
+      createdby: item.createdby,
     });
     console.log("Photo:", photo ? "Received" : "No photo");
 
@@ -489,8 +492,8 @@ app.post("/api/insert/:typename", upload.single("photo"), (req, res) => {
         }
 
         connection.query(
-          `INSERT INTO Items (Title, Photo) VALUES (?, ?)`,
-          [item.title, photo],
+          `INSERT INTO Items (Title, Photo, createdBy) VALUES (?, ?, ?)`,
+          [item.title, photo, item.createdby],
           (itemErr, itemsResult) => {
             if (itemErr) {
               console.error("Items Insert Error:", {
@@ -1849,6 +1852,7 @@ app.post("/api/login", async (req, res) => {
       req.session.middleName = member.MiddleName;
       req.session.lastName = member.LastName;
       req.session.address = member.Address;
+      req.session.email = member.Email;
 
       // Debug check
       //console.log("Session after setting memberID:", req.session);

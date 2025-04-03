@@ -1,9 +1,11 @@
 import React, { useState } from "react";
 import { Outlet, useOutletContext } from "react-router";
 import { Link, useLocation } from "react-router";
+import { type AuthData } from "~/services/api";
 import "./admin.css";
 export default function AddItem() {
   const location = useLocation();
+  const authData = useOutletContext<AuthData>();
 
   // Determine form type based on URL path
   const getFormType = () => {
@@ -31,7 +33,7 @@ export default function AddItem() {
         </div>
       </div>
       <main>
-        <Outlet />
+        <Outlet context={authData} />
       </main>
     </div>
   );
