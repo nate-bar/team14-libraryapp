@@ -35,10 +35,14 @@
 }
 
 .input-field:focus {
-    border-color: #3b82f6; 
+    border-color: #04197c; 
     box-shadow: 0 0 4px rgba(59, 130, 246, 0.5); 
 }
 
 .input-field::placeholder {
     color: #9ca3af; 
+}
+.sign{
+    color: #01497c; 
+    
 }

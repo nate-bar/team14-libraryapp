@@ -1016,16 +1016,28 @@ function validPassword(password, hash, salt) {
 // ------------------------------------------------- BEGIN SIGN UP -------------------------------------------------
 app.post("/api/signup", async (req, res) => {
   // get Email, Password, & GroupID from request body
-  const { email, password, groupid, firstName, middleName, lastName, address } =
-    req.body;
+  const {
+    email,
+    password,
+    groupid,
+    firstName,
+    middleName,
+    lastName,
+    address,
+    phoneNumber,
+    birthDate,
+  } = req.body;
+
+  console.log(birthDate);
+  console.log(phoneNumber);
 
   // validation check to ensure email & password were passed to server
+  // shouldnt ever see this just in case though
   if (!email || !password) {
-    res.status(400).json({ error: "Email & Password are poopy." });
     return;
   }
 
-  // validation check to ensure format of email is correct
+  // double up email regex cause why not
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   if (!emailRegex.test(email)) {
     res.status(400).json({ error: "Invalid email format" });
@@ -1034,14 +1046,21 @@ app.post("/api/signup", async (req, res) => {
 
   // validation of password strength (ex. minimum 8 characters)
   // can include others, or not if you don't want to be annoying
+  // do this shit if you want to be annoying
+  // ^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$
   if (password.length < 8) {
     res
       .status(400)
       .json({ error: "Password must be at least 8 characters long" });
     return;
   }
+  // if keeping it to just length check shouldnt ever see this
 
   // GroupID should be defaulted to Student, this will happen elsewhere??
+  if (groupid === null) {
+    groupid = "Student";
+  }
+  // just default it here tooo
 
   // Okay so we have an Email and Password here
   // We need to check if the Email already exists in database
@@ -1060,8 +1079,8 @@ app.post("/api/signup", async (req, res) => {
 
           // use connection
           connection.query(
-            "SELECT 1 FROM Members WHERE Email = ? LIMIT 1",
-            [email],
+            "SELECT 1 FROM Members WHERE Email = ? OR PhoneNumber = ? LIMIT 1",
+            [email, phoneNumber],
             (err, result) => {
               connection.release();
 
@@ -1089,14 +1108,16 @@ app.post("/api/signup", async (req, res) => {
           }
 
           connection.query(
-            "INSERT INTO Members (Email, Password, GroupID, FirstName, MiddleName, LastName, Address) VALUES (?, ?, ?, ?, ?, ?, ?)",
+            "INSERT INTO Members (FirstName, MiddleName, LastName, GroupID, Email, Password, PhoneNumber, BirthDate, Address) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
             [
-              email,
-              hashedPassword,
-              groupid,
               firstName,
               middleName,
               lastName,
+              groupid,
+              email,
+              hashedPassword,
+              phoneNumber,
+              birthDate,
               address,
             ],
             (err, result) => {
@@ -1114,7 +1135,7 @@ app.post("/api/signup", async (req, res) => {
 
     // Check if user exists
     const userExists = await checkExistingUser();
-
+    // this is an important error return
     if (userExists) {
       res.status(409).json({ error: "Account already exists" });
       return;
@@ -1126,7 +1147,7 @@ app.post("/api/signup", async (req, res) => {
     // Log successful registration
     console.log(`New user registered with email: ${email.substring(0, 3)}...`);
 
-    // Return success response
+    // Return success response, commenting out
     res
       .status(201)
       .json({ success: true, message: "Account created successfully!" });
@@ -1215,6 +1236,7 @@ app.post("/api/login", async (req, res) => {
       req.session.middleName = member.MiddleName;
       req.session.lastName = member.LastName;
       req.session.address = member.Address;
+      req.session.email = member.Email;
 
       // Debug check
       //console.log("Session after setting memberID:", req.session);

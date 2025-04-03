@@ -17,7 +17,7 @@ export default function Layout() {
   const authData = useLoaderData() as AuthData;
 
   return (
-    <div className="">
+    <div className="flex flex-col min-h-screen">
       <NavBar
         // like the one that will be here
         isLoggedIn={authData.isLoggedIn}
@@ -29,7 +29,7 @@ export default function Layout() {
         middleName={authData.middleName}
       />
       <NavBar2 />
-      <main className="pb-16">
+      <main className="flex-grow">
         <Outlet context={authData} />
       </main>
       <Footer />

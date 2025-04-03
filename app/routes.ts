@@ -8,8 +8,8 @@ import {
 export default [
   layout("routes/layout.tsx", [
     index("routes/home.tsx"),
-    route("about", "routes/about.tsx"),
-    route("items", "routes/items.tsx"),
+    route("about", "routes/info/about.tsx"),
+    route("catalog", "routes/catalog.tsx"),
     route("search", "routes/search.tsx"),
     route("admin", "routes/admin.tsx"),
     route("adminedit", "routes/adminedit.tsx"),

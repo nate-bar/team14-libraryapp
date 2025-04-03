@@ -15,6 +15,10 @@ export function getCurrentGroupID(context: any) {
 
 // Adding more member information
 
+export function getCurrentEmail(context: any) {
+  return context.email || null;
+}
+
 export function getCurrentFirstName(context: any) {
   return context.firstName || null;
 }
@@ -51,5 +55,6 @@ export function getAuthData(context: any) {
     lastName: getCurrentLastName(context),
     middleName: getCurrentMiddleName(context),
     address: getCurrentAddress(context),
+    email: getCurrentEmail(context),
   };
 }
