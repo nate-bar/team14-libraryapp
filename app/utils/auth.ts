@@ -35,6 +35,15 @@ export function getCurrentAddress(context: any) {
   return context.address || null;
 }
 
+//adding phone number and date of birth
+export function getPhoneNumber(context: any) {
+  return context.phoneNumber || null;
+}
+
+export function getDateOfBirth(context: any) {
+  return context.dateOfBirth || null;
+}
+
 // Function to require authentication (use in protected route loaders)
 export function requireAuth(context: any, redirectTo = "/login") {
   if (!isAuthenticated(context)) {
@@ -56,5 +65,7 @@ export function getAuthData(context: any) {
     middleName: getCurrentMiddleName(context),
     address: getCurrentAddress(context),
     email: getCurrentEmail(context),
+    phoneNumber: getPhoneNumber(context),
+    dateOfBirth: getDateOfBirth(context),
   };
 }

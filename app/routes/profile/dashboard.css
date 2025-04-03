@@ -1,7 +1,9 @@
 .dashboard-container {
     width: 400px;  /* Adjust based on your needs */
     padding: 20px;
-    background-color: #f9f9f9; /* Light background */
+    top: 80px; /* Space from the top */
+    position: relative; /* For absolute positioning of child elements */
+    background-color: #d9d9d9; /* Light background */
     border-radius: 12px; /* Rounded corners */
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Soft shadow */
     text-align: center;

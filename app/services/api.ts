@@ -103,6 +103,8 @@ export interface AuthData {
   address: string | null;
   middleName: string | null;
   email: string;
+  phoneNumber: string | null;
+  dateOfBirth: string | null;
 }
 
 export interface Genres {

@@ -5,9 +5,15 @@ import "./dashboard.css";
 export default function Dashboard() {
     const authData = useOutletContext<AuthData>();
     return (
-        <div>
+        <div className="dashboard-container">
             <h1>{authData.firstName} {authData.lastName}</h1>
-            <h2>Welcome to your profile, {authData.firstName} </h2>
+            <h2>Welcome to your profile, {authData.firstName}! </h2>
+            <p>Name: {authData.firstName} {authData.lastName}</p>
+            <p>add bio here</p>
+            <p>Date of Birth: {authData.dateOfBirth}</p>
+            <p>Phone Number: {authData.phoneNumber}</p>
+            <p> Email: {authData.email}</p>
+            <p>Address: {authData.address}</p>
         </div>
     );
 }
