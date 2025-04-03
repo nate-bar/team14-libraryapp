@@ -160,26 +160,29 @@ app.get("/api/users", (req, res) => {
 });
 
 app.get("/api/borrow-summary", (req, res) => {
-  pool.getConnection((err, connection) => {
-    if (err) {
-      console.error("Error getting connection:", err);
-      return res.status(500).json({ error: "Database connection error." });
-    }
+  let connection;
 
-    const query = "SELECT * FROM borrow_summary_view";
-
-    connection.query(query, (err, results) => {
-      connection.release(); // Release the connection back to the pool
-      if (err) {
-        console.error("Error executing query:", err);
-        return res
-          .status(500)
-          .json({ error: "Error fetching borrow summary." });
-      }
-
-      res.json(results);
-    });
-  });
+  try {
+    pool
+      .getConnection()
+      .then((conn) => {
+        connection = conn;
+        return connection.query("SELECT * FROM borrow_summary_view");
+      })
+      .then((results) => {
+        res.json(results);
+      })
+      .catch((err) => {
+        console.error("Database error:", err);
+        res.status(500).json({ error: "Error fetching borrow summary." });
+      })
+      .finally(() => {
+        if (connection) connection.release();
+      });
+  } catch (err) {
+    console.error("Unexpected error:", err);
+    res.status(500).json({ error: "An unexpected error occurred." });
+  }
 });
 
 app.post("/api/insert/:typename", upload.single("photo"), (req, res) => {
