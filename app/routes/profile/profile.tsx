@@ -25,7 +25,7 @@ export default function ProfilePage() {
           </li>
         </ul>
       </div>
-      <main>
+      <main className="flex w-full py-2 px-4 justify-between items-center">
         {/* passing authData to children */}
         <Outlet context={authData} />
       </main>
