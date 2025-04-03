@@ -132,7 +132,7 @@ export default function MyItems() {
   }
 
   return (
-    <div>
+    <div className="flex-grow justify-center h-full w-full pl-25 pr-25">
       {isLoading ? (
         <p>Loading borrowed items...</p>
       ) : error ? (
