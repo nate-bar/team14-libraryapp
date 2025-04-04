@@ -1,21 +1,23 @@
-import { type Device } from "~/services/api";
+import { type DeviceInsert } from "~/services/api";
 import React, { useState } from "react";
-import { addDevice } from "./queries";
+import { addDevice } from "../queries";
 import Compressor from "compressorjs";
 import { type AuthData } from "~/services/api";
 import { useOutletContext } from "react-router";
+import "../edit.css";
+import "../admin.css";
 
 const DeviceForm: React.FC = () => {
   const { email } = useOutletContext<AuthData>();
   const [fileName, setFileName] = useState<string>("");
-  const [deviceData, setDeviceData] = useState<Device>({
-    title: "",
-    typename: "Device",
-    devicename: "",
-    devicetype: "",
-    manufacturer: "",
-    photo: null as File | null,
-    createdby: email,
+  const [deviceData, setDeviceData] = useState<DeviceInsert>({
+    Title: "",
+    TypeName: "Device",
+    DeviceName: "",
+    DeviceType: "",
+    Manufacturer: "",
+    Photo: null as File | null,
+    CreatedBy: email,
   });
 
   const [errors, setErrors] = useState({
@@ -30,8 +32,6 @@ const DeviceForm: React.FC = () => {
   ): void => {
     const { name, value } = e.target;
 
-    // Since Device type doesn't have numeric fields like genreid or publicationyear
-    // This method can be simplified
     setDeviceData((prev) => ({
       ...prev,
       [name]: value,
@@ -45,11 +45,11 @@ const DeviceForm: React.FC = () => {
       devicetype: "",
       manufacturer: "",
     };
-    const { title, devicename, devicetype, manufacturer } = deviceData;
-    if (!title) newErrors.title = "Enter a title";
-    if (!devicename) newErrors.devicename = "Enter a device name";
-    if (!devicetype) newErrors.devicetype = "Enter a device type";
-    if (!manufacturer)
+    const { Title, DeviceName, DeviceType, Manufacturer } = deviceData;
+    if (!Title) newErrors.title = "Enter a title";
+    if (!DeviceName) newErrors.devicename = "Enter a device name";
+    if (!DeviceType) newErrors.devicetype = "Enter a device type";
+    if (!Manufacturer)
       newErrors.manufacturer = "Enter a value for manufacturer";
 
     setErrors(newErrors);
@@ -130,13 +130,13 @@ const DeviceForm: React.FC = () => {
 
       // Clear form
       setDeviceData({
-        title: "",
-        typename: "Device",
-        devicename: "",
-        devicetype: "",
-        manufacturer: "",
-        photo: null,
-        createdby: email,
+        Title: "",
+        TypeName: "Device",
+        DeviceName: "",
+        DeviceType: "",
+        Manufacturer: "",
+        Photo: null,
+        CreatedBy: email,
       });
       alert("Device entered successfully!");
     } catch (error) {
@@ -151,9 +151,9 @@ const DeviceForm: React.FC = () => {
         <input
           className={`admin-input ${errors.title ? "error-field" : ""}`}
           type="text"
-          name="title"
+          name="Title"
           placeholder="Title"
-          value={deviceData.title}
+          value={deviceData.Title}
           onChange={handleInputChange}
         />
         {errors.title && <div className="error-message">{errors.title}</div>}
@@ -161,9 +161,9 @@ const DeviceForm: React.FC = () => {
         <input
           className={`admin-input ${errors.devicename ? "error-field" : ""}`}
           type="text"
-          name="devicename"
+          name="DeviceName"
           placeholder="Device name"
-          value={deviceData.devicename}
+          value={deviceData.DeviceName}
           onChange={handleInputChange}
         />
         {errors.devicename && (
@@ -172,9 +172,9 @@ const DeviceForm: React.FC = () => {
         <input
           className={`admin-input ${errors.devicetype ? "error-field" : ""}`}
           type="text"
-          name="devicetype"
+          name="DeviceType"
           placeholder="Device Type"
-          value={deviceData.devicetype}
+          value={deviceData.DeviceType}
           onChange={handleInputChange}
         />
         {errors.devicetype && (
@@ -184,9 +184,9 @@ const DeviceForm: React.FC = () => {
         <input
           className={`admin-input ${errors.manufacturer ? "error-field" : ""}`}
           type="text"
-          name="manufacturer"
+          name="Manufacturer"
           placeholder="Manufacturer"
-          value={deviceData.manufacturer}
+          value={deviceData.Manufacturer}
           onChange={handleInputChange}
         />
         {errors.manufacturer && (
@@ -214,11 +214,11 @@ const DeviceForm: React.FC = () => {
             id="photo-upload"
             className="admin-file-input"
             type="file"
-            name="photo"
+            name="Photo"
             accept="image/*"
             onChange={handleFileChange}
           />
-          {deviceData.photo && (
+          {deviceData.Photo && (
             <span className="admin-file-name">{fileName}</span>
           )}
         </div>

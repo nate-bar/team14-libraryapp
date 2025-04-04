@@ -1,10 +1,13 @@
 import React, { useEffect, useState } from "react";
 import { type Items } from "~/services/api";
+import { Link } from "react-router";
+import { useNavigate } from "react-router";
 import "./edit.css";
 
 export default function AdminEditPage() {
   const [items, setItems] = useState<Items[]>([]); // Initialize items as an empty array
   const [message, setMessage] = useState("");
+  const navigate = useNavigate();
 
   useEffect(() => {
     loadItems();
@@ -42,6 +45,14 @@ export default function AdminEditPage() {
       setMessage("Error deleting item.");
     }
   }
+
+  function handleEditClick(item: Items) {
+    // store selected item in local storage
+    localStorage.setItem("editItem", JSON.stringify(item));
+    // navigate to appropriate edit page
+    navigate(`/admin/edit/${item.TypeName.toLowerCase()}/${item.ItemID}`);
+  }
+
   return (
     <div className="admin-edit-container">
       {message && <p className="admin-edit-message">{message}</p>}
@@ -103,7 +114,14 @@ export default function AdminEditPage() {
                 <td>{item.ItemID}</td>
                 <td>{item.TypeName}</td>
                 <td>{item.Status}</td>
-                <td>
+                <td className="space-x-5">
+                  <button
+                    className="admin-edit-delete-btn inline-block text-center"
+                    onClick={() => handleEditClick(item)}
+                  >
+                    Edit
+                  </button>
+
                   <button
                     className="admin-edit-delete-btn"
                     onClick={() => handleDelete(item.ItemID)}

@@ -1,28 +1,30 @@
-import { type Book } from "~/services/api";
+import { type BookInsert } from "~/services/api";
 import React, { useState, useEffect } from "react";
-import { addBook } from "./queries";
+import { addBook } from "../queries";
 import { type Genres } from "~/services/api";
 import { type Languages } from "~/services/api";
 import Compressor from "compressorjs";
 import { type AuthData } from "~/services/api";
 import { useOutletContext } from "react-router";
+import "../edit.css";
+import "../admin.css";
 
 const BookForm: React.FC = () => {
   const { email } = useOutletContext<AuthData>();
   const [genres, setGenres] = useState<Genres[]>([]);
   const [languages, setLanguages] = useState<Languages[]>([]);
   const [fileName, setFileName] = useState<string>("");
-  const [bookData, setBookData] = useState<Book>({
-    isbn: "",
-    title: "",
-    typename: "Book",
-    authors: "",
-    publisher: "",
-    publicationyear: 0,
-    genreid: 0,
-    languageid: 0,
-    photo: null as File | null,
-    createdby: email,
+  const [bookData, setBookData] = useState<BookInsert>({
+    ISBN: "",
+    Title: "",
+    TypeName: "Book",
+    Authors: "",
+    Publisher: "",
+    PublicationYear: 0,
+    GenreID: 0,
+    LanguageID: 0,
+    Photo: null as File | null,
+    CreatedBy: email,
   });
 
   const fetchGenres = () => {
@@ -103,15 +105,15 @@ const BookForm: React.FC = () => {
       genreid: "",
       publicationyear: "",
     };
-    const { isbn, title, authors, publisher, genreid, publicationyear } =
+    const { ISBN, Title, Authors, Publisher, GenreID, PublicationYear } =
       bookData;
 
-    if (!isbn) newErrors.isbn = "Enter a value for ISBN";
-    if (!title) newErrors.title = "Enter a title";
-    if (!authors) newErrors.authors = "Enter a value for author";
-    if (!publisher) newErrors.publisher = "Enter a value for publisher";
-    if (genreid === 0) newErrors.genreid = "Select a genre";
-    if (!publicationyear) newErrors.publicationyear = "Select a year";
+    if (!ISBN) newErrors.isbn = "Enter a value for ISBN";
+    if (!Title) newErrors.title = "Enter a title";
+    if (!Authors) newErrors.authors = "Enter a value for author";
+    if (!Publisher) newErrors.publisher = "Enter a value for publisher";
+    if (GenreID === 0) newErrors.genreid = "Select a genre";
+    if (!PublicationYear) newErrors.publicationyear = "Select a year";
 
     setErrors(newErrors);
     return !Object.values(newErrors).some((error) => error);
@@ -191,16 +193,16 @@ const BookForm: React.FC = () => {
 
       // Clear form
       setBookData({
-        isbn: "",
-        title: "",
-        typename: "Book",
-        authors: "",
-        publisher: "",
-        publicationyear: 0,
-        genreid: 0,
-        languageid: 0,
-        photo: null,
-        createdby: email,
+        ISBN: "",
+        Title: "",
+        TypeName: "Book",
+        Authors: "",
+        Publisher: "",
+        PublicationYear: 0,
+        GenreID: 0,
+        LanguageID: 0,
+        Photo: null,
+        CreatedBy: email,
       });
       alert("Book entered successfully!");
     } catch (error) {
@@ -215,18 +217,18 @@ const BookForm: React.FC = () => {
         <input
           className={`admin-input ${errors.isbn ? "error-field" : ""}`}
           type="text"
-          name="isbn"
+          name="ISBN"
           placeholder="ISBN"
-          value={bookData.isbn}
+          value={bookData.ISBN}
           onChange={handleInputChange}
         />
         {errors.isbn && <div className="error-message">{errors.isbn}</div>}
         <input
           className={`admin-input ${errors.title ? "error-field" : ""}`}
           type="text"
-          name="title"
+          name="Title"
           placeholder="Title"
-          value={bookData.title}
+          value={bookData.Title}
           onChange={handleInputChange}
         />
         {errors.title && <div className="error-message">{errors.title}</div>}
@@ -234,8 +236,8 @@ const BookForm: React.FC = () => {
         {/* Genre dropdown */}
         <select
           className={`admin-select ${errors.genreid ? "error-field" : ""}`}
-          name="genreid"
-          value={bookData.genreid}
+          name="GenreID"
+          value={bookData.GenreID}
           onChange={handleInputChange}
           required
         >
@@ -253,9 +255,9 @@ const BookForm: React.FC = () => {
         <input
           className={`admin-input ${errors.authors ? "error-field" : ""}`}
           type="text"
-          name="authors"
+          name="Authors"
           placeholder="Authors"
-          value={bookData.authors}
+          value={bookData.Authors}
           onChange={handleInputChange}
         />
         {errors.authors && (
@@ -264,9 +266,9 @@ const BookForm: React.FC = () => {
         <input
           className={`admin-input ${errors.publisher ? "error-field" : ""}`}
           type="text"
-          name="publisher"
+          name="Publisher"
           placeholder="Publisher"
-          value={bookData.publisher}
+          value={bookData.Publisher}
           onChange={handleInputChange}
         />
         {errors.publisher && (
@@ -276,8 +278,8 @@ const BookForm: React.FC = () => {
           className={`admin-select ${
             errors.publicationyear ? "error-field" : ""
           }`}
-          name="publicationyear"
-          value={bookData.publicationyear || ""}
+          name="PublicationYear"
+          value={bookData.PublicationYear || ""}
           onChange={handleInputChange}
         >
           <option value="">Select Year</option>
@@ -297,8 +299,8 @@ const BookForm: React.FC = () => {
         {/* Language dropdown */}
         <select
           className="admin-select"
-          name="languageid"
-          value={bookData.languageid}
+          name="LanguageID"
+          value={bookData.LanguageID}
           onChange={handleInputChange}
           required
         >
@@ -330,11 +332,11 @@ const BookForm: React.FC = () => {
             id="photo-upload"
             className="admin-file-input"
             type="file"
-            name="photo"
+            name="Photo"
             accept="image/*"
             onChange={handleFileChange}
           />
-          {bookData.photo && (
+          {bookData.Photo && (
             <span className="admin-file-name">{fileName}</span>
           )}
         </div>

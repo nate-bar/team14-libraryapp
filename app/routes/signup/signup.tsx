@@ -319,6 +319,7 @@ const SignupForm: React.FC = () => {
               <option value="Student">Student</option>
               <option value="Faculty">Faculty</option>
               {/*<option value="Administrator">Administrator</option>{" "}
+              
               commenting this out because I dont really want people
               to make administrator accounts because they can like delete/add stuff to the database
               but uncomment if you need to make an admin account*/}
