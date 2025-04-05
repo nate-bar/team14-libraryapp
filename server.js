@@ -137,14 +137,14 @@ app.get("/api/search", (req, res) => {
 
 // -----------------------------------------FROM JOHNS BRANCH 3.0-----------------------------------------
 // Define the /api/admin/add-media route
-app.get("/api/users", (req, res) => {
+app.get("/api/user_borrowed_books_report", (req, res) => {
   pool.getConnection((err, connection) => {
     if (err) {
       console.error("Error getting connection:", err);
       return res.status(500).json({ error: "Database connection error." });
     }
 
-    const query = "SELECT * FROM user_view";
+    const query = "SELECT * FROM user_borrowed_books_report";
 
     connection.query(query, (err, results) => {
       connection.release(); // Release the connection back to the pool

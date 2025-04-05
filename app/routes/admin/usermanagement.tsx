@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import "./usermanagement.css";
+
 // Fetch users from the backend
 async function displayUsers() {
   const res = await fetch("/api/users", { method: "GET" });
@@ -56,9 +57,13 @@ export default function AdminUserDeletePage() {
   return (
     <div className="admin-user-container">
       {message && (
-        <p className={`admin-user-message ${message.includes("successfully") ? "success" : "error"}`}>
-        {message}
-      </p>
+        <p
+          className={`admin-user-message ${
+            message.includes("successfully") ? "success" : "error"
+          }`}
+        >
+          {message}
+        </p>
       )}
       <div className="overflow-x-auto">
         <table className="admin-user-table">
@@ -104,7 +109,7 @@ export default function AdminUserDeletePage() {
                     {user.LastName}
                   </td>
                   <td className="border border-gray-300 px-4 py-2">
-                    <button 
+                    <button
                       onClick={() => handleDelete(user.MemberID)}
                       className="admin-user-delete-btn"
                     >
