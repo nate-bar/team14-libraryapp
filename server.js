@@ -348,7 +348,7 @@ app.post("/api/edit/:typename", upload.single("Photo"), (req, res) => {
       Rating: item.Rating,
       UpdatedBy: item.UpdatedBy,
     });
-    console.log("Photo:", photo ? "Received" : "No photo");
+    console.log("Photo:", Photo ? "Received" : "No photo");
 
     pool.getConnection((err, connection) => {
       if (err) {
@@ -370,7 +370,7 @@ app.post("/api/edit/:typename", upload.single("Photo"), (req, res) => {
 
         connection.query(
           `UPDATE Items SET Title = ?, Photo = ?, UpdatedBy = ? WHERE Items.ItemID = ?`,
-          [item.Title, photo, item.UpdatedBy, item.ItemID],
+          [item.Title, Photo, item.UpdatedBy, item.ItemID],
           (itemErr, itemsResult) => {
             if (itemErr) {
               console.error("Items update Error:", {
@@ -436,7 +436,7 @@ app.post("/api/edit/:typename", upload.single("Photo"), (req, res) => {
                   connection.release();
                   return res.status(201).json({
                     success: true,
-                    message: "Media added successfully!",
+                    message: "Media updated successfully!",
                     itemId: item.ItemID,
                   });
                 });
@@ -450,12 +450,11 @@ app.post("/api/edit/:typename", upload.single("Photo"), (req, res) => {
     console.log("Received Device Data:", {
       Title: item.Title,
       DeviceID: item.DeviceID,
-      DeviceName: item.DeviceName,
       DeviceType: item.DeviceType,
       Manufacturer: item.Manufacturer,
       UpdatedBy: item.UpdatedBy,
     });
-    console.log("Photo:", photo ? "Received" : "No photo");
+    console.log("Photo:", Photo ? "Received" : "No photo");
 
     pool.getConnection((err, connection) => {
       if (err) {
@@ -498,11 +497,11 @@ app.post("/api/edit/:typename", upload.single("Photo"), (req, res) => {
             }
 
             connection.query(
-              `UPDATE ItemDevice SET DeviceName = ?, DeviceType = ?, Manufacturer = ? WHERE ItemDevice.DeviceID = ?`,
-              [item.Device, item.DeviceType, item.Manufacturer, item.DeviceID],
+              `UPDATE ItemDevice SET DeviceType = ?, Manufacturer = ? WHERE ItemDevice.DeviceID = ?`,
+              [item.DeviceType, item.Manufacturer, item.DeviceID],
               (deviceErr, deviceResults) => {
                 if (deviceErr) {
-                  console.error("Media update Error:", {
+                  console.error("device update Error:", {
                     message: deviceErr.message,
                     sqlMessage: deviceErr.sqlMessage,
                     code: deviceErr.code,
@@ -512,7 +511,7 @@ app.post("/api/edit/:typename", upload.single("Photo"), (req, res) => {
                   return connection.rollback(() => {
                     connection.release();
                     res.status(500).json({
-                      error: "Media update failed",
+                      error: "device update failed",
                       details: deviceErr.message,
                       sqlMessage: deviceErr.sqlMessage,
                     });
@@ -534,7 +533,7 @@ app.post("/api/edit/:typename", upload.single("Photo"), (req, res) => {
                   connection.release();
                   return res.status(201).json({
                     success: true,
-                    message: "Device added successfully!",
+                    message: "Device updated successfully!",
                     itemId: item.ItemID,
                   });
                 });
@@ -833,7 +832,6 @@ app.post("/api/insert/:typename", upload.single("photo"), (req, res) => {
   } else if (typename === "Device") {
     console.log("Received Device Data:", {
       title: item.title,
-      devicename: item.devicename,
       devicetype: item.devicetype,
       manufacturer: item.manufacturer,
       createdby: item.createdby,
@@ -884,8 +882,8 @@ app.post("/api/insert/:typename", upload.single("photo"), (req, res) => {
             console.log("Generated Item ID:", returnedItemID);
 
             connection.query(
-              `INSERT INTO ItemDevice (DeviceName, DeviceType, Manufacturer) VALUES (?, ?, ?)`,
-              [item.devicename, item.devicetype, item.manufacturer],
+              `INSERT INTO ItemDevice (DeviceType, Manufacturer) VALUES (?, ?)`,
+              [item.devicetype, item.manufacturer],
               (deviceErr, deviceResults) => {
                 if (deviceErr) {
                   console.error("Media Insert Error:", {
@@ -1058,7 +1056,7 @@ app.post("/api/admin/add-book", upload.single("photo"), (req, res) => {
   });
 });
 */
-
+/*
 app.post("/api/admin/add-media", upload.single("photo"), (req, res) => {
   const { genreId, languageId, director, leads, releaseYear, format, rating } =
     req.body;
@@ -1172,10 +1170,10 @@ app.post("/api/admin/add-media", upload.single("photo"), (req, res) => {
   });
 });
 app.post("/api/admin/add-device", upload.single("photo"), (req, res) => {
-  const { deviceId, deviceName, deviceType, manufacturer } = req.body;
+  const { deviceId, deviceType, manufacturer } = req.body;
   const photo = req.file ? req.file.buffer : null;
 
-  if (!deviceId || !deviceName || !deviceType || !manufacturer) {
+  if (!deviceId || !deviceType || !manufacturer) {
     return res.status(400).json({ error: "All fields are required." });
   }
 
@@ -1256,7 +1254,7 @@ app.post("/api/admin/add-device", upload.single("photo"), (req, res) => {
     });
   });
 });
-
+*/
 // Book view
 app.get("/api/book-details", (req, res) => {
   pool.getConnection((err, connection) => {
@@ -1930,7 +1928,7 @@ app.get("/api/itemdetail/:itemid", (req, res) => {
        INNER JOIN Languages l ON b.LanguageID = l.LanguageID
        WHERE i.ItemID = ? AND it.TypeName = 'Book'`;
         } else if (currentType === "Media") {
-          q = `SELECT i.ItemID, TO_BASE64(i.Photo) AS Photo, i.Title, i.Status, it.TypeName, im.Director, im.Leads, im.ReleaseYear, im.Format, im.Rating, it.MediaID, g.GenreName, g.GenreID, l.LanguageID, l.Language
+          q = `SELECT i.ItemID, TO_BASE64(i.Photo) AS Photo, i.Title, i.Status, it.TypeName, im.Director, im.Leads, im.ReleaseYear, im.MediaID, im.Format, im.Rating, it.MediaID, g.GenreName, g.GenreID, l.LanguageID, l.Language
        FROM Items i
        INNER JOIN ItemTypes it ON it.ItemID = i.ItemID
        INNER JOIN Media im ON it.MediaID = im.MediaID

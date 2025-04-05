@@ -56,7 +56,7 @@ const MediaForm: React.FC = () => {
       })
       .then((data) => {
         setMediaData(data);
-
+        setOriginalPhoto(data.Photo);
         setLoading(false);
       })
       .catch((error) => {
@@ -102,6 +102,7 @@ const MediaForm: React.FC = () => {
     ReleaseYear: "",
     Format: "",
     GenreID: "",
+    Rating: "",
   });
 
   useEffect(() => {
@@ -121,7 +122,12 @@ const MediaForm: React.FC = () => {
       [name]: "",
     }));
 
-    if (name === "GenreID" || name === "ReleaseYear" || name === "LanguageID") {
+    if (
+      name === "GenreID" ||
+      name === "ReleaseYear" ||
+      name === "LanguageID" ||
+      name === "Rating"
+    ) {
       setMediaData((prev) => ({
         ...prev,
         [name]: parseInt(value, 10) || 0,
@@ -193,6 +199,7 @@ const MediaForm: React.FC = () => {
       ReleaseYear: "",
       Format: "",
       GenreID: "",
+      Rating: "",
     };
 
     let isValid = true;
@@ -222,6 +229,11 @@ const MediaForm: React.FC = () => {
       isValid = false;
     }
 
+    if (!mediaData.Rating) {
+      newErrors.Rating = "Please select a rating";
+      isValid = false;
+    }
+
     setErrors(newErrors);
     return isValid;
   };
@@ -231,20 +243,26 @@ const MediaForm: React.FC = () => {
   ): Promise<void> => {
     e.preventDefault();
 
+    if (isSubmitting) {
+      return;
+    }
+
     if (!validateForm()) {
       return;
     }
 
-    setIsSubmitting(true);
     setFormError(null);
 
     const dataToSubmit = { ...mediaData };
+    dataToSubmit.UpdatedBy = authData.email;
     if (dataToSubmit.Photo === null) {
       dataToSubmit.Photo = originalPhoto;
     }
 
     try {
-      const result = await editMedia(mediaData);
+      setIsSubmitting(true);
+
+      const result = await editMedia(dataToSubmit);
 
       if (!result.success) {
         setFormError(result.error || "Update failed. Please try again.");
@@ -252,6 +270,7 @@ const MediaForm: React.FC = () => {
       }
 
       // Success - redirect or show success message
+      setFileName("");
       alert("Media updated successfully!");
       navigate("/admin/edit");
     } catch (error) {
@@ -344,20 +363,21 @@ const MediaForm: React.FC = () => {
           onChange={handleInputChange}
         />
         <input
-          className="admin-input"
+          className={`admin-input ${errors.Format ? "error-field" : ""}`}
           type="text"
           name="Format"
           placeholder="Format (e.g., DVD, Blu-ray, Digital)"
           value={mediaData.Format}
           onChange={handleInputChange}
         />
+        {errors.Format && <div className="error-message">{errors.Format}</div>}
 
         <div className="admin-input-group">
           <label htmlFor="rating" className="admin-label">
             Rating (0-100)
           </label>
           <input
-            className="admin-input"
+            className={`admin-input ${errors.Rating ? "error-field" : ""}`}
             type="number"
             name="Rating"
             min="0"
@@ -366,6 +386,9 @@ const MediaForm: React.FC = () => {
             value={mediaData.Rating}
             onChange={handleInputChange}
           />
+          {errors.Rating && (
+            <div className="error-message">{errors.Rating}</div>
+          )}
         </div>
 
         <select
@@ -424,7 +447,7 @@ const MediaForm: React.FC = () => {
             id="photo-upload"
             className="admin-file-input"
             type="file"
-            name="photo"
+            name="Photo"
             accept="image/*"
             onChange={handleFileChange}
           />

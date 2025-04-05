@@ -10,7 +10,7 @@ import LoadingSpinner from "~/components/loadingspinner";
 import "../edit.css";
 import "../admin.css";
 
-const BookForm: React.FC = () => {
+const DeviceForm: React.FC = () => {
   const { itemId } = useParams<{ itemId: string }>();
   const numericItemId = itemId ? parseInt(itemId, 10) : 0;
   const navigate = useNavigate();
@@ -25,7 +25,6 @@ const BookForm: React.FC = () => {
     DeviceID: 0,
     Title: "",
     TypeName: "Device",
-    DeviceName: "",
     DeviceType: "",
     Manufacturer: "",
     Photo: null as File | null | Blob,
@@ -50,19 +49,18 @@ const BookForm: React.FC = () => {
       })
       .then((data) => {
         setDeviceData(data);
-
+        setOriginalPhoto(data.Photo);
         setLoading(false);
       })
       .catch((error) => {
-        console.error("Error fetching book:", error);
-        setFormError("Failed to load book details. Please try again.");
+        console.error("Error fetching device:", error);
+        setFormError("Failed to load device details. Please try again.");
         setLoading(false);
       });
   }, [itemId]);
 
   const [errors, setErrors] = useState({
     Title: "",
-    DeviceName: "",
     DeviceType: "",
     Manufacturer: "",
   });
@@ -133,7 +131,6 @@ const BookForm: React.FC = () => {
   const validateForm = (): boolean => {
     const newErrors = {
       Title: "",
-      DeviceName: "",
       DeviceType: "",
       Manufacturer: "",
     };
@@ -142,11 +139,6 @@ const BookForm: React.FC = () => {
 
     if (!deviceData.Title.trim()) {
       newErrors.Title = "Title is required";
-      isValid = false;
-    }
-
-    if (!deviceData.DeviceName.trim()) {
-      newErrors.DeviceName = "Device name is required";
       isValid = false;
     }
 
@@ -168,21 +160,29 @@ const BookForm: React.FC = () => {
     e: React.FormEvent<HTMLFormElement>
   ): Promise<void> => {
     e.preventDefault();
+    console.log("Form submission started");
 
-    if (!validateForm()) {
+    if (isSubmitting) {
       return;
     }
 
-    setIsSubmitting(true);
+    if (!validateForm()) {
+      console.log("Form validation failed", errors);
+      return;
+    }
+
     setFormError(null);
 
     const dataToSubmit = { ...deviceData };
+    dataToSubmit.UpdatedBy = authData.email;
     if (dataToSubmit.Photo === null) {
       dataToSubmit.Photo = originalPhoto;
     }
 
     try {
-      const result = await editDevice(deviceData);
+      setIsSubmitting(true);
+
+      const result = await editDevice(dataToSubmit);
 
       if (!result.success) {
         setFormError(result.error || "Update failed. Please try again.");
@@ -190,6 +190,7 @@ const BookForm: React.FC = () => {
       }
 
       // Success - redirect or show success message
+      setFileName("");
       alert("Device updated successfully!");
       navigate("/admin/edit"); // redirect back to edit list
     } catch (error) {
@@ -210,7 +211,26 @@ const BookForm: React.FC = () => {
 
   return (
     <div className="admin-container">
+      {formError && <div className="error-message form-error">{formError}</div>}
       <form onSubmit={handleSubmit} className="admin-form">
+        <div className="image-preview">
+          {typeof deviceData.Photo === "string" && deviceData.Photo ? (
+            <img
+              src={`data:image/jpeg;base64,${deviceData.Photo}`}
+              alt={deviceData.Title}
+              className="w-full h-48 object-contain rounded-lg mb-2"
+            />
+          ) : deviceData.Photo instanceof Blob ? (
+            <img
+              src={URL.createObjectURL(deviceData.Photo)}
+              alt={deviceData.Title}
+              className="w-full h-48 object-contain rounded-lg mb-2"
+            />
+          ) : (
+            <p className="text-gray-500">No Photo Available</p>
+          )}
+        </div>
+
         <input
           className={`admin-input ${errors.Title ? "error-field" : ""}`}
           type="text"
@@ -221,17 +241,6 @@ const BookForm: React.FC = () => {
         />
         {errors.Title && <div className="error-message">{errors.Title}</div>}
 
-        <input
-          className={`admin-input ${errors.DeviceName ? "error-field" : ""}`}
-          type="text"
-          name="DeviceName"
-          placeholder="Device name"
-          value={deviceData.DeviceName}
-          onChange={handleInputChange}
-        />
-        {errors.DeviceName && (
-          <div className="error-message">{errors.DeviceName}</div>
-        )}
         <input
           className={`admin-input ${errors.DeviceType ? "error-field" : ""}`}
           type="text"
@@ -287,11 +296,11 @@ const BookForm: React.FC = () => {
         </div>
 
         <button type="submit" className="admin-submit">
-          Add Device
+          Update Device
         </button>
       </form>
     </div>
   );
 };
 
-export default BookForm;
+export default DeviceForm;

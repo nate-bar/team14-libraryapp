@@ -3,29 +3,28 @@ import { addMedia } from "../queries";
 import { type Genres } from "~/services/api";
 import { type Languages } from "~/services/api";
 import { type MediaInsert } from "~/services/api";
-import Compressor from "compressorjs";
-import { useOutletContext } from "react-router";
 import { type AuthData } from "~/services/api";
-import "../edit.css";
-import "../admin.css";
+import { useOutletContext } from "react-router";
+import Compressor from "compressorjs";
 
 const MediaForm: React.FC = () => {
   const { email } = useOutletContext<AuthData>();
   const [genres, setGenres] = useState<Genres[]>([]);
   const [languages, setLanguages] = useState<Languages[]>([]);
   const [fileName, setFileName] = useState<string>("");
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [mediaData, setMediaData] = useState<MediaInsert>({
-    Title: "",
-    TypeName: "Media",
-    Director: "",
-    Leads: "",
-    ReleaseYear: 0,
-    Format: "",
-    Rating: 0,
-    GenreID: 0,
-    LanguageID: 0,
-    Photo: null as File | null,
-    CreatedBy: email,
+    title: "",
+    typename: "Media",
+    director: "",
+    leads: "",
+    releaseyear: 0,
+    format: "",
+    rating: 0,
+    genreid: 0,
+    languageid: 0,
+    photo: null as File | null,
+    createdby: email,
   });
 
   const fetchGenres = () => {
@@ -65,6 +64,8 @@ const MediaForm: React.FC = () => {
     title: "",
     releaseyear: "",
     genreid: "",
+    format: "",
+    rating: "",
   });
 
   useEffect(() => {
@@ -105,13 +106,17 @@ const MediaForm: React.FC = () => {
       title: "",
       releaseyear: "",
       genreid: "",
+      format: "",
+      rating: "",
     };
-    const { Director, Title, ReleaseYear, GenreID } = mediaData;
+    const { director, title, releaseyear, genreid, format, rating } = mediaData;
 
-    if (!Director) newErrors.director = "Enter a value for director";
-    if (!Title) newErrors.title = "Enter a title";
-    if (GenreID === 0) newErrors.genreid = "Select a genre";
-    if (!ReleaseYear) newErrors.releaseyear = "Select a year";
+    if (!director) newErrors.director = "Enter a value for director";
+    if (!title) newErrors.title = "Enter a title";
+    if (genreid === 0) newErrors.genreid = "Select a genre";
+    if (!releaseyear) newErrors.releaseyear = "Select a year";
+    if (!format) newErrors.format = "Select a format";
+    if (!rating) newErrors.rating = "Select a rating";
 
     setErrors(newErrors);
     return !Object.values(newErrors).some((error) => error);
@@ -174,12 +179,18 @@ const MediaForm: React.FC = () => {
     e.preventDefault();
     console.log("Form submitted:", mediaData);
 
+    if (isSubmitting) {
+      return;
+    }
+
     const validationError = validateForm();
     if (!validationError) {
       return;
     }
 
     try {
+      setIsSubmitting(true);
+
       const result = await addMedia(mediaData);
 
       if (!result.success) {
@@ -191,22 +202,26 @@ const MediaForm: React.FC = () => {
 
       // Clear form
       setMediaData({
-        Title: "",
-        TypeName: "Media",
-        Director: "",
-        Leads: "",
-        ReleaseYear: 0,
-        GenreID: 0,
-        LanguageID: 0,
-        Photo: null,
-        Format: "",
-        Rating: 0,
-        CreatedBy: email,
+        title: "",
+        typename: "Media",
+        director: "",
+        leads: "",
+        releaseyear: 0,
+        genreid: 0,
+        languageid: 0,
+        photo: null,
+        format: "",
+        rating: 0,
+        createdby: email,
       });
+      setFileName("");
       alert("Media entered successfully!");
     } catch (error) {
       console.error("Error submitting form:", error);
       alert(`Error submitting form: ${error}`);
+    } finally {
+      // Reset submitting state regardless of success or failure
+      setIsSubmitting(false);
     }
   };
 
@@ -216,18 +231,49 @@ const MediaForm: React.FC = () => {
         <input
           className={`admin-input ${errors.title ? "error-field" : ""}`}
           type="text"
-          name="Title"
+          name="title"
           placeholder="Title"
-          value={mediaData.Title}
+          value={mediaData.title}
           onChange={handleInputChange}
         />
         {errors.title && <div className="error-message">{errors.title}</div>}
 
+        <input
+          className={`admin-input ${errors.director ? "error-field" : ""}`}
+          type="text"
+          name="director"
+          placeholder="Director"
+          value={mediaData.director}
+          onChange={handleInputChange}
+        />
+        {errors.director && (
+          <div className="error-message">{errors.director}</div>
+        )}
+
+        <input
+          className={`admin-input`}
+          type="text"
+          name="leads"
+          placeholder="Leads (Optional)"
+          value={mediaData.leads}
+          onChange={handleInputChange}
+        />
+
+        <input
+          className={`admin-input ${errors.format ? "error-field" : ""}`}
+          type="text"
+          name="format"
+          placeholder="Format (e.g., DVD, Blu-ray, Digital)"
+          value={mediaData.format}
+          onChange={handleInputChange}
+        />
+        {errors.format && <div className="error-message">{errors.format}</div>}
+
         {/* Genre dropdown */}
         <select
           className={`admin-select ${errors.genreid ? "error-field" : ""}`}
-          name="GenreID"
-          value={mediaData.GenreID}
+          name="genreid"
+          value={mediaData.genreid}
           onChange={handleInputChange}
           required
         >
@@ -242,54 +288,29 @@ const MediaForm: React.FC = () => {
           <div className="error-message">{errors.genreid}</div>
         )}
 
-        <input
-          className={`admin-input ${errors.director ? "error-field" : ""}`}
-          type="text"
-          name="Director"
-          placeholder="Director"
-          value={mediaData.Director}
-          onChange={handleInputChange}
-        />
-        {errors.director && (
-          <div className="error-message">{errors.director}</div>
-        )}
-        <input
-          className={`admin-input`}
-          type="text"
-          name="Leads"
-          placeholder="Leads (Optional)"
-          value={mediaData.Leads}
-          onChange={handleInputChange}
-        />
-        <input
-          className="admin-input"
-          type="text"
-          name="Format"
-          placeholder="Format (e.g., DVD, Blu-ray, Digital)"
-          value={mediaData.Format}
-          onChange={handleInputChange}
-        />
-
         <div className="admin-input-group">
           <label htmlFor="rating" className="admin-label">
             Rating (0-100)
           </label>
           <input
-            className="admin-input"
+            className={`admin-select ${errors.rating ? "error-field" : ""}`}
             type="number"
-            name="Rating"
+            name="rating"
             min="0"
             max="100"
             placeholder="Enter rating (0-100)"
-            value={mediaData.Rating}
+            value={mediaData.rating}
             onChange={handleInputChange}
           />
+          {errors.rating && (
+            <div className="error-message">{errors.rating}</div>
+          )}
         </div>
 
         <select
           className={`admin-select ${errors.releaseyear ? "error-field" : ""}`}
-          name="ReleaseYear"
-          value={mediaData.ReleaseYear || ""}
+          name="releaseyear"
+          value={mediaData.releaseyear || ""}
           onChange={handleInputChange}
         >
           <option value="">Select Year</option>
@@ -309,8 +330,8 @@ const MediaForm: React.FC = () => {
         {/* Language dropdown */}
         <select
           className="admin-select"
-          name="LanguageID"
-          value={mediaData.LanguageID}
+          name="languageid"
+          value={mediaData.languageid}
           onChange={handleInputChange}
           required
         >
@@ -346,7 +367,7 @@ const MediaForm: React.FC = () => {
             accept="image/*"
             onChange={handleFileChange}
           />
-          {mediaData.Photo && (
+          {mediaData.photo && (
             <span className="admin-file-name">{fileName}</span>
           )}
         </div>

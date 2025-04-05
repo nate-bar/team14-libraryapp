@@ -70,42 +70,41 @@ export interface CartItem {
 
 // for inserting
 export interface BookInsert {
-  ISBN: string;
-  Title: string;
-  TypeName: string;
-  Authors: string;
-  Publisher: string;
-  PublicationYear: number;
-  GenreID: number;
-  LanguageID: number;
-  Photo?: File | Blob | null;
-  CreatedBy: string;
+  isbn: string;
+  title: string;
+  typename: string;
+  authors: string;
+  publisher: string;
+  publicationyear: number;
+  genreid: number;
+  languageid: number;
+  photo?: File | Blob | null;
+  createdby: string;
 }
 
 // for inserting
 export interface MediaInsert {
-  Title: string;
-  TypeName: string;
-  Director: string;
-  Leads: string;
-  ReleaseYear: number;
-  Format: string;
-  Rating: number;
-  LanguageID: number;
-  GenreID: number;
-  Photo?: File | Blob | null;
-  CreatedBy: string;
+  title: string;
+  typename: string;
+  director: string;
+  leads: string;
+  releaseyear: number;
+  format: string;
+  rating: number;
+  languageid: number;
+  genreid: number;
+  photo?: File | Blob | null;
+  createdby: string;
 }
 
 // for inserting
 export interface DeviceInsert {
-  Title: string;
-  TypeName: string;
-  DeviceName: string;
-  DeviceType: string;
-  Manufacturer: string;
-  Photo?: File | Blob | null;
-  CreatedBy: string;
+  title: string;
+  typename: string;
+  devicetype: string;
+  manufacturer: string;
+  photo?: File | Blob | null;
+  createdby: string;
 }
 
 // sign up interface
@@ -198,7 +197,6 @@ export interface DeviceEdit {
   DeviceID: number;
   Title: string;
   TypeName: string;
-  DeviceName: string;
   DeviceType: string;
   Manufacturer: string;
   Photo?: File | Blob | null;

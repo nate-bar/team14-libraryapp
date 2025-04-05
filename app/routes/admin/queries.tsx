@@ -3,7 +3,6 @@ import {
   type BookInsert,
   type MediaInsert,
   type DeviceInsert,
-  type Media,
 } from "~/services/api";
 import { type ApiResponse } from "~/services/api";
 import { type BookEdit, type MediaEdit, type DeviceEdit } from "~/services/api";
@@ -16,23 +15,23 @@ export const addBook = async (book: BookInsert): Promise<ApiResponse> => {
   try {
     // Prepare data for API call
     const formData = new FormData();
-    formData.append("isbn", book.ISBN);
-    formData.append("title", book.Title);
-    formData.append("typename", book.TypeName || "Book");
-    formData.append("authors", book.Authors);
-    formData.append("publisher", book.Publisher);
-    formData.append("publicationyear", book.PublicationYear.toString());
-    formData.append("genreid", book.GenreID.toString());
-    formData.append("languageid", book.LanguageID.toString());
-    formData.append("createdby", book.CreatedBy);
+    formData.append("isbn", book.isbn);
+    formData.append("title", book.title);
+    formData.append("typename", book.typename || "Book");
+    formData.append("authors", book.authors);
+    formData.append("publisher", book.publisher);
+    formData.append("publicationyear", book.publicationyear.toString());
+    formData.append("genreid", book.genreid.toString());
+    formData.append("languageid", book.languageid.toString());
+    formData.append("createdby", book.createdby);
 
     // Add photo if it exists
-    if (book.Photo) {
-      formData.append("photo", book.Photo);
+    if (book.photo) {
+      formData.append("photo", book.photo);
     }
 
     // Make the API call
-    const response = await fetch(`/api/insert/${book.TypeName}`, {
+    const response = await fetch(`/api/insert/${book.typename}`, {
       method: "POST",
       body: formData,
     });
@@ -68,24 +67,24 @@ export const addMedia = async (media: MediaInsert): Promise<ApiResponse> => {
   try {
     // Prepare data for API call
     const formData = new FormData();
-    formData.append("title", media.Title);
-    formData.append("typename", media.TypeName || "Media");
-    formData.append("director", media.Director);
-    formData.append("leads", media.Leads);
-    formData.append("releaseyear", media.ReleaseYear.toString());
-    formData.append("genreid", media.GenreID.toString());
-    formData.append("languageid", media.LanguageID.toString());
-    formData.append("rating", media.Rating.toString());
-    formData.append("format", media.Format);
-    formData.append("createdby", media.CreatedBy);
+    formData.append("title", media.title);
+    formData.append("typename", media.typename || "Media");
+    formData.append("director", media.director);
+    formData.append("leads", media.leads);
+    formData.append("releaseyear", media.releaseyear.toString());
+    formData.append("genreid", media.genreid.toString());
+    formData.append("languageid", media.languageid.toString());
+    formData.append("rating", media.rating.toString());
+    formData.append("format", media.format.toString());
+    formData.append("createdby", media.createdby);
 
     // Add photo if it exists
-    if (media.Photo) {
-      formData.append("photo", media.Photo);
+    if (media.photo) {
+      formData.append("photo", media.photo);
     }
 
     // Make the API call
-    const response = await fetch(`/api/insert/${media.TypeName}`, {
+    const response = await fetch(`/api/insert/${media.typename}`, {
       method: "POST",
       body: formData,
     });
@@ -121,20 +120,19 @@ export const addDevice = async (device: DeviceInsert): Promise<ApiResponse> => {
   try {
     // Prepare data for API call
     const formData = new FormData();
-    formData.append("title", device.Title);
-    formData.append("typename", device.TypeName || "Device");
-    formData.append("devicename", device.DeviceName);
-    formData.append("devicetype", device.DeviceType);
-    formData.append("manufacturer", device.Manufacturer);
-    formData.append("createdby", device.CreatedBy);
+    formData.append("title", device.title);
+    formData.append("typename", device.typename || "Device");
+    formData.append("devicetype", device.devicetype);
+    formData.append("manufacturer", device.manufacturer);
+    formData.append("createdby", device.createdby);
 
     // Add photo if it exists
-    if (device.Photo) {
-      formData.append("photo", device.Photo);
+    if (device.photo) {
+      formData.append("photo", device.photo);
     }
 
     // Make the API call
-    const response = await fetch(`/api/insert/${device.TypeName}`, {
+    const response = await fetch(`/api/insert/${device.typename}`, {
       method: "POST",
       body: formData,
     });
@@ -226,6 +224,7 @@ export const editMedia = async (mediaEdit: MediaEdit): Promise<ApiResponse> => {
     // Prepare data for API call
     const formData = new FormData();
     formData.append("ItemID", mediaEdit.ItemID.toString());
+    formData.append("MediaID", mediaEdit.MediaID.toString());
     formData.append("Title", mediaEdit.Title);
     formData.append("TypeName", mediaEdit.TypeName || "Media");
     formData.append("Director", mediaEdit.Director);
@@ -239,7 +238,7 @@ export const editMedia = async (mediaEdit: MediaEdit): Promise<ApiResponse> => {
 
     // Add photo if it exists
     if (mediaEdit.Photo) {
-      formData.append("photo", mediaEdit.Photo);
+      formData.append("Photo", mediaEdit.Photo);
     }
 
     // Make the API call
@@ -282,16 +281,16 @@ export const editDevice = async (
     // Prepare data for API call
     const formData = new FormData();
     formData.append("ItemID", deviceEdit.ItemID.toString());
-    formData.append("title", deviceEdit.Title);
-    formData.append("typename", deviceEdit.TypeName || "Device");
-    formData.append("devicename", deviceEdit.DeviceName);
-    formData.append("devicetype", deviceEdit.DeviceType);
-    formData.append("manufacturer", deviceEdit.Manufacturer);
-    formData.append("createdby", deviceEdit.UpdatedBy);
+    formData.append("DeviceID", deviceEdit.DeviceID.toString());
+    formData.append("Title", deviceEdit.Title);
+    formData.append("TypeName", deviceEdit.TypeName || "Device");
+    formData.append("DeviceType", deviceEdit.DeviceType);
+    formData.append("Manufacturer", deviceEdit.Manufacturer);
+    formData.append("UpdatedBy", deviceEdit.UpdatedBy);
 
     // Add photo if it exists
     if (deviceEdit.Photo) {
-      formData.append("photo", deviceEdit.Photo);
+      formData.append("Photo", deviceEdit.Photo);
     }
 
     // Make the API call

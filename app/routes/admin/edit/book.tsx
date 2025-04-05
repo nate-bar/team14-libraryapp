@@ -253,6 +253,10 @@ const BookForm: React.FC = () => {
   ): Promise<void> => {
     e.preventDefault();
 
+    if (isSubmitting) {
+      return;
+    }
+
     if (!validateForm()) {
       return;
     }
@@ -274,6 +278,8 @@ const BookForm: React.FC = () => {
     }
 
     try {
+      setIsSubmitting(true);
+
       const result = await editBook(dataToSubmit);
 
       if (!result.success) {
@@ -282,6 +288,7 @@ const BookForm: React.FC = () => {
       }
 
       // Success - redirect or show success message
+      setFileName("");
       alert("Book updated successfully!");
       navigate("/admin/edit"); // Redirect to books list
     } catch (error) {
