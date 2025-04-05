@@ -86,6 +86,9 @@ export default function BookDetail() {
           <p>
             <strong>Genre:</strong> {book.GenreName}
           </p>
+          <p>
+            <strong>Language:</strong> {book.Language}
+          </p>
         </div>
       </div>
 

@@ -80,7 +80,10 @@ export default function MediaDetail() {
             <strong>Release Year:</strong> {media.ReleaseYear}
           </p>
           <p>
-            <strong>MediaID:</strong> {media.MediaID}
+            <strong>Format:</strong> {media.Format}
+          </p>
+          <p>
+            <strong>Rating:</strong> {media.Rating}
           </p>
           <p>
             <strong>Genre:</strong> {media.GenreName}

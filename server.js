@@ -1930,7 +1930,7 @@ app.get("/api/itemdetail/:itemid", (req, res) => {
        INNER JOIN Languages l ON b.LanguageID = l.LanguageID
        WHERE i.ItemID = ? AND it.TypeName = 'Book'`;
         } else if (currentType === "Media") {
-          q = `SELECT i.ItemID, TO_BASE64(i.Photo) AS Photo, i.Title, i.Status, it.TypeName, im.Director, im.Leads, im.ReleaseYear, it.MediaID, g.GenreName, g.GenreID, l.LanguageID, l.Language
+          q = `SELECT i.ItemID, TO_BASE64(i.Photo) AS Photo, i.Title, i.Status, it.TypeName, im.Director, im.Leads, im.ReleaseYear, im.Format, im.Rating, it.MediaID, g.GenreName, g.GenreID, l.LanguageID, l.Language
        FROM Items i
        INNER JOIN ItemTypes it ON it.ItemID = i.ItemID
        INNER JOIN Media im ON it.MediaID = im.MediaID
