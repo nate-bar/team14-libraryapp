@@ -146,9 +146,9 @@ export interface AuthData {
   address: string | null;
   middleName: string | null;
   email: string;
-  phonenumber: string;
-  birthdate: string;
-  balance: number;
+  phoneNumber: string;
+  birthDate: string;
+  balance: string;
 }
 
 export interface Genres {

@@ -1797,8 +1797,8 @@ app.post("/api/login", async (req, res) => {
       req.session.lastName = member.LastName;
       req.session.address = member.Address;
       req.session.email = member.Email;
-      req.session.phonenumber = member.PhoneNumber;
-      req.session.birthdate = member.BirthDate;
+      req.session.phoneNumber = member.PhoneNumber;
+      req.session.birthDate = member.BirthDate;
       req.session.balance = member.Balance;
 
       // Debug check

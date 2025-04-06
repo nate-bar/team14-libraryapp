@@ -15,8 +15,8 @@ export default function Dashboard() {
           Name: {authData.firstName} {authData.lastName}
         </p>
         <p>add bio here</p>
-        <p>Date of Birth: {authData.birthdate}</p>
-        <p>Phone Number: {authData.phonenumber}</p>
+        <p>Date of Birth: {authData.birthDate}</p>
+        <p>Phone Number: {authData.phoneNumber}</p>
         <p> Email: {authData.email}</p>
         <p>Address: {authData.address}</p>
         <p>Balance: {authData.balance}</p>

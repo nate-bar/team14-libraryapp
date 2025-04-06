@@ -16,8 +16,8 @@ declare module "react-router" {
     lastName: string;
     middleName: string | null;
     email: string;
-    phonenumber: string;
-    birthdate: string;
+    phoneNumber: string;
+    birthDate: string;
     balance: string;
   }
 }
@@ -45,8 +45,8 @@ app.use(
         address: session?.address,
         middleName: session?.middleName,
         email: session?.email,
-        phonenumber: session?.phonenumber,
-        birthdate: session?.birthdate,
+        phoneNumber: session?.phoneNumber,
+        birthDate: session?.birthDate,
         balance: session?.balance,
         // (2) alright now go to //utils/auth.ts
       };

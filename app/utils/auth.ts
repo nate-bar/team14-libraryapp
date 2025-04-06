@@ -36,20 +36,20 @@ export function getCurrentAddress(context: any) {
 }
 
 export function getCurrentPhoneNumber(context: any) {
-  return context.phonenumber || null;
+  return context.phoneNumber || null;
 }
 
-export function getCurrentBirthDate(context: any) {
-  const birthdate = context.birthdate || null;
+export function getCurrentBirthDate(context: any): string {
+  const birthDate = context.birthDate || null;
 
-  if (!birthdate) {
-    return null;
+  if (!birthDate) {
+    return "";
   }
 
-  const date = new Date(birthdate);
+  const date = new Date(birthDate);
 
   if (isNaN(date.getTime())) {
-    return null;
+    return "";
   }
 
   const options: Intl.DateTimeFormatOptions = {
@@ -62,7 +62,7 @@ export function getCurrentBirthDate(context: any) {
 
 export function getCurrentBalance(context: any) {
   if (context.balance === undefined || context.balance === null) {
-    return null;
+    return "";
   }
 
   // format as currency
@@ -95,8 +95,8 @@ export function getAuthData(context: any) {
     middleName: getCurrentMiddleName(context),
     address: getCurrentAddress(context),
     email: getCurrentEmail(context),
-    phonenumber: getCurrentPhoneNumber(context),
-    birthdate: getCurrentBirthDate(context),
+    phoneNumber: getCurrentPhoneNumber(context),
+    birthDate: getCurrentBirthDate(context),
     balance: getCurrentBalance(context),
   };
 }
