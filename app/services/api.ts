@@ -80,6 +80,7 @@ export interface BookInsert {
   languageid: number;
   photo?: File | Blob | null;
   createdby: string;
+  quantity: number;
 }
 
 // for inserting
@@ -95,6 +96,7 @@ export interface MediaInsert {
   genreid: number;
   photo?: File | Blob | null;
   createdby: string;
+  quantity: number;
 }
 
 // for inserting

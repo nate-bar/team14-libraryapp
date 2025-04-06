@@ -24,6 +24,7 @@ export const addBook = async (book: BookInsert): Promise<ApiResponse> => {
     formData.append("genreid", book.genreid.toString());
     formData.append("languageid", book.languageid.toString());
     formData.append("createdby", book.createdby);
+    formData.append("quantity", book.quantity.toString());
 
     // Add photo if it exists
     if (book.photo) {
@@ -77,6 +78,7 @@ export const addMedia = async (media: MediaInsert): Promise<ApiResponse> => {
     formData.append("rating", media.rating.toString());
     formData.append("format", media.format.toString());
     formData.append("createdby", media.createdby);
+    formData.append("quantity", media.quantity.toString());
 
     // Add photo if it exists
     if (media.photo) {

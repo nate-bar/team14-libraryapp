@@ -113,6 +113,104 @@ app.get("/api/borrow-summary", (req, res) => {
   }
 });
 
+function handleQuantityInserts(
+  title,
+  photo,
+  createdBy,
+  typename,
+  typeID,
+  callback
+) {
+  pool.getConnection((err, connection) => {
+    if (err) {
+      console.error("DB Connection Error:", err);
+      return callback({ error: "DB connection error", details: err.message });
+    }
+
+    // Begin transaction to ensure data consistency
+    connection.beginTransaction((err) => {
+      if (err) {
+        connection.release();
+        console.error("Transaction Error:", err);
+        return callback({ error: "Transaction error", details: err.message });
+      }
+
+      connection.query(
+        `INSERT INTO Items (Title, Photo, CreatedBy) VALUES (?, ?, ?)`,
+        [title, photo, createdBy],
+        (err, results) => {
+          if (err) {
+            connection.rollback(() => {
+              connection.release();
+            });
+            console.error("Items Insert Error:", err);
+            return callback({
+              error: "Failed to insert item",
+              details: err.message,
+            });
+          }
+
+          // Get the inserted item ID
+          const returnedItemID = results.insertId;
+          let query;
+
+          if (typename === "Book") {
+            query = `INSERT INTO ItemTypes (ItemID, TypeName, ISBN) VALUES (?, ?, ?)`;
+          } else if (typename === "Media") {
+            query = `INSERT INTO ItemTypes (ItemID, TypeName, MediaID) VALUES (?, ?, ?)`;
+          } else {
+            connection.rollback(() => {
+              connection.release();
+            });
+            return callback({ error: "Invalid type name" });
+          }
+
+          connection.query(
+            query,
+            [returnedItemID, typename, typeID],
+            (err, results) => {
+              if (err) {
+                connection.rollback(() => {
+                  connection.release();
+                });
+                console.error("ItemTypes Insert Error:", err);
+                return callback({
+                  error: "Failed to insert item type",
+                  details: err.message,
+                });
+              }
+
+              // Commit the transaction
+              connection.commit((err) => {
+                if (err) {
+                  connection.rollback(() => {
+                    connection.release();
+                  });
+                  console.error("Commit Error:", err);
+                  return callback({
+                    error: "Failed to commit transaction",
+                    details: err.message,
+                  });
+                }
+
+                // Release the connection back to the pool
+                connection.release();
+
+                // Success
+                return callback(null, {
+                  success: true,
+                  itemID: returnedItemID,
+                  message: "Item inserted successfully",
+                });
+              });
+            }
+          );
+        }
+      );
+    });
+  });
+}
+
 app.post("/api/insert/:typename", upload.single("photo"), (req, res) => {
   const typename = req.params.typename;
   const item = req.body;
@@ -128,6 +226,7 @@ app.post("/api/insert/:typename", upload.single("photo"), (req, res) => {
       genreId: item.genreid,
       languageId: item.languageid,
       createdby: item.createdby,
+      quantity: item.quantity,
     });
     console.log("Photo:", photo ? "Received" : "No photo");
 
@@ -239,6 +338,24 @@ app.post("/api/insert/:typename", upload.single("photo"), (req, res) => {
                         });
                       }
 
+                      for (let i = 0; i < item.quantity - 1; i++) {
+                        handleQuantityInserts(
+                          item.title,
+                          photo,
+                          item.createdby,
+                          typename,
+                          item.isbn,
+                          (err, result) => {
+                            if (err) {
+                              console.error("Error:", err);
+                              res.status(500).json(err);
+                            } else {
+                              res.status(200).json(result);
+                            }
+                          }
+                        );
+                      }
+
                       connection.release();
                       return res.status(201).json({
                         success: true,
@@ -265,6 +382,7 @@ app.post("/api/insert/:typename", upload.single("photo"), (req, res) => {
       format: item.format,
       rating: item.rating,
       createdby: item.createdby,
+      quantity: item.quantity,
     });
     console.log("Photo:", photo ? "Received" : "No photo");
 
@@ -377,6 +495,24 @@ app.post("/api/insert/:typename", upload.single("photo"), (req, res) => {
                             details: commitErr.message,
                           });
                         });
+                      }
+
+                      for (let i = 0; i < item.quantity - 1; i++) {
+                        handleQuantityInserts(
+                          item.title,
+                          photo,
+                          item.createdby,
+                          typename,
+                          item.returnedMediaID,
+                          (err, result) => {
+                            if (err) {
+                              console.error("Error:", err);
+                              res.status(500).json(err);
+                            } else {
+                              res.status(200).json(result);
+                            }
+                          }
+                        );
                       }
 
                       connection.release();
