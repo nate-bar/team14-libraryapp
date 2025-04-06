@@ -9,6 +9,7 @@ import "../routes/ItemStyle.css";
 export default function CartPage() {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [debug, setDebug] = useState<string>("");
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const { isLoggedIn, memberID } = useOutletContext<AuthData>();
 
   // if user is not logged in
@@ -40,6 +41,8 @@ export default function CartPage() {
       return;
     }
 
+    setIsSubmitting(true);
+
     // preparing item ids to send to server
     const selectedItemIds = cartItems.map((item) => item.ItemID);
 
@@ -69,10 +72,14 @@ export default function CartPage() {
 
         alert(`Successfully processed ${cartItems.length} items`);
         console.log("Server response:", data);
+
+        setIsSubmitting(false);
       })
       .catch((error) => {
         console.error("Error sending items:", error);
         alert(`Error processing items: ${error.message}`);
+
+        setIsSubmitting(false);
       });
   };
 
