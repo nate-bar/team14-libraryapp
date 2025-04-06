@@ -1374,29 +1374,87 @@ app.post("/profile/api/return", (req, res) => {
 
           const itemid = items[index];
 
+          // First get the current record
           connection.query(
-            `UPDATE borrowrecord SET ReturnDate = NOW() WHERE ItemID = ? AND ReturnDate IS NULL`,
+            `SELECT * FROM borrowrecord WHERE ItemID = ? AND ReturnDate IS NULL`,
             [itemid],
-            (err, returnResult) => {
-              if (err) {
-                console.error(`Error returning Item ${itemid}:`, err);
+            (err, rows) => {
+              if (err || rows.length === 0) {
+                console.error(
+                  `Error finding borrow record for Item ${itemid}:`,
+                  err
+                );
                 hasErrors = true;
                 returnItem(index + 1);
                 return;
               }
 
-              // update item status
+              const record = rows[0];
+
+              // Insert into returnrecord
               connection.query(
-                `UPDATE Items SET Status = 'Available', LastUpdated = NOW() WHERE ItemID = ?`,
-                [itemid],
-                (err, updateResult) => {
+                `INSERT INTO returnrecord (
+                  ReturnID, 
+                  MemberID, 
+                  ItemID, 
+                  BorrowDate, 
+                  DueDate, 
+                  ReturnDate, 
+                  FineAccrued
+                ) VALUES (?, ?, ?, ?, ?, NOW(), ?)`,
+                [
+                  record.BorrowID,
+                  record.MemberID,
+                  record.ItemID,
+                  record.BorrowDate,
+                  record.DueDate,
+                  record.FineAccrued,
+                ],
+                (err) => {
                   if (err) {
-                    console.error(`Error updating Item ${itemid}:`, err);
+                    console.error(
+                      `Error inserting return record for Item ${itemid}:`,
+                      err
+                    );
                     hasErrors = true;
-                  } else {
-                    returnedItems.push(itemid);
+                    returnItem(index + 1);
+                    return;
                   }
-                  returnItem(index + 1);
+
+                  // Delete from borrowrecord
+                  connection.query(
+                    `DELETE FROM borrowrecord WHERE ItemID = ? AND ReturnDate IS NULL`,
+                    [itemid],
+                    (err) => {
+                      if (err) {
+                        console.error(
+                          `Error deleting borrow record for Item ${itemid}:`,
+                          err
+                        );
+                        hasErrors = true;
+                        returnItem(index + 1);
+                        return;
+                      }
+
+                      // update item status
+                      connection.query(
+                        `UPDATE Items SET Status = 'Available', LastUpdated = NOW() WHERE ItemID = ?`,
+                        [itemid],
+                        (err, updateResult) => {
+                          if (err) {
+                            console.error(
+                              `Error updating Item ${itemid}:`,
+                              err
+                            );
+                            hasErrors = true;
+                          } else {
+                            returnedItems.push(itemid);
+                          }
+                          returnItem(index + 1);
+                        }
+                      );
+                    }
+                  );
                 }
               );
             }
