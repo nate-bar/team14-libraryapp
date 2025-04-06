@@ -22,9 +22,12 @@ export default function CartPage() {
     const cartData = sessionStorage.getItem("shoppingCart");
     setDebug(`Raw cart data: ${cartData}`);
 
-    const cart: CartItem[] = JSON.parse(cartData || "[]");
-    console.log("Cart items loaded:", cart); // Added console log
-    setCartItems(cart);
+    // Parse cart data and filter out any "On Hold" items
+    const allItems: CartItem[] = JSON.parse(cartData || "[]");
+    const inCartItems = allItems.filter((item) => item.Category === "In Cart");
+
+    console.log("Cart items loaded:", inCartItems);
+    setCartItems(inCartItems);
   }, []);
 
   const removeFromCart = (itemId: number) => {
@@ -62,92 +65,57 @@ export default function CartPage() {
       })
       .then((data) => {
         // ON SUCCESSFUL CHECKOUT
-        const updatedCart = cartItems.filter(
-          (item) => item.Category === "On Hold"
-        );
-        setCartItems(updatedCart);
-        sessionStorage.setItem("shoppingCart", JSON.stringify(updatedCart));
+        // Clear all items from cart
+        setCartItems([]);
+        sessionStorage.setItem("shoppingCart", JSON.stringify([]));
         window.dispatchEvent(new Event("cartUpdated"));
-        // CLEAR ITEMS FROM CART AND UPDATE
 
         alert(`Successfully processed ${cartItems.length} items`);
         console.log("Server response:", data);
-
         setIsSubmitting(false);
       })
       .catch((error) => {
         console.error("Error sending items:", error);
         alert(`Error processing items: ${error.message}`);
-
         setIsSubmitting(false);
       });
   };
-
-  // Count items in each category for debugging
-  const checkoutCount = cartItems.filter(
-    (item) => item.Category === "In Cart"
-  ).length;
-  const holdCount = cartItems.filter(
-    (item) => item.Category === "On Hold"
-  ).length;
 
   return (
     <div className="cart-container">
       <h1>We hope you enjoy your books member #{memberID}</h1>
       <div className="cart-section">
         <h2>Shopping Cart</h2>
-        {cartItems.filter((item) => item.Category === "In Cart").length ? (
-          cartItems
-            .filter((item) => item.Category === "In Cart")
-            .map((item) => (
-              <div key={item.ItemID} className="cart-item">
-                <p>
-                  {item.Title} ({item.TypeName})
-                </p>
-                <button
-                  className="btn btn-danger"
-                  onClick={() => removeFromCart(item.ItemID)}
-                >
-                  Remove
-                </button>
-              </div>
-            ))
+        {cartItems.length ? (
+          cartItems.map((item) => (
+            <div key={item.ItemID} className="cart-item">
+              <p>
+                {item.Title} ({item.TypeName})
+              </p>
+              <button
+                className="btn btn-danger"
+                onClick={() => removeFromCart(item.ItemID)}
+                disabled={isSubmitting}
+              >
+                Remove
+              </button>
+            </div>
+          ))
         ) : (
           <p>No items in cart</p>
         )}
       </div>
 
-      <div className="cart-section">
-        <h2>On Hold</h2>
-        {cartItems.filter((item) => item.Category === "On Hold").length ? (
-          cartItems
-            .filter((item) => item.Category === "On Hold")
-            .map((item) => (
-              <div key={item.ItemID} className="cart-item">
-                <p>
-                  {item.Title} ({item.TypeName})
-                </p>
-                <button
-                  className="btn btn-danger"
-                  onClick={() => removeFromCart(item.ItemID)}
-                >
-                  Remove
-                </button>
-              </div>
-            ))
-        ) : (
-          <p>No items on hold</p>
-        )}
-      </div>
-      {cartItems.filter((item) => item.Category === "In Cart").length > 0 && (
+      {cartItems.length > 0 && (
         <div className="checkout-section">
           <button
             className="btn btn-primary checkout-button"
             onClick={handleCheckout}
+            disabled={isSubmitting}
           >
-            Checkout (
-            {cartItems.filter((item) => item.Category === "In Cart").length}{" "}
-            items)
+            {isSubmitting
+              ? "Processing..."
+              : `Checkout (${cartItems.length} items)`}
           </button>
         </div>
       )}

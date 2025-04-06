@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { Link, useNavigate } from "react-router"; // Using React Router
+import { Link, useNavigate } from "react-router";
 import { type Items } from "~/services/api";
 import "../components/navbar.css";
 import { type CartItem } from "~/services/api";
@@ -12,12 +12,12 @@ export function NavBar2() {
   const searchRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
 
+  // sends to catalog page to reset filters
   const triggerFilterReset = () => {
-    // Dispatch a custom event that the catalog page can listen for
     window.dispatchEvent(new Event("resetCatalogFilters"));
   };
 
-  // Fetch items from API
+  // fetch items from api
   useEffect(() => {
     fetch("/api/items")
       .then((response) => response.json())

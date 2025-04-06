@@ -660,6 +660,85 @@ app.post("/api/insert/:typename", upload.single("photo"), (req, res) => {
   }
 });
 
+app.post("/api/holdrequest", (req, res) => {
+  const { itemid, memberid } = req.body;
+  //console.log(itemid);
+  //console.log(memberid);
+
+  // quick validation of input
+  if (!itemid || !memberid) {
+    return res.status(400).json({ error: "ItemID and MemberID are required" });
+  }
+
+  pool.getConnection((err, connection) => {
+    if (err) {
+      console.error("DB Connection Error:", err);
+      return res
+        .status(500)
+        .json({ error: "DB connection error", details: err.message });
+    }
+
+    // perform check for duplicate entry
+    connection.query(
+      `SELECT * FROM holdrequest WHERE ItemID = ? AND MemberID = ?`,
+      [itemid, memberid],
+      (err, existingHolds) => {
+        if (err) {
+          connection.release();
+          console.error("Hold check Error:", {
+            message: err.message,
+            sqlMessage: err.sqlMessage,
+            code: err.code,
+            sql: err.sql,
+          });
+          return res.status(500).json({
+            error: "Failed to check existing hold requests",
+            details: err.message,
+          });
+        }
+
+        // return error emssage if hold exists
+        if (existingHolds.length > 0) {
+          connection.release();
+          return res.status(409).json({
+            error: "You already have a hold request for this item",
+          });
+        }
+
+        // no existing hold, continue to inserting
+        connection.query(
+          `INSERT INTO holdrequest (ItemID, MemberID, CreatedAt) VALUES (?, ?, NOW())`,
+          [itemid, memberid],
+          (err, results) => {
+            // release conenction
+            connection.release();
+
+            if (err) {
+              console.error("Hold request Error:", {
+                message: err.message,
+                sqlMessage: err.sqlMessage,
+                code: err.code,
+                sql: err.sql,
+              });
+              return res.status(500).json({
+                error: "Failed to create hold request",
+                details: err.message,
+              });
+            }
+
+            // return success
+            return res.status(201).json({
+              success: true,
+              message: "Hold request created successfully",
+              requestId: results.insertId,
+            });
+          }
+        );
+      }
+    );
+  });
+});
+
 app.post("/api/edit/:typename", upload.single("Photo"), (req, res) => {
   const typename = req.params.typename;
   const item = req.body;

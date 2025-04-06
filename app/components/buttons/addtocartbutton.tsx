@@ -1,75 +1,116 @@
-import { type CartItem } from "~/services/api";
+import { useState } from "react";
+import { type Items } from "~/services/api";
+import { Outlet, useOutletContext } from "react-router";
+import { type AuthData } from "~/services/api";
 
-interface AddToCartButtonProps {
-  item: {
-    ItemID: number;
-    Title: string;
-    TypeName: string;
-    Status: string;
-  };
+interface ItemActionButtonsProps {
+  item: Items;
 }
 
-export default function AddToCartButton({ item }: AddToCartButtonProps) {
-  const handleAction = (action: "In Cart" | "On Hold") => {
-    try {
-      // Get current cart or initialize empty array
-      let cart: CartItem[] = [];
-      const cartData = sessionStorage.getItem("shoppingCart");
+export default function ItemActionButtons({ item }: ItemActionButtonsProps) {
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  const authData = useOutletContext<AuthData>();
 
-      if (cartData) {
-        cart = JSON.parse(cartData);
-        console.log("Existing cart loaded:", cart);
-      }
-
-      // Check if item already exists
-      if (!cart.some((cartItem) => cartItem.ItemID === item.ItemID)) {
-        // Create a simplified item object
-        const newItem: CartItem = {
-          ItemID: item.ItemID,
-          Title: item.Title,
-          TypeName: item.TypeName,
-          Status: item.Status,
-          Category: action,
-        };
-
-        cart.push(newItem);
-        const newCartString = JSON.stringify(cart);
-        sessionStorage.setItem("shoppingCart", newCartString);
-        window.dispatchEvent(new Event("cartUpdated"));
-        console.log("Item added, new cart:", cart);
-        alert(`${item.Title} added to ${action}`);
-      } else {
-        alert(`${item.Title} is already in the cart`);
-      }
-    } catch (error) {
-      console.error("Error updating cart:", error);
-      alert("There was an error adding the item to cart");
+  const handleAddToCart = () => {
+    // check if user is logged in
+    if (!authData.isLoggedIn) {
+      alert("Please login first");
+      return;
     }
+
+    const cart = JSON.parse(sessionStorage.getItem("shoppingCart") || "[]");
+    const existingItemIndex = cart.findIndex(
+      (cartItem: any) => cartItem.ItemID === item.ItemID
+    );
+
+    // check if item already exists in cart
+    if (existingItemIndex >= 0) {
+      alert("Item is already in your cart");
+      return;
+    }
+
+    const itemWithCategory = {
+      ...item,
+      Category: "In Cart",
+    };
+
+    const updatedCart = [...cart, itemWithCategory];
+    sessionStorage.setItem("shoppingCart", JSON.stringify(updatedCart));
+    window.dispatchEvent(new Event("cartUpdated"));
+
+    alert("Item added to cart");
   };
 
-  if (item.Status === "Available") {
-    return (
-      <button 
-        className="btn btn-primary" 
-        onClick={() => handleAction("In Cart")}
-      >
-        Add to Cart
-      </button>
-    );
-  } else if (item.Status === "Checked Out") {
-    return (
-      <button 
-        className="btn btn-warning" 
-        onClick={() => handleAction("On Hold")}
-      >
-        Place on Hold
-      </button>
-    );
-  } else {
-    return (
-      <button className="btn btn-disabled" disabled>
-        Unavailable
-      </button>
-    );
-  }
+  const handleHoldRequest = () => {
+    if (!authData.isLoggedIn) {
+      alert("Please login first");
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    fetch("/api/holdrequest", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        itemid: item.ItemID,
+        memberid: authData.memberID,
+      }),
+    })
+      .then(async (response) => {
+        const data = await response.json();
+
+        if (!response.ok) {
+          // error 409 is returned by the server if user already has book on hold
+          if (response.status === 409) {
+            throw new Error(
+              data.error || "You already have a hold request for this item"
+            );
+          }
+          throw new Error(
+            data.error || `HTTP error! Status: ${response.status}`
+          );
+        }
+
+        return data;
+      })
+      .then((data) => {
+        alert("Hold request submitted successfully");
+        console.log("Server response:", data);
+        setIsSubmitting(false);
+      })
+      .catch((error) => {
+        console.error("Error submitting hold request:", error);
+        alert(error.message);
+        setIsSubmitting(false);
+      });
+  };
+
+  return (
+    <div className="item-actions">
+      {/* add to cart button - only shown for Available items */}
+      {item.Status === "Available" && (
+        <button
+          className="btn btn-primary"
+          onClick={handleAddToCart}
+          disabled={isSubmitting}
+        >
+          Add to Cart
+        </button>
+      )}
+
+      {/* hold request button - only shown for Checked Out items */}
+      {item.Status === "Checked Out" && (
+        <button
+          className="btn btn-secondary hold-button"
+          onClick={handleHoldRequest}
+          disabled={isSubmitting}
+        >
+          {isSubmitting ? "Processing..." : "Place Hold Request"}
+        </button>
+      )}
+    </div>
+  );
 }
