@@ -65,79 +65,7 @@ app.get("/api/members", (req, res) => {
 /*
 //---------------------CODE FOR API'S HERE--------------------
 */
-/*
-app.get("/api/search", (req, res) => {
-  const query = req.query.q;
 
-  if (!query) {
-    return res
-      .status(400)
-      .json({ success: false, message: "Missing search query" });
-  }
-
-  pool.getConnection((err, connection) => {
-    if (err) {
-      console.error("Error getting connection:", err);
-      return res
-        .status(500)
-        .json({ success: false, message: "Database connection error" });
-    }
-
-    const searchQuery = `
-      SELECT
-        b.ISBN AS ItemID,
-        b.Title,
-        'Book' AS TypeName,
-        'Available' AS Status,
-        TO_BASE64(b.Photo) AS PhotoBase64
-      FROM books b
-      WHERE b.Title LIKE ?
-      
-      UNION ALL
-      
-      SELECT
-        m.MediaID AS ItemID,
-        i.Title,
-        'Media' AS TypeName,
-        i.Status,
-        TO_BASE64(m.Photo) AS PhotoBase64
-      FROM media m
-      JOIN items i ON m.MediaID = i.ItemID
-      WHERE i.Title LIKE ?
-      
-      UNION ALL
-      
-      SELECT
-        d.DeviceID AS ItemID,
-        d.DeviceName AS Title,
-        'Device' AS TypeName,
-        'Available' AS Status,
-        TO_BASE64(d.Photo) AS PhotoBase64
-      FROM itemdevice d
-      WHERE d.DeviceName Like ?;
-      `;
-
-    connection.query(
-      searchQuery,
-      [`%${query}%`, `%${query}%`, `%${query}%`],
-      (err, results) => {
-        connection.release();
-        if (err) {
-          console.error("Error executing search query:", err.stack);
-          return res
-            .status(500)
-            .json({ success: false, message: "Error searching items" });
-        }
-
-        res.json(results);
-      }
-    );
-  });
-});
-*/
-
-// -----------------------------------------FROM JOHNS BRANCH 3.0-----------------------------------------
-// Define the /api/admin/add-media route
 app.get("/api/users", (req, res) => {
   pool.getConnection((err, connection) => {
     if (err) {
@@ -182,369 +110,6 @@ app.get("/api/borrow-summary", (req, res) => {
   } catch (err) {
     console.error("Unexpected error:", err);
     res.status(500).json({ error: "An unexpected error occurred." });
-  }
-});
-
-app.post("/api/edit/:typename", upload.single("Photo"), (req, res) => {
-  const typename = req.params.typename;
-  const item = req.body;
-  let Photo = null;
-
-  if (req.file) {
-    // A new file was uploaded
-    Photo = req.file.buffer;
-  } else if (typeof item.Photo === "string" && item.Photo) {
-    // The original photo was sent back as base64
-    Photo = Buffer.from(item.Photo, "base64");
-  }
-
-  if (typename === "Book") {
-    console.log("Received Book Data:", {
-      ItemID: item.ItemID,
-      Title: item.Title,
-      ISBN: item.ISBN,
-      Authors: item.Authors,
-      Publisher: item.Publisher,
-      PublicationYear: item.PublicationYear,
-      GenreID: item.GenreID,
-      LanguageID: item.LanguageID,
-      UpdatedBy: item.UpdatedBy,
-      newISBN: item.newISBN,
-    });
-    console.log("Photo:", Photo ? "Received" : "No photo");
-
-    pool.getConnection((err, connection) => {
-      if (err) {
-        console.error("DB Connection Error:", err);
-        return res
-          .status(500)
-          .json({ error: "DB connection error", details: err.message });
-      }
-
-      connection.beginTransaction((transactionErr) => {
-        if (transactionErr) {
-          connection.release();
-          console.error("Transaction Begin Error:", transactionErr);
-          return res.status(500).json({
-            error: "Transaction error",
-            details: transactionErr.message,
-          });
-        }
-
-        connection.query(
-          `UPDATE Items SET Title = ?, Photo = ?, UpdatedBy = ? WHERE ItemID = ?`,
-          [item.Title, Photo, item.UpdatedBy, item.ItemID],
-          (itemErr, itemsResult) => {
-            if (itemErr) {
-              console.error("Items update Error:", {
-                message: itemErr.message,
-                sqlMessage: itemErr.sqlMessage,
-                code: itemErr.code,
-                sql: itemErr.sql,
-              });
-
-              return connection.rollback(() => {
-                connection.release();
-                res.status(500).json({
-                  error: "Item update failed",
-                  details: itemErr.message,
-                  sqlMessage: itemErr.sqlMessage,
-                });
-              });
-            }
-
-            connection.query(
-              `UPDATE Books SET ISBN = ?, Authors = ?, GenreID = ?, Publisher = ?, PublicationYear = ?, LanguageID = ? WHERE Books.ISBN = ?`,
-              [
-                item.newISBN,
-                item.Authors,
-                item.GenreID,
-                item.Publisher,
-                item.PublicationYear,
-                item.LanguageID,
-                item.ISBN,
-              ],
-              (bookErr, booksResult) => {
-                if (bookErr) {
-                  console.error("Books update Error:", {
-                    message: bookErr.message,
-                    sqlMessage: bookErr.sqlMessage,
-                    code: bookErr.code,
-                    sql: bookErr.sql,
-                  });
-
-                  return connection.rollback(() => {
-                    connection.release();
-                    res.status(500).json({
-                      error: "Book update failed",
-                      details: bookErr.message,
-                      sqlMessage: bookErr.sqlMessage,
-                    });
-                  });
-                }
-
-                console.log("Books Insert Result:", booksResult);
-
-                connection.query(
-                  `UPDATE ItemTypes SET ISBN = ? WHERE ItemTypes.ISBN = ?`,
-                  [item.newISBN, item.ISBN],
-                  (itemTypeErr, itResult) => {
-                    if (itemTypeErr) {
-                      console.error("ItemTypes Update Error:", {
-                        message: itemTypeErr.message,
-                        sqlMessage: itemTypeErr.sqlMessage,
-                        code: itemTypeErr.code,
-                        sql: itemTypeErr.sql,
-                      });
-
-                      return connection.rollback(() => {
-                        connection.release();
-                        res.status(500).json({
-                          error: "Item Types Update failed",
-                          details: itemTypeErr.message,
-                          sqlMessage: itemTypeErr.sqlMessage,
-                        });
-                      });
-                    }
-
-                    connection.commit((commitErr) => {
-                      if (commitErr) {
-                        console.error("Commit Error:", commitErr);
-                        return connection.rollback(() => {
-                          connection.release();
-                          res.status(500).json({
-                            error: "Commit error",
-                            details: commitErr.message,
-                          });
-                        });
-                      }
-
-                      connection.release();
-                      return res.status(201).json({
-                        success: true,
-                        message: "Book updated successfully!",
-                        itemId: item.ItemID,
-                      });
-                    });
-                  }
-                );
-              }
-            );
-          }
-        );
-      });
-    });
-  } else if (typename === "Media") {
-    console.log("Received Media Data:", {
-      ItemID: item.ItemID,
-      MediaID: item.MediaID,
-      Title: item.Title,
-      Director: item.Director,
-      Leads: item.Leads,
-      ReleaseYear: item.ReleaseYear,
-      GenreID: item.GenreID,
-      LanguageID: item.LanguageID,
-      Format: item.Format,
-      Rating: item.Rating,
-      UpdatedBy: item.UpdatedBy,
-    });
-    console.log("Photo:", Photo ? "Received" : "No photo");
-
-    pool.getConnection((err, connection) => {
-      if (err) {
-        console.error("DB Connection Error:", err);
-        return res
-          .status(500)
-          .json({ error: "DB connection error", details: err.message });
-      }
-
-      connection.beginTransaction((transactionErr) => {
-        if (transactionErr) {
-          connection.release();
-          console.error("Transaction Begin Error:", transactionErr);
-          return res.status(500).json({
-            error: "Transaction error",
-            details: transactionErr.message,
-          });
-        }
-
-        connection.query(
-          `UPDATE Items SET Title = ?, Photo = ?, UpdatedBy = ? WHERE Items.ItemID = ?`,
-          [item.Title, Photo, item.UpdatedBy, item.ItemID],
-          (itemErr, itemsResult) => {
-            if (itemErr) {
-              console.error("Items update Error:", {
-                message: itemErr.message,
-                sqlMessage: itemErr.sqlMessage,
-                code: itemErr.code,
-                sql: itemErr.sql,
-              });
-
-              return connection.rollback(() => {
-                connection.release();
-                res.status(500).json({
-                  error: "Item update failed",
-                  details: itemErr.message,
-                  sqlMessage: itemErr.sqlMessage,
-                });
-              });
-            }
-
-            connection.query(
-              `UPDATE Media SET Director = ?, Leads = ?, ReleaseYear = ?, GenreID = ?, LanguageID = ?, Format = ?, Rating = ? WHERE Media.MediaID = ?`,
-              [
-                item.Director,
-                item.Leads,
-                item.ReleaseYear,
-                item.GenreID,
-                item.LanguageID,
-                item.Format,
-                item.Rating,
-                item.MediaID,
-              ],
-              (mediaErr, mediaResults) => {
-                if (mediaErr) {
-                  console.error("Media update Error:", {
-                    message: mediaErr.message,
-                    sqlMessage: mediaErr.sqlMessage,
-                    code: mediaErr.code,
-                    sql: mediaErr.sql,
-                  });
-
-                  return connection.rollback(() => {
-                    connection.release();
-                    res.status(500).json({
-                      error: "Media update failed",
-                      details: mediaErr.message,
-                      sqlMessage: mediaErr.sqlMessage,
-                    });
-                  });
-                }
-
-                connection.commit((commitErr) => {
-                  if (commitErr) {
-                    console.error("Commit Error:", commitErr);
-                    return connection.rollback(() => {
-                      connection.release();
-                      res.status(500).json({
-                        error: "Commit error",
-                        details: commitErr.message,
-                      });
-                    });
-                  }
-
-                  connection.release();
-                  return res.status(201).json({
-                    success: true,
-                    message: "Media updated successfully!",
-                    itemId: item.ItemID,
-                  });
-                });
-              }
-            );
-          }
-        );
-      });
-    });
-  } else if (typename === "Device") {
-    console.log("Received Device Data:", {
-      Title: item.Title,
-      DeviceID: item.DeviceID,
-      DeviceType: item.DeviceType,
-      Manufacturer: item.Manufacturer,
-      UpdatedBy: item.UpdatedBy,
-    });
-    console.log("Photo:", Photo ? "Received" : "No photo");
-
-    pool.getConnection((err, connection) => {
-      if (err) {
-        console.error("DB Connection Error:", err);
-        return res
-          .status(500)
-          .json({ error: "DB connection error", details: err.message });
-      }
-
-      connection.beginTransaction((transactionErr) => {
-        if (transactionErr) {
-          connection.release();
-          console.error("Transaction Begin Error:", transactionErr);
-          return res.status(500).json({
-            error: "Transaction error",
-            details: transactionErr.message,
-          });
-        }
-
-        connection.query(
-          `UPDATE Items SET Title = ?, Photo = ?, UpdatedBy = ? WHERE Items.ItemID = ?`,
-          [item.Title, Photo, item.UpdatedBy, item.ItemID],
-          (itemErr, itemsResult) => {
-            if (itemErr) {
-              console.error("Items update Error:", {
-                message: itemErr.message,
-                sqlMessage: itemErr.sqlMessage,
-                code: itemErr.code,
-                sql: itemErr.sql,
-              });
-
-              return connection.rollback(() => {
-                connection.release();
-                res.status(500).json({
-                  error: "Item update failed",
-                  details: itemErr.message,
-                  sqlMessage: itemErr.sqlMessage,
-                });
-              });
-            }
-
-            connection.query(
-              `UPDATE ItemDevice SET DeviceType = ?, Manufacturer = ? WHERE ItemDevice.DeviceID = ?`,
-              [item.DeviceType, item.Manufacturer, item.DeviceID],
-              (deviceErr, deviceResults) => {
-                if (deviceErr) {
-                  console.error("device update Error:", {
-                    message: deviceErr.message,
-                    sqlMessage: deviceErr.sqlMessage,
-                    code: deviceErr.code,
-                    sql: deviceErr.sql,
-                  });
-
-                  return connection.rollback(() => {
-                    connection.release();
-                    res.status(500).json({
-                      error: "device update failed",
-                      details: deviceErr.message,
-                      sqlMessage: deviceErr.sqlMessage,
-                    });
-                  });
-                }
-
-                connection.commit((commitErr) => {
-                  if (commitErr) {
-                    console.error("Commit Error:", commitErr);
-                    return connection.rollback(() => {
-                      connection.release();
-                      res.status(500).json({
-                        error: "Commit error",
-                        details: commitErr.message,
-                      });
-                    });
-                  }
-
-                  connection.release();
-                  return res.status(201).json({
-                    success: true,
-                    message: "Device updated successfully!",
-                    itemId: item.ItemID,
-                  });
-                });
-              }
-            );
-          }
-        );
-      });
-    });
-  } else {
-    res.status(400).json({ error: "Invalid type name" });
   }
 });
 
@@ -959,303 +524,369 @@ app.post("/api/insert/:typename", upload.single("photo"), (req, res) => {
   }
 });
 
-/*
-app.post("/api/admin/add-book", upload.single("photo"), (req, res) => {
-  const {
-    isbn,
-    title,
-    genreId,
-    languageId,
-    authors,
-    publisher,
-    publicationYear,
-  } = req.body;
-  const photo = req.file ? req.file.buffer : null;
+app.post("/api/edit/:typename", upload.single("Photo"), (req, res) => {
+  const typename = req.params.typename;
+  const item = req.body;
+  let Photo = null;
 
-  if (!isbn || !title || !languageId) {
-    return res
-      .status(400)
-      .json({ error: "ISBN, Title, and Language ID are required." });
+  if (req.file) {
+    // A new file was uploaded
+    Photo = req.file.buffer;
+  } else if (typeof item.Photo === "string" && item.Photo) {
+    // The original photo was sent back as base64
+    Photo = Buffer.from(item.Photo, "base64");
   }
 
-  pool.getConnection((err, connection) => {
-    if (err) return res.status(500).json({ error: "DB connection error." });
-
-    connection.beginTransaction((err) => {
-      if (err)
-        return (
-          connection.release(),
-          res.status(500).json({ error: "Transaction error." })
-        );
-
-      const itemQuery = `
-        INSERT INTO Items (Title, Cost, TimesBorrowed, CreatedAt, CreatedBy, LastUpdated, Status)
-        VALUES (?, 0, 0, NOW(), ?, NOW(), 'Available');
-      `;
-      const createdBy = req.user ? req.user.id : null;
-      const itemParams = [title, createdBy];
-
-      connection.query(itemQuery, itemParams, (err, itemResult) => {
-        if (err)
-          return connection.rollback(
-            () => connection.release(),
-            res.status(500).json({ error: "Item insert failed." })
-          );
-
-        const itemId = itemResult.insertId;
-
-        const bookQuery = `
-          INSERT INTO Books (ISBN, BookID, Authors, GenreID, Publisher, PublicationYear, LanguageID, Photo)
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?);
-        `;
-        const bookParams = [
-          isbn,
-          itemId,
-          authors || null,
-          genreId || null,
-          publisher || null,
-          publicationYear || null,
-          languageId,
-          photo,
-        ];
-
-        connection.query(bookQuery, bookParams, (err) => {
-          if (err)
-            return connection.rollback(
-              () => connection.release(),
-              res.status(500).json({ error: "Book insert failed." })
-            );
-
-          const itemTypeQuery = `
-            INSERT INTO ItemTypes (ItemID, TypeName, BookID)
-            VALUES (?, 'Book', ?);
-          `;
-          connection.query(itemTypeQuery, [itemId, itemId], (err) => {
-            if (err)
-              return connection.rollback(
-                () => connection.release(),
-                res.status(500).json({ error: "ItemType insert failed." })
-              );
-
-            connection.commit((err) => {
-              if (err)
-                return connection.rollback(
-                  () => connection.release(),
-                  res.status(500).json({ error: "Commit error." })
-                );
-
-              connection.release();
-              res
-                .status(201)
-                .json({ success: true, message: "Book added successfully!" });
-            });
-          });
-        });
-      });
+  if (typename === "Book") {
+    console.log("Received Book Data:", {
+      ItemID: item.ItemID,
+      Title: item.Title,
+      ISBN: item.ISBN,
+      Authors: item.Authors,
+      Publisher: item.Publisher,
+      PublicationYear: item.PublicationYear,
+      GenreID: item.GenreID,
+      LanguageID: item.LanguageID,
+      UpdatedBy: item.UpdatedBy,
+      newISBN: item.newISBN,
     });
-  });
-});
-*/
-/*
-app.post("/api/admin/add-media", upload.single("photo"), (req, res) => {
-  const { genreId, languageId, director, leads, releaseYear, format, rating } =
-    req.body;
-  const photo = req.file ? req.file.buffer : null;
+    console.log("Photo:", Photo ? "Received" : "No photo");
 
-  // Validate required fields
-  if (!title || !languageId) {
-    return res
-      .status(400)
-      .json({ error: "Title and Language ID are required." });
-  }
-
-  // Obtain a connection for transaction control
-  pool.getConnection((err, connection) => {
-    if (err) {
-      console.error("Connection error:", err);
-      return res.status(500).json({ error: "Database connection error." });
-    }
-
-    connection.beginTransaction((err) => {
+    pool.getConnection((err, connection) => {
       if (err) {
-        connection.release();
-        return res.status(500).json({ error: "Transaction initiation error." });
+        console.error("DB Connection Error:", err);
+        return res
+          .status(500)
+          .json({ error: "DB connection error", details: err.message });
       }
 
-      // Insert into the Items table
-      const itemQuery = `
-        INSERT INTO Items 
-          (Title, Cost, TimesBorrowed, CreatedAt, CreatedBy, LastUpdated, Status)
-        VALUES (?, 0, 0, NOW(), ?, NOW(), 'Available');
-      `;
-      const createdBy = req.user ? req.user.id : null; // Replace with actual user ID if available
-      const itemParams = [title, createdBy];
-
-      connection.query(itemQuery, itemParams, (err, itemResult) => {
-        if (err) {
-          return connection.rollback(() => {
-            connection.release();
-            console.error("Error inserting item:", err);
-            res.status(500).json({ error: "Failed to add item." });
+      connection.beginTransaction((transactionErr) => {
+        if (transactionErr) {
+          connection.release();
+          console.error("Transaction Begin Error:", transactionErr);
+          return res.status(500).json({
+            error: "Transaction error",
+            details: transactionErr.message,
           });
         }
 
-        const itemId = itemResult.insertId;
+        connection.query(
+          `UPDATE Items SET Title = ?, Photo = ?, UpdatedBy = ? WHERE ItemID = ?`,
+          [item.Title, Photo, item.UpdatedBy, item.ItemID],
+          (itemErr, itemsResult) => {
+            if (itemErr) {
+              console.error("Items update Error:", {
+                message: itemErr.message,
+                sqlMessage: itemErr.sqlMessage,
+                code: itemErr.code,
+                sql: itemErr.sql,
+              });
 
-        // Insert into the Media table
-        const mediaQuery = `
-          INSERT INTO Media 
-            (MediaID, Director, Leads, ReleaseYear, GenreID, LanguageID, Format, Rating, Photo)
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);
-        `;
-        const mediaParams = [
-          itemId,
-          director || null,
-          leads || null,
-          releaseYear || null,
-          genreId || null,
-          languageId,
-          format || null,
-          rating || null,
-          photo,
-        ];
-
-        connection.query(mediaQuery, mediaParams, (err) => {
-          if (err) {
-            return connection.rollback(() => {
-              connection.release();
-              console.error("Error inserting media:", err);
-              res.status(500).json({ error: "Failed to add media." });
-            });
-          }
-
-          // Insert into the ItemTypes table
-          const itemTypeQuery = `
-            INSERT INTO ItemTypes 
-              (ItemID, TypeName, MediaID)
-            VALUES (?, 'Media', ?);
-          `;
-          const itemTypeParams = [itemId, itemId];
-
-          connection.query(itemTypeQuery, itemTypeParams, (err) => {
-            if (err) {
               return connection.rollback(() => {
                 connection.release();
-                console.error("Error inserting item type:", err);
-                res
-                  .status(500)
-                  .json({ error: "Failed to add item type record." });
+                res.status(500).json({
+                  error: "Item update failed",
+                  details: itemErr.message,
+                  sqlMessage: itemErr.sqlMessage,
+                });
               });
             }
 
-            // Commit the transaction
-            connection.commit((err) => {
-              if (err) {
-                return connection.rollback(() => {
+            connection.query(
+              `UPDATE Books SET ISBN = ?, Authors = ?, GenreID = ?, Publisher = ?, PublicationYear = ?, LanguageID = ? WHERE Books.ISBN = ?`,
+              [
+                item.newISBN,
+                item.Authors,
+                item.GenreID,
+                item.Publisher,
+                item.PublicationYear,
+                item.LanguageID,
+                item.ISBN,
+              ],
+              (bookErr, booksResult) => {
+                if (bookErr) {
+                  console.error("Books update Error:", {
+                    message: bookErr.message,
+                    sqlMessage: bookErr.sqlMessage,
+                    code: bookErr.code,
+                    sql: bookErr.sql,
+                  });
+
+                  return connection.rollback(() => {
+                    connection.release();
+                    res.status(500).json({
+                      error: "Book update failed",
+                      details: bookErr.message,
+                      sqlMessage: bookErr.sqlMessage,
+                    });
+                  });
+                }
+
+                console.log("Books Insert Result:", booksResult);
+
+                connection.query(
+                  `UPDATE ItemTypes SET ISBN = ? WHERE ItemTypes.ISBN = ?`,
+                  [item.newISBN, item.ISBN],
+                  (itemTypeErr, itResult) => {
+                    if (itemTypeErr) {
+                      console.error("ItemTypes Update Error:", {
+                        message: itemTypeErr.message,
+                        sqlMessage: itemTypeErr.sqlMessage,
+                        code: itemTypeErr.code,
+                        sql: itemTypeErr.sql,
+                      });
+
+                      return connection.rollback(() => {
+                        connection.release();
+                        res.status(500).json({
+                          error: "Item Types Update failed",
+                          details: itemTypeErr.message,
+                          sqlMessage: itemTypeErr.sqlMessage,
+                        });
+                      });
+                    }
+
+                    connection.commit((commitErr) => {
+                      if (commitErr) {
+                        console.error("Commit Error:", commitErr);
+                        return connection.rollback(() => {
+                          connection.release();
+                          res.status(500).json({
+                            error: "Commit error",
+                            details: commitErr.message,
+                          });
+                        });
+                      }
+
+                      connection.release();
+                      return res.status(201).json({
+                        success: true,
+                        message: "Book updated successfully!",
+                        itemId: item.ItemID,
+                      });
+                    });
+                  }
+                );
+              }
+            );
+          }
+        );
+      });
+    });
+  } else if (typename === "Media") {
+    console.log("Received Media Data:", {
+      ItemID: item.ItemID,
+      MediaID: item.MediaID,
+      Title: item.Title,
+      Director: item.Director,
+      Leads: item.Leads,
+      ReleaseYear: item.ReleaseYear,
+      GenreID: item.GenreID,
+      LanguageID: item.LanguageID,
+      Format: item.Format,
+      Rating: item.Rating,
+      UpdatedBy: item.UpdatedBy,
+    });
+    console.log("Photo:", Photo ? "Received" : "No photo");
+
+    pool.getConnection((err, connection) => {
+      if (err) {
+        console.error("DB Connection Error:", err);
+        return res
+          .status(500)
+          .json({ error: "DB connection error", details: err.message });
+      }
+
+      connection.beginTransaction((transactionErr) => {
+        if (transactionErr) {
+          connection.release();
+          console.error("Transaction Begin Error:", transactionErr);
+          return res.status(500).json({
+            error: "Transaction error",
+            details: transactionErr.message,
+          });
+        }
+
+        connection.query(
+          `UPDATE Items SET Title = ?, Photo = ?, UpdatedBy = ? WHERE Items.ItemID = ?`,
+          [item.Title, Photo, item.UpdatedBy, item.ItemID],
+          (itemErr, itemsResult) => {
+            if (itemErr) {
+              console.error("Items update Error:", {
+                message: itemErr.message,
+                sqlMessage: itemErr.sqlMessage,
+                code: itemErr.code,
+                sql: itemErr.sql,
+              });
+
+              return connection.rollback(() => {
+                connection.release();
+                res.status(500).json({
+                  error: "Item update failed",
+                  details: itemErr.message,
+                  sqlMessage: itemErr.sqlMessage,
+                });
+              });
+            }
+
+            connection.query(
+              `UPDATE Media SET Director = ?, Leads = ?, ReleaseYear = ?, GenreID = ?, LanguageID = ?, Format = ?, Rating = ? WHERE Media.MediaID = ?`,
+              [
+                item.Director,
+                item.Leads,
+                item.ReleaseYear,
+                item.GenreID,
+                item.LanguageID,
+                item.Format,
+                item.Rating,
+                item.MediaID,
+              ],
+              (mediaErr, mediaResults) => {
+                if (mediaErr) {
+                  console.error("Media update Error:", {
+                    message: mediaErr.message,
+                    sqlMessage: mediaErr.sqlMessage,
+                    code: mediaErr.code,
+                    sql: mediaErr.sql,
+                  });
+
+                  return connection.rollback(() => {
+                    connection.release();
+                    res.status(500).json({
+                      error: "Media update failed",
+                      details: mediaErr.message,
+                      sqlMessage: mediaErr.sqlMessage,
+                    });
+                  });
+                }
+
+                connection.commit((commitErr) => {
+                  if (commitErr) {
+                    console.error("Commit Error:", commitErr);
+                    return connection.rollback(() => {
+                      connection.release();
+                      res.status(500).json({
+                        error: "Commit error",
+                        details: commitErr.message,
+                      });
+                    });
+                  }
+
                   connection.release();
-                  console.error("Commit error:", err);
-                  res.status(500).json({ error: "Transaction commit error." });
+                  return res.status(201).json({
+                    success: true,
+                    message: "Media updated successfully!",
+                    itemId: item.ItemID,
+                  });
                 });
               }
-
-              connection.release();
-              res
-                .status(201)
-                .json({ success: true, message: "Media added successfully!" });
-            });
-          });
-        });
-      });
-    });
-  });
-});
-app.post("/api/admin/add-device", upload.single("photo"), (req, res) => {
-  const { deviceId, deviceType, manufacturer } = req.body;
-  const photo = req.file ? req.file.buffer : null;
-
-  if (!deviceId || !deviceType || !manufacturer) {
-    return res.status(400).json({ error: "All fields are required." });
-  }
-
-  pool.getConnection((err, connection) => {
-    if (err) return res.status(500).json({ error: "DB connection error." });
-
-    connection.beginTransaction((err) => {
-      if (err)
-        return (
-          connection.release(),
-          res.status(500).json({ error: "Transaction error." })
-        );
-
-      const itemQuery = `
-        INSERT INTO Items (Title, Cost, TimesBorrowed, CreatedAt, CreatedBy, LastUpdated, Status)
-        VALUES (?, 0, 0, NOW(), ?, NOW(), 'Available');
-      `;
-      const createdBy = req.user ? req.user.id : null;
-      const itemParams = [deviceName, createdBy];
-
-      connection.query(itemQuery, itemParams, (err, itemResult) => {
-        if (err)
-          return connection.rollback(
-            () => connection.release(),
-            res.status(500).json({ error: "Item insert failed." })
-          );
-
-        const itemId = itemResult.insertId;
-
-        const deviceQuery = `
-          INSERT INTO ItemDevice (ItemID, DeviceID, DeviceName, DeviceType, Manufacturer, CreatedBy, CreatedAt, UpdatedBy, LastUpdated, Photo)
-          VALUES (?, ?, ?, ?, ?, ?, NOW(), ?, NOW(), ?);
-        `;
-        const deviceParams = [
-          itemId,
-          deviceId,
-          deviceName,
-          deviceType,
-          manufacturer,
-          createdBy,
-          createdBy,
-          photo,
-        ];
-
-        connection.query(deviceQuery, deviceParams, (err) => {
-          if (err)
-            return connection.rollback(
-              () => connection.release(),
-              res.status(500).json({ error: "Device insert failed." })
             );
-
-          const itemTypeQuery = `
-            INSERT INTO ItemTypes (ItemID, TypeName)
-            VALUES (?, 'Device');
-          `;
-          connection.query(itemTypeQuery, [itemId], (err) => {
-            if (err)
-              return connection.rollback(
-                () => connection.release(),
-                res.status(500).json({ error: "ItemType insert failed." })
-              );
-
-            connection.commit((err) => {
-              if (err)
-                return connection.rollback(
-                  () => connection.release(),
-                  res.status(500).json({ error: "Commit error." })
-                );
-
-              connection.release();
-              res
-                .status(201)
-                .json({ success: true, message: "Device added successfully!" });
-            });
-          });
-        });
+          }
+        );
       });
     });
-  });
+  } else if (typename === "Device") {
+    console.log("Received Device Data:", {
+      Title: item.Title,
+      DeviceID: item.DeviceID,
+      DeviceType: item.DeviceType,
+      Manufacturer: item.Manufacturer,
+      UpdatedBy: item.UpdatedBy,
+    });
+    console.log("Photo:", Photo ? "Received" : "No photo");
+
+    pool.getConnection((err, connection) => {
+      if (err) {
+        console.error("DB Connection Error:", err);
+        return res
+          .status(500)
+          .json({ error: "DB connection error", details: err.message });
+      }
+
+      connection.beginTransaction((transactionErr) => {
+        if (transactionErr) {
+          connection.release();
+          console.error("Transaction Begin Error:", transactionErr);
+          return res.status(500).json({
+            error: "Transaction error",
+            details: transactionErr.message,
+          });
+        }
+
+        connection.query(
+          `UPDATE Items SET Title = ?, Photo = ?, UpdatedBy = ? WHERE Items.ItemID = ?`,
+          [item.Title, Photo, item.UpdatedBy, item.ItemID],
+          (itemErr, itemsResult) => {
+            if (itemErr) {
+              console.error("Items update Error:", {
+                message: itemErr.message,
+                sqlMessage: itemErr.sqlMessage,
+                code: itemErr.code,
+                sql: itemErr.sql,
+              });
+
+              return connection.rollback(() => {
+                connection.release();
+                res.status(500).json({
+                  error: "Item update failed",
+                  details: itemErr.message,
+                  sqlMessage: itemErr.sqlMessage,
+                });
+              });
+            }
+
+            connection.query(
+              `UPDATE ItemDevice SET DeviceType = ?, Manufacturer = ? WHERE ItemDevice.DeviceID = ?`,
+              [item.DeviceType, item.Manufacturer, item.DeviceID],
+              (deviceErr, deviceResults) => {
+                if (deviceErr) {
+                  console.error("device update Error:", {
+                    message: deviceErr.message,
+                    sqlMessage: deviceErr.sqlMessage,
+                    code: deviceErr.code,
+                    sql: deviceErr.sql,
+                  });
+
+                  return connection.rollback(() => {
+                    connection.release();
+                    res.status(500).json({
+                      error: "device update failed",
+                      details: deviceErr.message,
+                      sqlMessage: deviceErr.sqlMessage,
+                    });
+                  });
+                }
+
+                connection.commit((commitErr) => {
+                  if (commitErr) {
+                    console.error("Commit Error:", commitErr);
+                    return connection.rollback(() => {
+                      connection.release();
+                      res.status(500).json({
+                        error: "Commit error",
+                        details: commitErr.message,
+                      });
+                    });
+                  }
+
+                  connection.release();
+                  return res.status(201).json({
+                    success: true,
+                    message: "Device updated successfully!",
+                    itemId: item.ItemID,
+                  });
+                });
+              }
+            );
+          }
+        );
+      });
+    });
+  } else {
+    res.status(400).json({ error: "Invalid type name" });
+  }
 });
-*/
-// Book view
+
 app.get("/api/book-details", (req, res) => {
   pool.getConnection((err, connection) => {
     if (err) {
@@ -1277,6 +908,7 @@ app.get("/api/book-details", (req, res) => {
   });
 });
 
+/*
 // displays all users in the system
 app.get("/api/users", (req, res) => {
   pool.getConnection((err, connection) => {
@@ -1305,6 +937,7 @@ app.get("/api/users", (req, res) => {
     });
   });
 });
+*/
 
 // deletes a user from the system
 app.delete("/api/usersdelete/:userId", (req, res) => {
@@ -1336,7 +969,6 @@ app.delete("/api/usersdelete/:userId", (req, res) => {
   });
 });
 
-// -------------------------------------------------------------------------------------------------------
 app.get("/api/search", (req, res) => {
   const query = req.query.q;
 
@@ -1762,60 +1394,6 @@ app.post("/api/checkout", (req, res) => {
   }
 });
 
-/*
-app.get("/api/items", (req, res) => {
-  pool.getConnection((err, connection) => {
-    if (err) {
-      console.error("Error getting connection: ", err);
-      return res.status(500).send("Error connecting to the database");
-    }
-
-    const query = `
-      SELECT 
-        b.ISBN AS ItemID, 
-        b.Title, 
-        'Book' AS TypeName, 
-        'Available' AS Status, 
-        TO_BASE64(b.Photo) AS PhotoBase64,
-        b.GenreID AS GenreID -- Include GenreID from books table
-      FROM books b
-
-      UNION ALL
-
-      SELECT 
-        m.MediaID AS ItemID, 
-        i.Title, 
-        'Media' AS TypeName, 
-        i.Status, 
-        TO_BASE64(m.Photo) AS PhotoBase64,
-        m.GenreID AS GenreID -- Include GenreID from media table
-      FROM media m
-      JOIN items i ON m.MediaID = i.ItemID
-
-      UNION ALL
-
-      SELECT 
-        d.DeviceID AS ItemID, 
-        d.DeviceName AS Title, 
-        'Device' AS TypeName, 
-        'Available' AS Status, 
-        NULL AS PhotoBase64, -- Devices may not have photos
-        NULL AS GenreID -- Devices do not have a GenreID
-      FROM itemdevice d;
-    `;
-
-    connection.query(query, (err, results) => {
-      connection.release(); // Release the connection back to the pool
-      if (err) {
-        console.error("Error executing query: ", err.stack);
-        return res.status(500).send("Error fetching items");
-      }
-
-      res.json(results);
-    });
-  });
-});
-*/
 // RETURNS ALL ITEMS AND THEIR TYPE
 app.get("/api/items", (req, res) => {
   pool.getConnection((err, connection) => {
@@ -2219,6 +1797,9 @@ app.post("/api/login", async (req, res) => {
       req.session.lastName = member.LastName;
       req.session.address = member.Address;
       req.session.email = member.Email;
+      req.session.phonenumber = member.PhoneNumber;
+      req.session.birthdate = member.BirthDate;
+      req.session.balance = member.Balance;
 
       // Debug check
       //console.log("Session after setting memberID:", req.session);

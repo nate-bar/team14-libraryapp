@@ -35,6 +35,45 @@ export function getCurrentAddress(context: any) {
   return context.address || null;
 }
 
+export function getCurrentPhoneNumber(context: any) {
+  return context.phonenumber || null;
+}
+
+export function getCurrentBirthDate(context: any) {
+  const birthdate = context.birthdate || null;
+
+  if (!birthdate) {
+    return null;
+  }
+
+  const date = new Date(birthdate);
+
+  if (isNaN(date.getTime())) {
+    return null;
+  }
+
+  const options: Intl.DateTimeFormatOptions = {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  };
+  return date.toLocaleDateString("en-US", options);
+}
+
+export function getCurrentBalance(context: any) {
+  if (context.balance === undefined || context.balance === null) {
+    return null;
+  }
+
+  // format as currency
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(context.balance);
+}
+
 // Function to require authentication (use in protected route loaders)
 export function requireAuth(context: any, redirectTo = "/login") {
   if (!isAuthenticated(context)) {
@@ -56,5 +95,8 @@ export function getAuthData(context: any) {
     middleName: getCurrentMiddleName(context),
     address: getCurrentAddress(context),
     email: getCurrentEmail(context),
+    phonenumber: getCurrentPhoneNumber(context),
+    birthdate: getCurrentBirthDate(context),
+    balance: getCurrentBalance(context),
   };
 }
