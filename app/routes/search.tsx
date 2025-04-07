@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback, useMemo } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import { type ItemFull } from "~/services/api";
 import { useLocation } from "react-router";
 import { useNavigate } from "react-router";
@@ -11,17 +11,19 @@ const AdvancedSearch = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
-  const [activeFilter, setActiveFilter] = useState<ItemCategory>("All");
-  const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 25;
+  const [activeFilter, setActiveFilter] = useState<ItemCategory>("All"); // default to all category
+  const [currentPage, setCurrentPage] = useState(1); // set page state
+  const itemsPerPage = 25; // items displayed per page
 
-  const location = useLocation();
-  const navigate = useNavigate();
+  const location = useLocation(); // used for getting search from url
+  const navigate = useNavigate(); // used to navigate to item page
 
+  // handle navigation to item detail page
   const handleRowClick = (item: ItemFull) => {
     navigate(`/${item.TypeName}/${item.ItemID}`);
   };
 
+  // fetching data from api that returns ItemFull type in api.ts
   const fetchData = useCallback(() => {
     setIsLoading(true);
     setError(null);
@@ -44,45 +46,49 @@ const AdvancedSearch = () => {
       });
   }, []);
 
-  // Comprehensive filtering logic
+  // filtering logic
   const filteredResults = useMemo(() => {
+    // if search bar is empty, return empty array
+    if (!searchTerm.trim()) {
+      return [];
+    }
+
     let results = [...items];
 
-    // First, apply category filter
+    // apply category filter if needed
     if (activeFilter !== "All") {
       results = results.filter(
         (item) => item.TypeName?.toLowerCase() === activeFilter.toLowerCase()
       );
     }
 
-    // Then, apply search term filter if exists
-    if (searchTerm.trim()) {
-      const lowercasedSearch = searchTerm.toLowerCase().trim();
+    // then => search term filter
+    const lowercasedSearch = searchTerm.toLowerCase().trim();
 
-      results = results.filter((item) => {
-        const searchFields = [
-          item.Title,
-          item.Authors,
-          item.Director,
-          item.Leads,
-          item.DeviceType,
-          item.Manufacturer,
-          item.GenreName,
-          item.Publisher,
-          item.Language,
-          item.TypeName,
-          item.Status,
-        ];
+    results = results.filter((item) => {
+      const searchFields = [
+        item.Title,
+        item.Authors,
+        item.Director,
+        item.Leads,
+        item.DeviceType,
+        item.Manufacturer,
+        item.GenreName,
+        item.Publisher,
+        item.Language,
+        item.TypeName,
+        item.Status,
+      ];
 
-        return searchFields.some(
-          (field) => field && field.toLowerCase().includes(lowercasedSearch)
-        );
-      });
-    }
+      return searchFields.some(
+        (field) => field && field.toLowerCase().includes(lowercasedSearch)
+      );
+    });
 
     return results;
   }, [searchTerm, items, activeFilter]);
 
+  // get search term from navbar2 search
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     const query = params.get("q");
@@ -91,20 +97,24 @@ const AdvancedSearch = () => {
     }
   }, [location.search]);
 
-  // Update filtered items when search results change
+  // await item change then update filtered items
   useEffect(() => {
     setFilteredItems(filteredResults);
+    // reset page state to 1 on change
+    setCurrentPage(1);
   }, [filteredResults]);
 
-  // Initial data fetch
+  // data fetch
   useEffect(() => {
     fetchData();
   }, [fetchData]);
 
+  // set active filter to selected category
   const handleFilterChange = (category: ItemCategory) => {
     setActiveFilter(category);
   };
 
+  // handle paging
   const paginatedResults = useMemo(() => {
     if (!filteredResults.length) return [];
 
@@ -113,21 +123,23 @@ const AdvancedSearch = () => {
     return filteredResults.slice(startIndex, endIndex);
   }, [filteredResults, currentPage]);
 
-  // Pagination calculations
+  // quick calc for total pages
   const totalPages = Math.ceil(filteredResults.length / itemsPerPage);
 
-  // Page navigation handlers
+  // page navigation
   const handleNextPage = () => {
     if (currentPage < totalPages) {
       setCurrentPage((prevPage) => prevPage + 1);
     }
   };
-
   const handlePrevPage = () => {
     if (currentPage > 1) {
       setCurrentPage((prevPage) => prevPage - 1);
     }
   };
+
+  // if no errors and no loading and search term is not empty => display results
+  const shouldShowResults = !isLoading && !error && searchTerm.trim() !== "";
 
   return (
     <div>
@@ -224,7 +236,7 @@ const AdvancedSearch = () => {
           )}
 
           {/* Results Table */}
-          {!isLoading && !error && searchTerm && filteredItems.length > 0 && (
+          {shouldShowResults && filteredItems.length > 0 && (
             <table
               style={{
                 width: "100%",
@@ -278,7 +290,7 @@ const AdvancedSearch = () => {
           )}
 
           {/* No Results Message */}
-          {!isLoading && !error && searchTerm && filteredItems.length === 0 && (
+          {shouldShowResults && filteredItems.length === 0 && (
             <div
               style={{
                 textAlign: "center",
@@ -290,54 +302,59 @@ const AdvancedSearch = () => {
               No items found matching "{searchTerm}"
             </div>
           )}
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "center",
-              alignItems: "center",
-              marginTop: "20px",
-            }}
-          >
-            <button
-              onClick={handlePrevPage}
-              disabled={currentPage === 1}
+
+          {/* Pagination - Only show when we have search results */}
+          {shouldShowResults && filteredItems.length > 0 && (
+            <div
               style={{
-                margin: "0 10px",
-                padding: "5px 10px",
-                backgroundColor: currentPage === 1 ? "#f0f0f0" : "#4a90e2",
-                color: currentPage === 1 ? "#888" : "white",
-                border: "none",
-                borderRadius: "4px",
-                cursor: currentPage === 1 ? "not-allowed" : "pointer",
+                display: "flex",
+                justifyContent: "center",
+                alignItems: "center",
+                marginTop: "20px",
               }}
             >
-              Previous
-            </button>
+              <button
+                onClick={handlePrevPage}
+                disabled={currentPage === 1}
+                style={{
+                  margin: "0 10px",
+                  padding: "5px 10px",
+                  backgroundColor: currentPage === 1 ? "#f0f0f0" : "#4a90e2",
+                  color: currentPage === 1 ? "#888" : "white",
+                  border: "none",
+                  borderRadius: "4px",
+                  cursor: currentPage === 1 ? "not-allowed" : "pointer",
+                }}
+              >
+                Previous
+              </button>
 
-            <span>
-              Page {currentPage} of {totalPages}
-            </span>
+              <span>
+                Page {currentPage} of {totalPages}
+              </span>
 
-            <button
-              onClick={handleNextPage}
-              disabled={currentPage === totalPages}
-              style={{
-                margin: "0 10px",
-                padding: "5px 10px",
-                backgroundColor:
-                  currentPage === totalPages ? "#f0f0f0" : "#4a90e2",
-                color: currentPage === totalPages ? "#888" : "white",
-                border: "none",
-                borderRadius: "4px",
-                cursor: currentPage === totalPages ? "not-allowed" : "pointer",
-              }}
-            >
-              Next
-            </button>
-          </div>
+              <button
+                onClick={handleNextPage}
+                disabled={currentPage === totalPages}
+                style={{
+                  margin: "0 10px",
+                  padding: "5px 10px",
+                  backgroundColor:
+                    currentPage === totalPages ? "#f0f0f0" : "#4a90e2",
+                  color: currentPage === totalPages ? "#888" : "white",
+                  border: "none",
+                  borderRadius: "4px",
+                  cursor:
+                    currentPage === totalPages ? "not-allowed" : "pointer",
+                }}
+              >
+                Next
+              </button>
+            </div>
+          )}
 
-          {/* Results Summary */}
-          {!isLoading && !error && searchTerm && filteredItems.length > 0 && (
+          {/* Results Summary - Only show when we have search results */}
+          {shouldShowResults && filteredItems.length > 0 && (
             <div
               style={{
                 marginTop: "10px",
@@ -352,14 +369,6 @@ const AdvancedSearch = () => {
       </div>
     </div>
   );
-};
-
-// Styles for table
-const tableHeaderStyle = {
-  border: "1px solid #ddd",
-  padding: "8px",
-  textAlign: "left",
-  backgroundColor: "#f9f9f9",
 };
 
 const tableCellStyle = {
