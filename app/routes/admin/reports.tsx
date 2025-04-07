@@ -1,17 +1,21 @@
 import React, { useEffect, useState } from "react";
+import LoadingSpinner from "~/components/loadingspinner";
 import "./reports.css";
+
 const Report = () => {
   const [data, setData] = useState([]); // Holds the fetched data
   const [error, setError] = useState("");
   const [selectedReport, setSelectedReport] = useState("userReport");
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     // Fetch data based on the selected report
     let endpoint = "/api/users"; // Default endpoint for user report
+    setIsLoading(true); // Set loading state to true when starting a new fetch
 
     if (selectedReport === "userReport") {
       endpoint = "/api/users";
-    } else if (selectedReport === "Report2") {
+    } else if (selectedReport === "borrowSummary") {
       endpoint = "/api/borrow-summary"; // Endpoint for borrow_summary_view
     } else if (selectedReport === "bookDetailsReport") {
       endpoint = "/api/book-details"; // Endpoint for book_details_view
@@ -31,6 +35,9 @@ const Report = () => {
       .catch((err) => {
         console.error("Error fetching data:", err);
         setError("Error fetching data");
+      })
+      .finally(() => {
+        setIsLoading(false); // Set loading state to false when fetch completes (success or error)
       });
   }, [selectedReport]); // Re-fetch data when the selected report changes
 
@@ -38,10 +45,7 @@ const Report = () => {
     <div className="report-container">
       {/* Dropdown for selecting reports */}
       <div className="mb-6">
-        <label
-          htmlFor="reportSelect"
-          className="report-select-label"
-        >
+        <label htmlFor="reportSelect" className="report-select-label">
           Select Report:
         </label>
         <select
@@ -49,16 +53,21 @@ const Report = () => {
           value={selectedReport}
           onChange={(e) => setSelectedReport(e.target.value)}
           className="report-select"
+          disabled={isLoading}
         >
           <option value="userReport">User Report</option>
-          <option value="Report2">Borrow Summary Report</option>
+          <option value="borrowSummary">Borrow Summary Report</option>
           <option value="bookDetailsReport">Book Details Report</option>
         </select>
       </div>
 
       {error && <p className="report-error">{error}</p>}
 
-      {data.length > 0 ? (
+      {isLoading ? (
+        <div className="flex justify-center items-center h-40">
+          <LoadingSpinner />
+        </div>
+      ) : data.length > 0 ? (
         <div className="overflow-x-auto">
           <table className="report-table">
             <thead className="bg-gray-100">
@@ -110,7 +119,7 @@ const Report = () => {
                     </th>
                   </>
                 )}
-                {selectedReport === "Report2" && (
+                {selectedReport === "borrowSummary" && (
                   <>
                     <th className="border border-gray-300 px-4 py-2 text-left">
                       Borrow ID
@@ -202,7 +211,7 @@ const Report = () => {
                     </td>
                   </tr>
                 ))}
-              {selectedReport === "Report2" &&
+              {selectedReport === "borrowSummary" &&
                 data.map((record: any, index: number) => (
                   <tr key={index} className="hover:bg-gray-50">
                     <td className="border border-gray-300 px-4 py-2">
@@ -212,7 +221,13 @@ const Report = () => {
                       {record.ItemID}
                     </td>
                     <td className="border border-gray-300 px-4 py-2">
-                      {record.DueDate}
+                      {record.DueDate
+                        ? new Date(record.DueDate).toLocaleDateString("en-US", {
+                            month: "2-digit",
+                            day: "2-digit",
+                            year: "numeric",
+                          })
+                        : "N/A"}
                     </td>
                     <td className="border border-gray-300 px-4 py-2">
                       {record.MemberName}
@@ -249,10 +264,7 @@ const Report = () => {
           </table>
         </div>
       ) : (
-        <p className="report-empty"
-        >
-          No data found for the selected report.
-        </p>
+        <p className="report-empty">No data found for the selected report.</p>
       )}
     </div>
   );
