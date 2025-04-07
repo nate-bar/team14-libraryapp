@@ -383,7 +383,7 @@ const BookForm: React.FC = () => {
         <div className="mb-4 w-full">
           <label
             htmlFor="summary"
-            className="block text-sm font-medium text-gray-700 mb-1 flex items-center"
+            className="text-sm font-medium text-gray-700 mb-1 flex items-center"
           >
             Summary{" "}
             <span className="ml-2 text-xs text-gray-500 italic">

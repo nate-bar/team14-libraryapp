@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { type Items } from "~/services/api";
 import { useNavigate } from "react-router";
 import LoadingSpinner from "~/components/loadingspinner";

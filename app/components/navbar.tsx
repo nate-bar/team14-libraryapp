@@ -1,5 +1,4 @@
 import { Link } from "react-router";
-import { useOutletContext } from "react-router";
 import { type AuthData } from "~/services/api";
 import { LogoutButton } from "./buttons/logoutbutton";
 import "../components/navbar.css";

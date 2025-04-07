@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import LoadingSpinner from "~/components/loadingspinner";
 import "./reports.css";
 
