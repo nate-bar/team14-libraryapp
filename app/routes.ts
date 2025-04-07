@@ -30,7 +30,14 @@ export default [
       route("reports", "routes/admin/reports.tsx"),
       route("edit", "routes/admin/edit.tsx"),
       route("usermanagement", "routes/admin/usermanagement.tsx"),
-      route("additem", "routes/admin/additem.tsx"),
+      route("insert", "routes/admin/insert.tsx", [
+        route("book", "routes/admin/insert/book.tsx"),
+        route("media", "routes/admin/insert/media.tsx"),
+        route("device", "routes/admin/insert/device.tsx"),
+      ]),
+      route("edit/book/:itemId", "routes/admin/edit/book.tsx"),
+      route("edit/media/:itemId", "routes/admin/edit/media.tsx"),
+      route("edit/device/:itemId", "routes/admin/edit/device.tsx"),
     ]),
   ]),
 ] satisfies RouteConfig;

@@ -1,17 +1,26 @@
 import { Outlet, useOutletContext } from "react-router";
 import { type AuthData } from "~/services/api";
 import { Link, useLocation } from "react-router";
-import { Navigate } from "react-router";
+import { useNavigate } from "react-router";
+import { useEffect } from "react";
+import LoadingSpinner from "~/components/loadingspinner";
 
 export default function Admin() {
   const authData = useOutletContext<AuthData>();
   const { isLoggedIn, groupID } = authData;
   const isAdmin = groupID === "Administrator";
   const location = useLocation();
+  const navigate = useNavigate();
 
   // if user is not logged in or user is not administrator redirect
+  useEffect(() => {
+    if (!isLoggedIn || !isAdmin) {
+      navigate("/");
+    }
+  }, [isLoggedIn, isAdmin, navigate]);
+
   if (!isLoggedIn || !isAdmin) {
-    return <Navigate to="/" />;
+    return <LoadingSpinner />;
   }
 
   // Function to check if a link is active
@@ -34,9 +43,9 @@ export default function Admin() {
             Reports
           </Link>
           <Link
-            to="/admin/additem"
+            to="/admin/insert"
             className={`text-xl font-bold ${
-              isLinkActive("/admin/additem")
+              isLinkActive("/admin/insert")
                 ? "text-blue-800 border-b-2 border-blue-600"
                 : "text-gray-800 hover:text-blue-500"
             }`}
@@ -66,7 +75,7 @@ export default function Admin() {
         </div>
       </nav>
       <main className="p-4">
-        <Outlet />
+        <Outlet context={authData} />
       </main>
     </>
   );

@@ -1,17 +1,25 @@
-//note to self - FIGURE OUT WHAT THE FUCK IS WRONG W CREATING A FOLDER UGH
-
+import { useOutletContext } from "react-router";
+import { type AuthData } from "~/services/api";
 import "./dashboard.css";
-import { type AuthData } from "~/services/api"; // import these for authdata
-import { useOutletContext } from "react-router"; // import these for auth data passed from outlet context
 
 export default function Dashboard() {
-  // so two ways to do it
-  const authData = useOutletContext<AuthData>(); // [1]
-  // const { firstName, lastName } = useOutletContext<AuthData>(); [2]
-
+  const authData = useOutletContext<AuthData>();
   return (
-    <div>
-      <h2>Welcome to your profile {authData.firstName}</h2>
+    <div className="flex justify-center items-center h-full">
+      <div className="dashboard-container">
+        <h1>
+          {authData.firstName} {authData.lastName}
+        </h1>
+        <h2>Welcome to your profile, {authData.firstName}! </h2>
+        <p>
+          Name: {authData.firstName} {authData.lastName}
+        </p>
+        <p>add bio here</p>
+        <p>Date of Birth: {authData.dateOfBirth}</p>
+        <p>Phone Number: {authData.phoneNumber}</p>
+        <p> Email: {authData.email}</p>
+        <p>Address: {authData.address}</p>
+      </div>
     </div>
   );
 }

@@ -1,135 +1,134 @@
 /* AdminPage.css */
 
 .admin-container {
-    max-width: 600px;
-    margin: 2rem auto;
-    padding: 2rem;
-    border-radius: 12px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    background-color: #ffffff;
-    font-family: Arial, sans-serif;
-  }
-  
-  .admin-header {
-    text-align: center;
-    margin-bottom: 1.5rem;
-    font-size: 1.75rem;
-  }
-  
-  .admin-buttons {
-    display: flex;
-    justify-content: center;
-    gap: 1rem;
-    margin-bottom: 1.5rem;
-  }
-  
-  .admin-button {
-    padding: 0.5rem 1rem;
-    font-weight: bold;
-    border: none;
-    background-color: #04197c;
-    color: white;
-    border-radius: 6px;
-    cursor: pointer;
-    transition: background-color 0.2s ease;
-  }
-  
-  .admin-button:hover {
-    background-color: #c2a87d;
-  }
-  
-  .admin-form {
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-  }
-  
-  .admin-input,
-  .admin-select {
-    padding: 0.5rem;
-    border: 1px solid #ccc;
-    border-radius: 6px;
-    font-size: 1rem;
-  }
-  
-  .admin-submit {
-    margin-top: 1rem;
-    padding: 0.75rem;
-    background-color: #c2a87d;
-    color: white;
-    font-weight: bold;
-    border: none;
-    border-radius: 6px;
-    cursor: pointer;
-    transition: background-color 0.2s ease;
-  }
-  
-  .admin-submit:hover {
-    background-color: #04197c;
-  }
-  
-  .admin-message {
-    text-align: center;
-    color: #333;
-    margin-bottom: 1rem;
-  }
-  .admin-file-wrapper {
-    display: flex;
-    align-items: center;
-    justify-content: start;
-    gap: 0.75rem;
-  }
- .admin-file-section {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 1rem;
-    margin: 1.5rem 0;
-  }
-  
-  .admin-line {
-    flex: 1;
-    height: 1px;
-    background-color: #000;
-  }
-  
-  .admin-file-wrapper {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 0.5rem;
-  }
-  
-  .admin-file-label {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-    padding: 0.75rem 1.25rem;
-    background-color: #76c6de;
-    color: white;
-    font-weight: bold;
-    border-radius: 8px;
-    cursor: pointer;
-    transition: background-color 0.2s ease;
-    font-size: 1rem;
-  }
-  
-  .admin-file-label:hover {
-    background-color: #e4c9a8;
-  }
-  
-  .admin-file-label svg {
-    width: 20px;
-    height: 20px;
-  }
-  
-  .admin-file-input {
-    display: none;
-  }
-  
-  .admin-file-name {
-    font-size: 0.9rem;
-    color: #444;
-    text-align: center;
-  }
-  
+  max-width: 600px;
+  margin: 2rem auto;
+  padding: 2rem;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  background-color: #ffffff;
+  font-family: Arial, sans-serif;
+}
+
+.admin-header {
+  text-align: center;
+  margin-bottom: 1.5rem;
+  font-size: 1.75rem;
+}
+
+.admin-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.admin-button {
+  padding: 0.5rem 1rem;
+  font-weight: bold;
+  border: none;
+  background-color: #04197c;
+  color: white;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.admin-button:hover {
+  background-color: #c2a87d;
+}
+
+.admin-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.admin-input,
+.admin-select {
+  padding: 0.5rem;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 1rem;
+}
+
+.admin-submit {
+  margin-top: 1rem;
+  padding: 0.75rem;
+  background-color: #c2a87d;
+  color: white;
+  font-weight: bold;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.admin-submit:hover {
+  background-color: #04197c;
+}
+
+.admin-message {
+  text-align: center;
+  color: #333;
+  margin-bottom: 1rem;
+}
+.admin-file-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: start;
+  gap: 0.75rem;
+}
+.admin-file-section {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  margin: 1.5rem 0;
+}
+
+.admin-line {
+  flex: 1;
+  height: 1px;
+  background-color: #000;
+}
+
+.admin-file-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.admin-file-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.25rem;
+  background-color: #76c6de;
+  color: white;
+  font-weight: bold;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  font-size: 1rem;
+}
+
+.admin-file-label:hover {
+  background-color: #e4c9a8;
+}
+
+.admin-file-label svg {
+  width: 20px;
+  height: 20px;
+}
+
+.admin-file-input {
+  display: none;
+}
+
+.admin-file-name {
+  font-size: 0.9rem;
+  color: #444;
+  text-align: center;
+}

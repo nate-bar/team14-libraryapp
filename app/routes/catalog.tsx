@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Link } from "react-router";
 import { type Genres } from "~/services/api";
 import { type Items } from "~/services/api";
+import NoImage from "~/components/imgplaceholder";
 
 const UsingFetch = () => {
   const [genres, setGenres] = useState<Genres[]>([]);
@@ -11,16 +12,40 @@ const UsingFetch = () => {
   const [typeFilter, setTypeFilter] = useState(""); // State for the type dropdown filter
   const [genreFilter, setGenreFilter] = useState(""); // State for the genre dropdown filter
 
-  const fetchGenres = () => {
-    fetch("/api/genres")
+  const resetFilters = () => {
+    setTypeFilter("");
+    setGenreFilter("");
+    setFilteredItems(items);
+    setGenres([]);
+  };
+
+  const fetchGenres = (type: string) => {
+    let endpoint = "";
+    switch (type) {
+      case "Book":
+        endpoint = "/api/bookgenres";
+        break;
+      case "Media":
+        endpoint = "/api/mediagenres";
+        break;
+      default:
+        setGenres([]);
+        return;
+    }
+
+    fetch(endpoint)
       .then((response) => {
         if (!response.ok) {
-          throw new Error("Failed to fetch genres");
+          throw new Error(`Failed to fetch ${type} genres`);
         }
         return response.json();
       })
       .then((data) => {
         setGenres(data);
+      })
+      .catch((error) => {
+        console.error(`Error fetching ${type} genres:`, error);
+        setGenres([]);
       });
   };
 
@@ -56,14 +81,32 @@ const UsingFetch = () => {
   // Fetch items on component mount
   useEffect(() => {
     fetchData();
-    fetchGenres();
   }, []);
+
+  useEffect(() => {
+    const handleFilterReset = () => {
+      resetFilters();
+    };
+
+    window.addEventListener("resetCatalogFilters", handleFilterReset);
+
+    // Cleanup listener
+    return () => {
+      window.removeEventListener("resetCatalogFilters", handleFilterReset);
+    };
+  }, [items]);
 
   // Handle type dropdown filter change
   const handleTypeFilterChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const selectedType = e.target.value;
     setTypeFilter(selectedType);
     setGenreFilter(""); // Reset genre filter when type changes
+
+    if (selectedType === "Book" || selectedType === "Media") {
+      fetchGenres(selectedType);
+    } else {
+      setGenres([]); // Clear genres for other types
+    }
 
     if (selectedType === "") {
       setFilteredItems(items); // Show all items if no type is selected
@@ -148,7 +191,7 @@ const UsingFetch = () => {
                   className="w-full h-48 object-contain rounded-lg mb-2"
                 />
               ) : (
-                <p className="text-gray-500">No Photo Available</p>
+                <NoImage />
               )}
               <p className="text-sm text-gray-700">
                 <strong>Type:</strong> {item.TypeName}
@@ -165,9 +208,11 @@ const UsingFetch = () => {
                   {item.Status}
                 </span>
               </p>
-              <p className="text-sm text-gray-700">
-                <strong>Genre:</strong> {item.GenreName}
-              </p>
+              {item.GenreName ? (
+                <p className="text-sm text-gray-700">
+                  <strong>Genre:</strong> {item.GenreName}
+                </p>
+              ) : null}
             </Link>
           ))}
         </div>

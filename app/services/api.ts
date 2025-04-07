@@ -19,14 +19,6 @@ export interface Items {
   Photo?: string; // Optional for item images
 }
 
-export interface CartItem {
-  ItemID: number;
-  Title: string;
-  TypeName: string;
-  Status: string;
-  Category: "In Cart" | "On Hold";
-}
-
 export interface Book {
   ItemID: number;
   Title: string;
@@ -35,13 +27,15 @@ export interface Book {
   Authors: string;
   Publisher: string;
   PublicationYear: number;
+  Language: string;
   ISBN: string;
   GenreName: string;
-  Photo?: string;
+  Photo?: File | Blob | null;
 }
 
 export interface Media {
   ItemID: number;
+  Title: string;
   TypeName: string;
   Status: string;
   MediaID: number;
@@ -52,7 +46,7 @@ export interface Media {
   Language: string;
   Format: string;
   Rating: number;
-  Photo?: string;
+  Photo?: File | Blob | null;
 }
 
 export interface Device {
@@ -63,7 +57,54 @@ export interface Device {
   DeviceID: number;
   DeviceType: string;
   Manufacturer: string;
-  Photo?: string;
+  Photo?: File | Blob | null;
+}
+
+export interface CartItem {
+  ItemID: number;
+  Title: string;
+  TypeName: string;
+  Status: string;
+  Category: "In Cart" | "On Hold";
+}
+
+// for inserting
+export interface BookInsert {
+  isbn: string;
+  title: string;
+  typename: string;
+  authors: string;
+  publisher: string;
+  publicationyear: number;
+  genreid: number;
+  languageid: number;
+  photo?: File | Blob | null;
+  createdby: string;
+}
+
+// for inserting
+export interface MediaInsert {
+  title: string;
+  typename: string;
+  director: string;
+  leads: string;
+  releaseyear: number;
+  format: string;
+  rating: number;
+  languageid: number;
+  genreid: number;
+  photo?: File | Blob | null;
+  createdby: string;
+}
+
+// for inserting
+export interface DeviceInsert {
+  title: string;
+  typename: string;
+  devicetype: string;
+  manufacturer: string;
+  photo?: File | Blob | null;
+  createdby: string;
 }
 
 // sign up interface
@@ -98,15 +139,66 @@ export interface ApiResponse {
 // now go to layouyt and fix any errors
 export interface AuthData {
   isLoggedIn: boolean;
-  memberID: number | null;
-  groupID: string | null;
-  firstName: string | null;
-  lastName: string | null;
+  memberID: number;
+  groupID: string;
+  firstName: string;
+  lastName: string;
   address: string | null;
   middleName: string | null;
+  email: string;
 }
 
 export interface Genres {
   GenreID: number;
   GenreName: string;
+}
+
+export interface Languages {
+  LanguageID: number;
+  Language: string;
+}
+
+// for editing
+export interface BookEdit {
+  ItemID: number;
+  ISBN: string;
+  newISBN: string;
+  Title: string;
+  TypeName: string;
+  Authors: string;
+  Publisher: string;
+  PublicationYear: number;
+  GenreID: number;
+  LanguageID: number;
+  Photo?: File | Blob | null;
+  UpdatedBy: string;
+}
+
+// for editing
+export interface MediaEdit {
+  ItemID: number;
+  MediaID: number;
+  Title: string;
+  TypeName: string;
+  Director: string;
+  Leads: string;
+  ReleaseYear: number;
+  Format: string;
+  Rating: number;
+  LanguageID: number;
+  GenreID: number;
+  Photo?: File | Blob | null;
+  UpdatedBy: string;
+}
+
+// for editing
+export interface DeviceEdit {
+  ItemID: number;
+  DeviceID: number;
+  Title: string;
+  TypeName: string;
+  DeviceType: string;
+  Manufacturer: string;
+  Photo?: File | Blob | null;
+  UpdatedBy: string;
 }

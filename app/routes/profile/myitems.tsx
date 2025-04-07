@@ -39,6 +39,10 @@ export default function MyItems() {
     setError(null);
     fetch(`/profile/api/borroweditems/${memberID}`)
       .then((response) => {
+        // return an empty array here if borroweditems returns 404
+        if (response.status === 404) {
+          return [];
+        }
         if (!response.ok) {
           throw new Error(`HTTP error! Status: ${response.status}`);
         }
@@ -128,7 +132,7 @@ export default function MyItems() {
   }
 
   return (
-    <div>
+    <div className="flex-grow justify-center h-full w-full pl-25 pr-25">
       {isLoading ? (
         <p>Loading borrowed items...</p>
       ) : error ? (

@@ -86,11 +86,8 @@ export default function BookDetail() {
           <p>
             <strong>Genre:</strong> {book.GenreName}
           </p>
-        </div>
-
-        <div className="info-section">
           <p>
-            <strong>Status:</strong> {book.Status}
+            <strong>Language:</strong> {book.Language}
           </p>
         </div>
       </div>
