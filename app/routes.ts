@@ -24,7 +24,7 @@ export default [
       route("dashboard", "routes/profile/dashboard.tsx"),
       route("myitems", "routes/profile/myitems.tsx"),
       //route("mailbox", "routes/mailbox.tsx"),
-      //route("settings", "routes/settings.tsx"),
+      route("settings", "routes/profile/settings.tsx"),
     ]),
     route("admin", "routes/admin/admin.tsx", [
       route("reports", "routes/admin/reports.tsx"),

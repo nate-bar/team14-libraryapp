@@ -9,8 +9,8 @@ export default function Dashboard() {
             <div className="dashboard-container">
                 <h1>{authData.firstName} {authData.lastName}</h1>
                 <h2>Welcome to your profile, {authData.firstName}! </h2>
+                <h3>Current Balance: </h3>
                 <p>Name: {authData.firstName} {authData.lastName}</p>
-                <p>add bio here</p>
                 <p>Date of Birth: {authData.dateOfBirth}</p>
                 <p>Phone Number: {authData.phoneNumber}</p>
                 <p> Email: {authData.email}</p>
