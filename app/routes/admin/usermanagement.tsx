@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
+import LoadingSpinner from "~/components/loadingspinner";
 import "./usermanagement.css";
 
 // Fetch users from the backend
@@ -22,6 +23,7 @@ export default function AdminUserDeletePage() {
 
   useEffect(() => {
     async function fetchUsers() {
+      setLoading(true);
       try {
         const data = await displayUsers();
         setUsers(data);
@@ -37,6 +39,8 @@ export default function AdminUserDeletePage() {
 
   async function handleDelete(memberId: number): Promise<void> {
     if (!window.confirm("Are you sure you want to delete this user?")) return;
+
+    setLoading(true);
     try {
       const res = await fetch(`/api/usersdelete/${memberId}`, {
         method: "DELETE",
@@ -51,6 +55,8 @@ export default function AdminUserDeletePage() {
     } catch (error) {
       console.error("Error deleting user:", error);
       setMessage("Error deleting user.");
+    } finally {
+      setLoading(false);
     }
   }
 
@@ -89,8 +95,10 @@ export default function AdminUserDeletePage() {
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan={5} className="text-center py-4">
-                  Loading...
+                <td colSpan={5} className="text-center py-8">
+                  <div className="flex justify-center">
+                    <LoadingSpinner />
+                  </div>
                 </td>
               </tr>
             ) : users.length > 0 ? (
@@ -112,8 +120,9 @@ export default function AdminUserDeletePage() {
                     <button
                       onClick={() => handleDelete(user.MemberID)}
                       className="admin-user-delete-btn"
+                      disabled={loading}
                     >
-                      Delete
+                      {loading ? "Processing..." : "Delete"}
                     </button>
                   </td>
                 </tr>

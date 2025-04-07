@@ -27,14 +27,6 @@ export function getCurrentLastName(context: any) {
   return context.lastName || null;
 }
 
-export function getCurrentMiddleName(context: any) {
-  return context.middleName || null;
-}
-
-export function getCurrentAddress(context: any) {
-  return context.address || null;
-}
-
 // Function to require authentication (use in protected route loaders)
 export function requireAuth(context: any, redirectTo = "/login") {
   if (!isAuthenticated(context)) {
@@ -53,8 +45,6 @@ export function getAuthData(context: any) {
     groupID: getCurrentGroupID(context),
     firstName: getCurrentFirstName(context),
     lastName: getCurrentLastName(context),
-    middleName: getCurrentMiddleName(context),
-    address: getCurrentAddress(context),
     email: getCurrentEmail(context),
   };
 }

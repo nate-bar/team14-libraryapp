@@ -25,6 +25,7 @@ const MediaForm: React.FC = () => {
     languageid: 0,
     photo: null as File | null,
     createdby: email,
+    quantity: 1,
   });
 
   const fetchGenres = () => {
@@ -213,6 +214,7 @@ const MediaForm: React.FC = () => {
         format: "",
         rating: 0,
         createdby: email,
+        quantity: 1,
       });
       setFileName("");
       alert("Media entered successfully!");
@@ -370,6 +372,26 @@ const MediaForm: React.FC = () => {
           {mediaData.photo && (
             <span className="admin-file-name">{fileName}</span>
           )}
+        </div>
+
+        {/* Quantity dropdown */}
+        <div className="form-group">
+          <label htmlFor="quantity" className="admin-label">
+            Quantity:
+          </label>
+          <select
+            id="quantity"
+            name="quantity"
+            className="admin-select"
+            value={mediaData.quantity}
+            onChange={handleInputChange}
+          >
+            {[...Array(10)].map((_, i) => (
+              <option key={i + 1} value={i + 1}>
+                {i + 1}
+              </option>
+            ))}
+          </select>
         </div>
 
         <button type="submit" className="admin-submit">

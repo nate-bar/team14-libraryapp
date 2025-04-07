@@ -213,6 +213,7 @@ const DeviceForm: React.FC = () => {
     <div className="admin-container">
       {formError && <div className="error-message form-error">{formError}</div>}
       <form onSubmit={handleSubmit} className="admin-form">
+        {/* Image Preview */}
         <div className="image-preview">
           {typeof deviceData.Photo === "string" && deviceData.Photo ? (
             <img
@@ -231,6 +232,7 @@ const DeviceForm: React.FC = () => {
           )}
         </div>
 
+        {/* Title/Device Name */}
         <input
           className={`admin-input ${errors.Title ? "error-field" : ""}`}
           type="text"
@@ -241,6 +243,7 @@ const DeviceForm: React.FC = () => {
         />
         {errors.Title && <div className="error-message">{errors.Title}</div>}
 
+        {/* Device Type */}
         <input
           className={`admin-input ${errors.DeviceType ? "error-field" : ""}`}
           type="text"
@@ -253,6 +256,7 @@ const DeviceForm: React.FC = () => {
           <div className="error-message">{errors.DeviceType}</div>
         )}
 
+        {/* Manufacturer */}
         <input
           className={`admin-input ${errors.Manufacturer ? "error-field" : ""}`}
           type="text"
@@ -265,6 +269,7 @@ const DeviceForm: React.FC = () => {
           <div className="error-message">{errors.Manufacturer}</div>
         )}
 
+        {/* Photo Uploading */}
         <div className="admin-file-wrapper">
           <label htmlFor="photo-upload" className="admin-file-label">
             <svg

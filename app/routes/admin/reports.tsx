@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-
+import "./reports.css";
 const Report = () => {
   // Interface for all borrowed item types
   interface BorrowedItemRecord {

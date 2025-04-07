@@ -1,5 +1,3 @@
-import React from "react";
-
 const NoImage = ({ width = "100%", height = "12rem", className = "" }) => {
   return (
     <svg
