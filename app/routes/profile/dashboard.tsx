@@ -16,6 +16,11 @@ export default function Dashboard() {
                 <p> Email: {authData.email}</p>
                 <p>Address: {authData.address}</p>
             </div>
+            <div className="text-center mt-4">
+              <a href="./settings" className="edit-profile">
+                Edit Profile
+              </a>
+          </div>
         </div>
     );
 }

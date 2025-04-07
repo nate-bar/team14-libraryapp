@@ -107,6 +107,17 @@ export interface AuthData {
   dateOfBirth: string | null;
 }
 
+//edit profile --> routes/profile/settings.tsx 
+export interface EditProfile {
+  firstName: string;
+  lastName: string;
+  address: string;
+  middleName: string;
+  email: string;
+  phoneNumber: string;
+  dateOfBirth: string;
+}
+
 export interface Genres {
   GenreID: number;
   GenreName: string;
