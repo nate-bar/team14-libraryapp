@@ -11,10 +11,10 @@ export default function ProfilePage() {
       <div className="navbar-left w-full flex justify-between items-center">
         <ul className="flex space-x-10">
           <li className="text-nav3">
-            <Link to="./dashboard">Dashboard</Link>
+            <Link to="/dashboard">Dashboard</Link>
           </li>
           <li className="text-nav3">
-            <Link to="./myitems">My Items</Link>
+            <Link to="/myitems">My Items</Link>
           </li>
           <li className="mailbox-nav3">
              <Link to="/mailbox">✉️

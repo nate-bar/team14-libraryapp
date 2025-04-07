@@ -2,7 +2,7 @@ import { type AuthData } from "~/services/api";
 import { useOutletContext } from "react-router";
 import React, { useEffect, useState } from "react";
 import { Navigate } from "react-router";
-
+import ProfilePage from "./profile";
 interface borrowedItems {
   ItemID: number;
   Title: string;
@@ -133,6 +133,7 @@ export default function MyItems() {
 
   return (
     <div>
+      <ProfilePage/>
       {isLoading ? (
         <p>Loading borrowed items...</p>
       ) : error ? (

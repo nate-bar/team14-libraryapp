@@ -1,21 +1,31 @@
 import { useOutletContext } from "react-router";
 import {type AuthData } from "~/services/api";
 import "./dashboard.css";
+import ProfilePage from "./profile";
 
 export default function Dashboard() {
     const authData = useOutletContext<AuthData>();
+  
     return (
-        <div className="flex justify-center h-full w-full pl-25 pr-25">
-            <div className="dashboard-container">
-                <h1>{authData.firstName} {authData.lastName}</h1>
-                <h2>Welcome to your profile, {authData.firstName}! </h2>
-                <p>Name: {authData.firstName} {authData.lastName}</p>
-                <p>add bio here</p>
-                <p>Date of Birth: {authData.dateOfBirth}</p>
-                <p>Phone Number: {authData.phoneNumber}</p>
-                <p> Email: {authData.email}</p>
-                <p>Address: {authData.address}</p>
-            </div>
+        <div><ProfilePage/>
+      <div className="dashboard-container">
+        <div className="profile-header">
+          <div className="profile-avatar">
+            <img src="/avatar-placeholder.png" alt="User Avatar" />
+          </div>
         </div>
+        <div className="profile-name">{authData.firstName} {authData.lastName}</div>
+  
+        <div className="profile-info">
+          <div className="info-item"><i className="fas fa-user"></i>{authData.firstName} {authData.lastName}</div>
+          <div className="info-item"><i className="fas fa-birthday-cake"></i>{authData.dateOfBirth}</div>
+          <div className="info-item"><i className="fas fa-phone"></i>{authData.phoneNumber}</div>
+          <div className="info-item"><i className="fas fa-envelope"></i>{authData.email}</div>
+          <div className="info-item"><i className="fas fa-map-marker-alt"></i>{authData.address}</div>
+        </div>
+  
+        <button className="edit-button">Edit Profile</button>
+      </div>
+      </div>
     );
-}
+  }

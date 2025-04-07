@@ -1,22 +1,92 @@
+body {
+  margin: 0;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background-color: #f4f8f7;
+}
+
+/* Container for the whole dashboard */
 .dashboard-container {
-    width: 600px;  /* Adjust based on your needs */
-    padding: 15px;
-    top: 80px; /* Space from the top */
-    background-color: #d9d9d9; /* Light background */
-    border-radius: 12px; /* Rounded corners */
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Soft shadow */
-    text-align: center;
-    font-family: Arial, sans-serif;
-  }
-  
-  .dashboard-container h2 {
-    margin-bottom: 10px;
-    font-size: 22px;
-    color: #333;
-  }
-  
-  .dashboard-container p {
-    font-size: 16px;
-    color: #666;
-  }
-  
+  margin: 2rem auto;
+  max-width: 80%;
+  background-color: #f4f8f7;
+  border-radius: 20px;
+  box-shadow: 0px 8px 24px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+/* Top profile header with curved background */
+.profile-header {
+  background: linear-gradient(135deg, #c2a87d, #e4c9a8);
+  height: 160px;
+  position: relative;
+  border-bottom-left-radius: 50% 20%;
+  border-bottom-right-radius: 50% 20%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+}
+
+.profile-avatar {
+  position: absolute;
+  bottom: -40px;
+  background-color: white;
+  border-radius: 50%;
+  padding: 5px;
+  width: 80px;
+  height: 80px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+}
+
+.profile-avatar img {
+  width: 70px;
+  height: 70px;
+  border-radius: 50%;
+}
+
+/* Name display */
+.profile-name {
+  margin-top: 60px;
+  text-align: center;
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+
+/* Info section */
+.profile-info {
+  padding: 1.5rem;
+}
+
+.info-item {
+  display: flex;
+  align-items: center;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid #eee;
+  color: #444;
+}
+
+.info-item i {
+  margin-right: 1rem;
+  color: #9575cd;
+}
+
+.edit-button {
+  display: block;
+  width: 80%;
+  margin: 1.5rem auto;
+  padding: 0.75rem;
+  border: none;
+  border-radius: 30px;
+  background:  #01497c;
+  color: white;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.edit-button:hover {
+  background:  #76c6de;
+}
