@@ -27,53 +27,6 @@ export function getCurrentLastName(context: any) {
   return context.lastName || null;
 }
 
-export function getCurrentMiddleName(context: any) {
-  return context.middleName || null;
-}
-
-export function getCurrentAddress(context: any) {
-  return context.address || null;
-}
-
-export function getCurrentPhoneNumber(context: any) {
-  return context.phoneNumber || null;
-}
-
-export function getCurrentBirthDate(context: any): string {
-  const birthDate = context.birthDate || null;
-
-  if (!birthDate) {
-    return "";
-  }
-
-  const date = new Date(birthDate);
-
-  if (isNaN(date.getTime())) {
-    return "";
-  }
-
-  const options: Intl.DateTimeFormatOptions = {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  };
-  return date.toLocaleDateString("en-US", options);
-}
-
-export function getCurrentBalance(context: any) {
-  if (context.balance === undefined || context.balance === null) {
-    return "";
-  }
-
-  // format as currency
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  }).format(context.balance);
-}
-
 // Function to require authentication (use in protected route loaders)
 export function requireAuth(context: any, redirectTo = "/login") {
   if (!isAuthenticated(context)) {
@@ -92,11 +45,6 @@ export function getAuthData(context: any) {
     groupID: getCurrentGroupID(context),
     firstName: getCurrentFirstName(context),
     lastName: getCurrentLastName(context),
-    middleName: getCurrentMiddleName(context),
-    address: getCurrentAddress(context),
     email: getCurrentEmail(context),
-    phoneNumber: getCurrentPhoneNumber(context),
-    birthDate: getCurrentBirthDate(context),
-    balance: getCurrentBalance(context),
   };
 }

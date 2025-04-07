@@ -1,33 +1,34 @@
 .dashboard-container {
-    width: 600px;  /* Adjust based on your needs */
-    padding: 15px;
-    top: 80px; /* Space from the top */
-    background-color: #d9d9d9; /* Light background */
-    border-radius: 12px; /* Rounded corners */
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Soft shadow */
-    text-align: left;
-    font-family: 'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif, sans-serif;
-    position: relative;
-  }
-  
-  .dashboard-container h1 {
-    color: #01497C;
-  }
+  width: 600px; /* Adjust based on your needs */
+  padding: 15px;
+  top: 80px; /* Space from the top */
+  background-color: #d9d9d9; /* Light background */
+  border-radius: 12px; /* Rounded corners */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Soft shadow */
+  text-align: left;
+  font-family: "Gill Sans", "Gill Sans MT", Calibri, "Trebuchet MS", sans-serif,
+    sans-serif;
+  position: relative;
+}
 
-  .dashboard-container h2 {
-    margin-bottom: 10px;
-    font-size: 22px;
-    color: #01497C;
-  }
-  
-  .dashboard-container h3 {
-    color:#01497C;
-  }
-  .dashboard-container p {
-    font-size: 16px;
-    color: #01497C;
-  }
-  
-  .edit-profile {
-    color: #01497c; 
-  }
+.dashboard-container h1 {
+  color: #01497c;
+}
+
+.dashboard-container h2 {
+  margin-bottom: 10px;
+  font-size: 22px;
+  color: #01497c;
+}
+
+.dashboard-container h3 {
+  color: #01497c;
+}
+.dashboard-container p {
+  font-size: 16px;
+  color: #01497c;
+}
+
+.edit-profile {
+  color: #01497c;
+}

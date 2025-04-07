@@ -26,12 +26,7 @@ export default function Layout() {
           groupID={authData.groupID}
           firstName={authData.firstName}
           lastName={authData.lastName}
-          address={authData.address}
-          middleName={authData.middleName}
           email={authData.email}
-          phoneNumber={authData.phoneNumber}
-          birthDate={authData.birthDate}
-          balance={authData.balance}
         />
         <NavBar2 />
         <main className="flex-grow">

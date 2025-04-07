@@ -261,15 +261,17 @@ const UsingFetch = () => {
                     <td>{item.Title}</td>
                     <td>{item.TypeName}</td>
                     <td>{item.Status}</td>
-                    <td>{item.PhotoBase64 ? (
-                <img
-                  src={`data:image/jpeg;base64,${item.PhotoBase64}`}
-                  alt={item.Title}
-                  className="w-full h-48 object-cover rounded-lg mb-2"
-                />
-              ) : (
-                <p className="text-gray-500">No Photo Available</p>
-              )}</td>
+                    <td>
+                      {item.PhotoBase64 ? (
+                        <img
+                          src={`data:image/jpeg;base64,${item.PhotoBase64}`}
+                          alt={item.Title}
+                          className="w-full h-48 object-cover rounded-lg mb-2"
+                        />
+                      ) : (
+                        <p className="text-gray-500">No Photo Available</p>
+                      )}
+                    </td>
                   </tr>
                 ))}
               </tbody>

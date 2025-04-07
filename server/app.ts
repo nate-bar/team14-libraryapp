@@ -14,11 +14,7 @@ declare module "react-router" {
     groupID: string;
     firstName: string;
     lastName: string;
-    middleName: string | null;
     email: string;
-    phoneNumber: string;
-    birthDate: string;
-    balance: string;
   }
 }
 
@@ -42,12 +38,7 @@ app.use(
         groupID: session?.groupID || null,
         firstName: session?.firstName,
         lastName: session?.lastName,
-        address: session?.address,
-        middleName: session?.middleName,
         email: session?.email,
-        phoneNumber: session?.phoneNumber,
-        birthDate: session?.birthDate,
-        balance: session?.balance,
         // (2) alright now go to //utils/auth.ts
       };
     },

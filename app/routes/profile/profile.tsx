@@ -39,7 +39,7 @@ export default function ProfilePage() {
               <Link to="/mailbox">✉️</Link>
             </li>
             <li className="settings-nav3">
-              <Link to="/settings">⚙️</Link>
+              <Link to="./settings">⚙️</Link>
             </li>
           </ul>
         </div>

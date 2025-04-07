@@ -735,6 +735,153 @@ app.post("/api/holdrequest", (req, res) => {
   });
 });
 
+app.get("/api/profile/:memberid", (req, res) => {
+  const memberId = req.params.memberid;
+
+  pool.getConnection((err, connection) => {
+    if (err) {
+      console.error("Database connection error:", err);
+      return res.status(500).json({ error: "Database connection error" });
+    }
+
+    connection.query(
+      "SELECT FirstName, LastName, MiddleName, Email, PhoneNumber, BirthDate, Address, Balance FROM Members WHERE MemberID = ?",
+      [memberId],
+      (err, results) => {
+        connection.release();
+
+        if (err) {
+          return res.status(500).json({ error: "Database query error" });
+        }
+
+        if (results.length === 0) {
+          return res.status(404).json({ error: "Member not found" });
+        }
+
+        const member = results[0];
+        res.json({
+          firstName: member.FirstName,
+          lastName: member.LastName,
+          middleName: member.MiddleName,
+          email: member.Email,
+          phoneNumber: member.PhoneNumber,
+          birthDate: member.BirthDate,
+          address: member.Address,
+          balance: member.Balance,
+        });
+      }
+    );
+  });
+});
+
+app.put("/profile/api/edit", async (req, res) => {
+  const profile = req.body;
+  console.log(profile);
+
+  // validation check to ensure email was passed to server
+  if (!profile.email) {
+    return res.status(400).json({ error: "Email is required" });
+  }
+
+  // double up email regex cause why not
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(profile.email)) {
+    return res.status(400).json({ error: "Invalid email format" });
+  }
+
+  try {
+    // Check if email or phone already exists for a DIFFERENT user
+    const checkExistingUser = () => {
+      return new Promise((resolve, reject) => {
+        pool.getConnection((err, connection) => {
+          if (err) {
+            console.error("Error getting connection: ", err);
+            reject(err);
+            return;
+          }
+
+          // Check if another user has this email or phone
+          connection.query(
+            "SELECT 1 FROM Members WHERE (Email = ? OR PhoneNumber = ?) AND MemberID != ? LIMIT 1",
+            [profile.email, profile.phoneNumber, profile.memberID],
+            (err, result) => {
+              connection.release();
+
+              if (err) {
+                reject(err);
+                return;
+              }
+              resolve(result && result.length > 0);
+            }
+          );
+        });
+      });
+    };
+
+    // Update user function
+    const updateUser = () => {
+      return new Promise((resolve, reject) => {
+        pool.getConnection((err, connection) => {
+          if (err) {
+            console.error("Error getting connection: ", err);
+            reject(err);
+            return;
+          }
+
+          connection.query(
+            `UPDATE Members 
+             SET FirstName = ?, 
+                 MiddleName = ?, 
+                 LastName = ?, 
+                 Email = ?, 
+                 PhoneNumber = ?, 
+                 BirthDate = ?, 
+                 Address = ?
+             WHERE MemberID = ?`,
+            [
+              profile.firstName,
+              profile.middleName,
+              profile.lastName,
+              profile.email,
+              profile.phoneNumber,
+              profile.birthDate,
+              profile.address,
+              profile.memberID,
+            ],
+            (err, result) => {
+              connection.release();
+              if (err) {
+                reject(err);
+                return;
+              }
+              resolve(result);
+            }
+          );
+        });
+      });
+    };
+
+    // Check if email/phone already exists for another user
+    const userExists = await checkExistingUser();
+    if (userExists) {
+      return res.status(409).json({
+        error: "Email or phone number already in use by another account",
+      });
+    }
+
+    // Update the user
+    await updateUser();
+
+    // Return success response
+    return res
+      .status(200)
+      .json({ success: true, message: "Account updated successfully!" });
+  } catch (error) {
+    console.error("Error in update process:", error);
+    return res.status(500).json({ error: "Update failed" });
+  }
+});
+
 app.post("/api/edit/:typename", upload.single("Photo"), (req, res) => {
   const typename = req.params.typename;
   const item = req.body;
@@ -2139,13 +2286,8 @@ app.post("/api/login", async (req, res) => {
 
       // just work you way up through app.ts, auth.ts, api.ts, layout.tsx, then wherever
       req.session.firstName = member.FirstName;
-      req.session.middleName = member.MiddleName;
       req.session.lastName = member.LastName;
-      req.session.address = member.Address;
       req.session.email = member.Email;
-      req.session.phoneNumber = member.PhoneNumber;
-      req.session.birthDate = member.BirthDate;
-      req.session.balance = member.Balance;
 
       // Debug check
       //console.log("Session after setting memberID:", req.session);

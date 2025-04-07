@@ -5,6 +5,17 @@ export interface Member {
   password: string;
 }
 
+export interface Profile {
+  firstName: string;
+  lastName: string;
+  middleName: string;
+  email: string;
+  phoneNumber: string;
+  birthDate: string;
+  address: string;
+  balance: number;
+}
+
 /*******************************************
  **************ITEM INTERFACE,***************
  *******REPRESENTS ITEM IN Items TABLE*******
@@ -147,23 +158,17 @@ export interface AuthData {
   groupID: string;
   firstName: string;
   lastName: string;
-  address: string | null;
-  middleName: string | null;
   email: string;
-  phoneNumber: string;
-  birthDate: string;
-  balance: string;
 }
 
-//edit profile --> routes/profile/settings.tsx 
+//edit profile --> routes/profile/settings.tsx
 export interface EditProfile {
+  memberID: number;
   firstName: string;
+  middleName: string;
   lastName: string;
   address: string;
-  middleName: string;
   email: string;
-  phoneNumber: string;
-  dateOfBirth: string;
   phoneNumber: string;
   birthDate: string;
 }

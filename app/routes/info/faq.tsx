@@ -53,7 +53,9 @@ export default function FaqPage() {
         >
           <div className="faq-question">
             <span>{faq.question}</span>
-            <span className={`arrow ${openIndex === i ? "rotate" : ""}`}>&#9662;</span>
+            <span className={`arrow ${openIndex === i ? "rotate" : ""}`}>
+              &#9662;
+            </span>
           </div>
           <div className="faq-answer">{faq.answer}</div>
         </div>
