@@ -51,6 +51,7 @@ export function NavBar2() {
     e.preventDefault();
     if (searchQuery.trim() !== "") {
       navigate(`/search?q=${encodeURIComponent(searchQuery)}`);
+      setSearchQuery("");
       setShowResults(false);
     }
   };

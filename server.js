@@ -2036,6 +2036,61 @@ app.get("/api/itemdetail/:itemid", (req, res) => {
   });
 });
 
+app.get("/api/itemfull", (req, res) => {
+  pool.getConnection((err, connection) => {
+    if (err) {
+      console.error("Error getting connection:", err);
+      res.status(500).json({ error: "Database connection error" });
+      return;
+    }
+
+    let q = `SELECT
+                i.ItemID,
+                i.Title,
+                i.Status,
+                it.TypeName,
+                it.ISBN,
+                b.Authors,
+                b.Publisher,
+                b.PublicationYear,
+                b.Summary,
+                g.GenreName,
+                g.GenreID,
+                l.LanguageID,
+                l.Language,
+                m.Director,
+                m.Leads,
+                m.ReleaseYear,
+                m.Format,
+                m.Rating,
+                d.DeviceType,
+                d.Manufacturer
+            FROM Items i
+            INNER JOIN ItemTypes it ON it.ItemID = i.ItemID
+            LEFT JOIN Books b ON b.ISBN = it.ISBN
+            LEFT JOIN Media m ON m.MediaID = it.MediaID
+            LEFT JOIN ItemDevice d ON d.DeviceID = it.DeviceID
+            LEFT JOIN Genres g ON b.GenreID = g.GenreID OR m.GenreID = g.GenreID
+            LEFT JOIN Languages l ON b.LanguageID = l.LanguageID OR m.LanguageID = l.LanguageID`;
+
+    connection.query(q, (err, results) => {
+      connection.release();
+
+      if (err) {
+        console.error("Error fetching details", err);
+        res.status(500).json({ error: "Database query error" });
+        return;
+      }
+
+      if (results.length === 0) {
+        return res.status(404).json({ error: "Item not found" });
+      }
+
+      res.json(results);
+    });
+  });
+});
+
 //--------------------------------------------------------------------------------------------------------------------------------------------------------------
 //----------------------------------------------------------- SHOULD NOT HAVE TO GO BELOW THIS LINE ------------------------------------------------------------
 //--------------------------------------------------------------------------------------------------------------------------------------------------------------

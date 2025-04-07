@@ -228,3 +228,27 @@ export interface DeviceEdit {
   Photo?: File | Blob | null;
   UpdatedBy: string;
 }
+
+export interface ItemFull {
+  itemid: number;
+  title: string;
+  typename: string;
+  status: string;
+  photo?: string;
+  isbn?: string;
+  mediaid?: number;
+  deviceid?: number;
+  authors?: string;
+  genre?: string;
+  publisher?: string;
+  publicationyear?: string;
+  summary?: string;
+  language?: string;
+  director?: string;
+  leads?: string;
+  releaseyear?: string;
+  format?: string;
+  rating?: number;
+  devicetype?: string;
+  manufacturer?: string;
+}

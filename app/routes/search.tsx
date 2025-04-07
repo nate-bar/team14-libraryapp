@@ -1,25 +1,32 @@
-import React, { useEffect, useState } from "react";
-import { type Items } from "~/services/api"; // interface used to shape items
+import React, { useEffect, useState, useCallback, useMemo } from "react";
+import { type ItemFull } from "~/services/api";
 import { useLocation } from "react-router";
-import { type CartItem } from "~/services/api";
+import { useNavigate } from "react-router";
 
-// Define possible item type categories
-type ItemCategory = "All" | "Books" | "Media" | "Devices";
+type ItemCategory = "All" | "Book" | "Media" | "Device";
 
-const UsingFetch = () => {
-  const [items, setItems] = React.useState<any[]>([]);
-  const [filteredItems, setFilteredItems] = useState<any[]>([]);
-  const [selectedItems, setSelectedItems] = useState<any[]>([]);
+const AdvancedSearch = () => {
+  const [items, setItems] = useState<ItemFull[]>([]);
+  const [filteredItems, setFilteredItems] = useState<ItemFull[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [activeFilter, setActiveFilter] = useState<ItemCategory>("All");
-  const location = useLocation(); // Get the current location to read URL parameters
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 25;
 
-  const fetchData = () => {
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  const handleRowClick = (item: ItemFull) => {
+    navigate(`/${item.TypeName}/${item.ItemID}`);
+  };
+
+  const fetchData = useCallback(() => {
     setIsLoading(true);
     setError(null);
-    fetch("/api/items")
+
+    fetch("/api/itemfull")
       .then((response) => {
         if (!response.ok) {
           throw new Error(`HTTP error! Status: ${response.status}`);
@@ -35,13 +42,47 @@ const UsingFetch = () => {
         setError(`Failed to fetch items: ${error.message}`);
         setIsLoading(false);
       });
-  };
-
-  useEffect(() => {
-    fetchData();
   }, []);
 
-  // Extract search query from URL when component mounts or URL changes
+  // Comprehensive filtering logic
+  const filteredResults = useMemo(() => {
+    let results = [...items];
+
+    // First, apply category filter
+    if (activeFilter !== "All") {
+      results = results.filter(
+        (item) => item.TypeName?.toLowerCase() === activeFilter.toLowerCase()
+      );
+    }
+
+    // Then, apply search term filter if exists
+    if (searchTerm.trim()) {
+      const lowercasedSearch = searchTerm.toLowerCase().trim();
+
+      results = results.filter((item) => {
+        const searchFields = [
+          item.Title,
+          item.Authors,
+          item.Director,
+          item.Leads,
+          item.DeviceType,
+          item.Manufacturer,
+          item.GenreName,
+          item.Publisher,
+          item.Language,
+          item.TypeName,
+          item.Status,
+        ];
+
+        return searchFields.some(
+          (field) => field && field.toLowerCase().includes(lowercasedSearch)
+        );
+      });
+    }
+
+    return results;
+  }, [searchTerm, items, activeFilter]);
+
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     const query = params.get("q");
@@ -50,249 +91,284 @@ const UsingFetch = () => {
     }
   }, [location.search]);
 
-  // Filter items based on search term and active category filter
+  // Update filtered items when search results change
   useEffect(() => {
-    let results = [...items];
+    setFilteredItems(filteredResults);
+  }, [filteredResults]);
 
-    // First apply category filter
-    if (activeFilter !== "All") {
-      results = results.filter((item) =>
-        item.TypeName.toLowerCase().includes(activeFilter.toLowerCase())
-      );
-    }
-
-    // Then apply search term filter
-    if (searchTerm.trim() !== "") {
-      const lowercasedSearch = searchTerm.toLowerCase();
-      results = results.filter((item) => {
-        return (
-          item.Title.toLowerCase().includes(lowercasedSearch) ||
-          item.TypeName.toLowerCase().includes(lowercasedSearch) ||
-          item.Status.toLowerCase().includes(lowercasedSearch)
-        );
-      });
-    }
-
-    setFilteredItems(results);
-  }, [searchTerm, activeFilter, items]);
-
-  const handleSelectItem = (item: Items) => {
-    setSelectedItems((prev) => {
-      // Check if item is already selected
-      const isSelected = prev.some(
-        (selectedItem) => selectedItem.ItemID === item.ItemID
-      );
-
-      if (isSelected) {
-        // Remove item if already selected
-        return prev.filter(
-          (selectedItem) => selectedItem.ItemID !== item.ItemID
-        );
-      } else {
-        // Add item if not selected
-        return [...prev, item];
-      }
-    });
-  };
-
-  const isItemSelected = (itemId: number) => {
-    return selectedItems.some((item) => item.ItemID === itemId);
-  };
-
-  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchTerm(e.target.value);
-  };
+  // Initial data fetch
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
   const handleFilterChange = (category: ItemCategory) => {
     setActiveFilter(category);
   };
 
-  // Function to add selected items to cart
-  const handleAddToCart = () => {
-    if (selectedItems.length === 0) {
-      alert("Please select at least one item");
-      return;
+  const paginatedResults = useMemo(() => {
+    if (!filteredResults.length) return [];
+
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    return filteredResults.slice(startIndex, endIndex);
+  }, [filteredResults, currentPage]);
+
+  // Pagination calculations
+  const totalPages = Math.ceil(filteredResults.length / itemsPerPage);
+
+  // Page navigation handlers
+  const handleNextPage = () => {
+    if (currentPage < totalPages) {
+      setCurrentPage((prevPage) => prevPage + 1);
     }
+  };
 
-    try {
-      // Get current cart or initialize empty array
-      let cart: CartItem[] = [];
-      const cartData = sessionStorage.getItem("shoppingCart");
-
-      if (cartData) {
-        cart = JSON.parse(cartData);
-      }
-
-      // Track newly added items and unavailable items
-      let newItemsCount = 0;
-      let unavailableItems = 0;
-
-      // Add each selected item to cart if available and not already present
-      selectedItems.forEach((item) => {
-        if (item.Status !== "Available") {
-          unavailableItems++;
-          return;
-        }
-
-        if (!cart.some((cartItem) => cartItem.ItemID === item.ItemID)) {
-          cart.push({
-            ItemID: item.ItemID,
-            Title: item.Title,
-            TypeName: item.TypeName,
-            Status: item.Status,
-            Category: "In Cart",
-          });
-          newItemsCount++;
-        }
-      });
-
-      // Save updated cart to sessionStorage
-      sessionStorage.setItem("shoppingCart", JSON.stringify(cart));
-
-      // Dispatch event to update navbar cart count
-      window.dispatchEvent(new Event("cartUpdated"));
-
-      // Clear selection after adding to cart
-      setSelectedItems([]);
-
-      // Provide appropriate feedback
-      if (unavailableItems > 0) {
-        if (newItemsCount > 0) {
-          alert(
-            `${newItemsCount} items added to cart. ${unavailableItems} unavailable items were not added.`
-          );
-        } else {
-          alert(
-            `No items added. ${unavailableItems} selected items are unavailable.`
-          );
-        }
-      } else if (newItemsCount > 0) {
-        alert(`${newItemsCount} items added to cart`);
-      } else {
-        alert("Selected items are already in your cart");
-      }
-    } catch (error) {
-      console.error("Error adding items to cart:", error);
-      alert("There was an error adding items to cart");
+  const handlePrevPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage((prevPage) => prevPage - 1);
     }
   };
 
   return (
-    <div style={{ paddingLeft: "5%", paddingRight: "5%" }}>
-      {error && (
-        <div style={{ color: "red", marginBottom: "10px" }}>
-          <p>{error}</p>
+    <div>
+      <div style={{ paddingLeft: "5%", paddingRight: "5%" }}>
+        {error && (
+          <div style={{ color: "red", marginBottom: "10px" }}>
+            <p>{error}</p>
+          </div>
+        )}
+
+        <div style={{ marginBottom: "10px" }}>
+          <span>Filter by type: </span>
+          {["All", "Book", "Media", "Device"].map((category) => (
+            <button
+              key={category}
+              onClick={() => handleFilterChange(category as ItemCategory)}
+              style={{
+                marginRight: "5px",
+                padding: "3px 8px",
+                backgroundColor:
+                  activeFilter === category ? "#4a90e2" : "white",
+                color: activeFilter === category ? "white" : "black",
+                border: `1px solid ${
+                  activeFilter === category ? "#4a90e2" : "#ccc"
+                }`,
+                borderRadius: "4px",
+                fontWeight: activeFilter === category ? "bold" : "normal",
+                transition: "all 0.3s ease",
+                boxShadow:
+                  activeFilter === category
+                    ? "0 2px 4px rgba(0,0,0,0.1)"
+                    : "none",
+                outline: "none",
+              }}
+            >
+              {category}
+            </button>
+          ))}
         </div>
-      )}
-      <div style={{ marginBottom: "10px" }}>
-        <input
-          type="text"
-          placeholder="Advanced search..."
-          value={searchTerm}
-          onChange={handleSearchChange}
-          style={{ width: "100%", padding: "5px" }}
-        />
-      </div>
+        <div style={{ padding: "20px", maxWidth: "1200px", margin: "0 auto" }}>
+          {/* Search Input */}
+          <div style={{ marginBottom: "20px" }}>
+            <input
+              type="text"
+              placeholder="Search items (Title, Authors, Director, Device, etc.)..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              style={{
+                width: "100%",
+                padding: "10px",
+                fontSize: "16px",
+                border: "1px solid #ddd",
+                borderRadius: "4px",
+              }}
+            />
+            {searchTerm && (
+              <div
+                style={{
+                  marginTop: "10px",
+                  color: "#666",
+                  fontSize: "14px",
+                }}
+              >
+                Searching across Title, Authors, Director, Device Type,
+                Manufacturer, Genre, Publisher, Language, and more...
+              </div>
+            )}
+          </div>
 
-      <div style={{ marginBottom: "10px" }}>
-        <span>Filter by type: </span>
-        {["All", "Book", "Media", "Device"].map((category) => (
-          <button
-            key={category}
-            onClick={() => handleFilterChange(category as ItemCategory)}
-            style={{
-              marginRight: "5px",
-              padding: "3px 8px",
-              backgroundColor: activeFilter === category ? "#eee" : "white",
-            }}
-          >
-            {category}
-          </button>
-        ))}
-      </div>
+          {/* Loading and Error States */}
+          {isLoading && (
+            <div
+              style={{
+                textAlign: "center",
+                color: "#666",
+                padding: "20px",
+              }}
+            >
+              Loading items...
+            </div>
+          )}
 
-      <div style={{ marginBottom: "10px" }}>
-        <span style={{ marginRight: "10px" }}>
-          {selectedItems.length} items selected
-        </span>
-        <button onClick={handleAddToCart} disabled={selectedItems.length === 0}>
-          Add to Cart
-        </button>
-      </div>
+          {error && (
+            <div
+              style={{
+                color: "red",
+                backgroundColor: "#ffeeee",
+                padding: "10px",
+                borderRadius: "4px",
+              }}
+            >
+              Error: {error}
+            </div>
+          )}
 
-      {isLoading ? (
-        <div>Loading...</div>
-      ) : (
-        <>
-          {filteredItems.length > 0 ? (
-            <table style={{ width: "100%", borderCollapse: "collapse" }}>
+          {/* Results Table */}
+          {!isLoading && !error && searchTerm && filteredItems.length > 0 && (
+            <table
+              style={{
+                width: "100%",
+                borderCollapse: "collapse",
+                border: "1px solid #ddd",
+              }}
+            >
               <thead>
-                <tr>
-                  <th style={{ textAlign: "left" }}>Select</th>
-                  <th style={{ textAlign: "left" }}>Title</th>
-                  <th style={{ textAlign: "left" }}>Type</th>
-                  <th style={{ textAlign: "left" }}>Status</th>
-                  <th style={{ textAlign: "left" }}>Photo</th>
+                <tr style={{ backgroundColor: "#f2f2f2" }}>
+                  <th>Title</th>
+                  <th>Type</th>
+                  <th>Authors/Director</th>
+                  <th>Additional Info</th>
+                  <th>Status</th>
                 </tr>
               </thead>
               <tbody>
-                {filteredItems.map((item) => (
+                {paginatedResults.map((item) => (
                   <tr
                     key={item.ItemID}
+                    onClick={() => handleRowClick(item)}
                     style={{
-                      backgroundColor: isItemSelected(item.ItemID)
-                        ? "#f0f0ff"
-                        : "transparent",
+                      borderBottom: "1px solid #ddd",
+                      backgroundColor:
+                        item.Status !== "Available" ? "white" : "white",
+                      cursor: "pointer",
+                      transition: "background-color 0.2s ease",
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.backgroundColor = "#e4c9a8";
+                    }}
+                    onMouseLeave={(e) => {
+                      // CHANGE HERE IF YOU WANT TO DISPLAY A DIFFERENT COLOR FOR CHECKED OUT BOOKS
+                      e.currentTarget.style.backgroundColor =
+                        item.Status !== "Available" ? "white" : "white";
                     }}
                   >
-                    <td>
-                      <input
-                        type="checkbox"
-                        checked={isItemSelected(item.ItemID)}
-                        onChange={() => handleSelectItem(item)}
-                        disabled={item.Status !== "Available"}
-                        title={
-                          item.Status !== "Available"
-                            ? "This item is not available"
-                            : ""
-                        }
-                      />
+                    <td style={tableCellStyle}>{item.Title}</td>
+                    <td style={tableCellStyle}>{item.TypeName}</td>
+                    <td style={tableCellStyle}>
+                      {item.Authors || item.Director || "N/A"}
                     </td>
-                    <td>{item.Title}</td>
-                    <td>{item.TypeName}</td>
-                    <td>{item.Status}</td>
-                    <td>
-                      {item.PhotoBase64 ? (
-                        <img
-                          src={`data:image/jpeg;base64,${item.PhotoBase64}`}
-                          alt={item.Title}
-                          className="w-full h-48 object-cover rounded-lg mb-2"
-                        />
-                      ) : (
-                        <p className="text-gray-500">No Photo Available</p>
-                      )}
+                    <td style={tableCellStyle}>
+                      {item.DeviceType || item.Publisher || item.Leads || "N/A"}
                     </td>
+                    <td style={tableCellStyle}>{item.Status}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
-          ) : (
-            <div>No items found matching your criteria</div>
           )}
 
-          {items.length > 0 && (
-            <div style={{ marginTop: "10px", fontSize: "small" }}>
-              Showing {filteredItems.length} of {items.length} items
-              {activeFilter !== "All" && (
-                <span> (filtered by {activeFilter})</span>
-              )}
-              {searchTerm && <span> (search: "{searchTerm}")</span>}
+          {/* No Results Message */}
+          {!isLoading && !error && searchTerm && filteredItems.length === 0 && (
+            <div
+              style={{
+                textAlign: "center",
+                color: "#666",
+                padding: "20px",
+                border: "1px dashed #ddd",
+              }}
+            >
+              No items found matching "{searchTerm}"
             </div>
           )}
-        </>
-      )}
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+              marginTop: "20px",
+            }}
+          >
+            <button
+              onClick={handlePrevPage}
+              disabled={currentPage === 1}
+              style={{
+                margin: "0 10px",
+                padding: "5px 10px",
+                backgroundColor: currentPage === 1 ? "#f0f0f0" : "#4a90e2",
+                color: currentPage === 1 ? "#888" : "white",
+                border: "none",
+                borderRadius: "4px",
+                cursor: currentPage === 1 ? "not-allowed" : "pointer",
+              }}
+            >
+              Previous
+            </button>
+
+            <span>
+              Page {currentPage} of {totalPages}
+            </span>
+
+            <button
+              onClick={handleNextPage}
+              disabled={currentPage === totalPages}
+              style={{
+                margin: "0 10px",
+                padding: "5px 10px",
+                backgroundColor:
+                  currentPage === totalPages ? "#f0f0f0" : "#4a90e2",
+                color: currentPage === totalPages ? "#888" : "white",
+                border: "none",
+                borderRadius: "4px",
+                cursor: currentPage === totalPages ? "not-allowed" : "pointer",
+              }}
+            >
+              Next
+            </button>
+          </div>
+
+          {/* Results Summary */}
+          {!isLoading && !error && searchTerm && filteredItems.length > 0 && (
+            <div
+              style={{
+                marginTop: "10px",
+                fontSize: "14px",
+                color: "#666",
+              }}
+            >
+              Showing {filteredItems.length} of {items.length} items
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   );
 };
 
-export default UsingFetch;
+// Styles for table
+const tableHeaderStyle = {
+  border: "1px solid #ddd",
+  padding: "8px",
+  textAlign: "left",
+  backgroundColor: "#f9f9f9",
+};
+
+const tableCellStyle = {
+  border: "1px solid #ddd",
+  padding: "8px",
+  maxWidth: "200px",
+  overflow: "hidden",
+  textOverflow: "ellipsis",
+  whiteSpace: "nowrap",
+};
+
+export default AdvancedSearch;
