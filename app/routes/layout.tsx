@@ -5,6 +5,7 @@ import { NavBar2 } from "~/components/Navbar2";
 import { getAuthData } from "~/utils/auth";
 import { type AuthData } from "~/services/api";
 import { Footer } from "~/components/footer";
+import { CartProvider } from "~/context/CartContext";
 
 export function loader({ context }: LoaderFunctionArgs): AuthData {
   //debug
@@ -17,22 +18,27 @@ export default function Layout() {
   const authData = useLoaderData() as AuthData;
 
   return (
-    <div className="flex flex-col min-h-screen">
-      <NavBar
-        // like the one that will be here
-        isLoggedIn={authData.isLoggedIn}
-        memberID={authData.memberID}
-        groupID={authData.groupID}
-        firstName={authData.firstName}
-        lastName={authData.lastName}
-        address={authData.address}
-        middleName={authData.middleName}
-      />
-      <NavBar2 />
-      <main className="flex-grow">
-        <Outlet context={authData} />
-      </main>
-      <Footer />
-    </div>
+    <CartProvider>
+      <div className="flex flex-col min-h-screen">
+        <NavBar
+          isLoggedIn={authData.isLoggedIn}
+          memberID={authData.memberID}
+          groupID={authData.groupID}
+          firstName={authData.firstName}
+          lastName={authData.lastName}
+          address={authData.address}
+          middleName={authData.middleName}
+          email={authData.email}
+          phoneNumber={authData.phoneNumber}
+          birthDate={authData.birthDate}
+          balance={authData.balance}
+        />
+        <NavBar2 />
+        <main className="flex-grow">
+          <Outlet context={authData} />
+        </main>
+        <Footer />
+      </div>
+    </CartProvider>
   );
 }

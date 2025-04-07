@@ -35,13 +35,43 @@ export function getCurrentAddress(context: any) {
   return context.address || null;
 }
 
-//adding phone number and date of birth
-export function getPhoneNumber(context: any) {
+export function getCurrentPhoneNumber(context: any) {
   return context.phoneNumber || null;
 }
 
-export function getDateOfBirth(context: any) {
-  return context.dateOfBirth || null;
+export function getCurrentBirthDate(context: any): string {
+  const birthDate = context.birthDate || null;
+
+  if (!birthDate) {
+    return "";
+  }
+
+  const date = new Date(birthDate);
+
+  if (isNaN(date.getTime())) {
+    return "";
+  }
+
+  const options: Intl.DateTimeFormatOptions = {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  };
+  return date.toLocaleDateString("en-US", options);
+}
+
+export function getCurrentBalance(context: any) {
+  if (context.balance === undefined || context.balance === null) {
+    return "";
+  }
+
+  // format as currency
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(context.balance);
 }
 
 // Function to require authentication (use in protected route loaders)
@@ -65,7 +95,8 @@ export function getAuthData(context: any) {
     middleName: getCurrentMiddleName(context),
     address: getCurrentAddress(context),
     email: getCurrentEmail(context),
-    phoneNumber: getPhoneNumber(context),
-    dateOfBirth: getDateOfBirth(context),
+    phoneNumber: getCurrentPhoneNumber(context),
+    birthDate: getCurrentBirthDate(context),
+    balance: getCurrentBalance(context),
   };
 }

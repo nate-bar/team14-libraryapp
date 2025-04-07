@@ -10,15 +10,7 @@ interface borrowedItems {
 }
 
 export default function MyItems() {
-  const {
-    isLoggedIn,
-    memberID,
-    groupID,
-    firstName,
-    lastName,
-    middleName,
-    address,
-  } = useOutletContext<AuthData>();
+  const { isLoggedIn, memberID } = useOutletContext<AuthData>();
   const [overdueCount, setOverdueCount] = useState(0);
   const [items, setItems] = React.useState<borrowedItems[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -132,7 +124,7 @@ export default function MyItems() {
   }
 
   return (
-    <div>
+    <div className="flex-grow justify-center h-full w-full pl-25 pr-25">
       <ProfilePage/>
       {isLoading ? (
         <p>Loading borrowed items...</p>

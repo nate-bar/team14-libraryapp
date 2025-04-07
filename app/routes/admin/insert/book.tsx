@@ -1,33 +1,35 @@
+import { type BookInsert } from "~/services/api";
 import React, { useState, useEffect } from "react";
-import { addMedia } from "./queries";
+import { addBook } from "../queries";
 import { type Genres } from "~/services/api";
 import { type Languages } from "~/services/api";
-import { type Media } from "~/services/api";
-import Compressor from "compressorjs";
-import { useOutletContext } from "react-router";
 import { type AuthData } from "~/services/api";
+import { useOutletContext } from "react-router";
+import Compressor from "compressorjs";
 
-const MediaForm: React.FC = () => {
+const BookForm: React.FC = () => {
   const { email } = useOutletContext<AuthData>();
   const [genres, setGenres] = useState<Genres[]>([]);
   const [languages, setLanguages] = useState<Languages[]>([]);
   const [fileName, setFileName] = useState<string>("");
-  const [mediaData, setMediaData] = useState<Media>({
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  const [bookData, setBookData] = useState<BookInsert>({
+    isbn: "",
     title: "",
-    typename: "Media",
-    director: "",
-    leads: "",
-    releaseyear: 0,
-    format: "",
-    rating: 0,
+    typename: "Book",
+    authors: "",
+    publisher: "",
+    publicationyear: 0,
     genreid: 0,
     languageid: 0,
     photo: null as File | null,
     createdby: email,
+    quantity: 1,
+    summary: "",
   });
 
   const fetchGenres = () => {
-    fetch("/api/mediagenres")
+    fetch("/api/bookgenres")
       .then((response) => {
         if (!response.ok) {
           throw new Error("Failed to fetch genres");
@@ -59,10 +61,12 @@ const MediaForm: React.FC = () => {
   };
 
   const [errors, setErrors] = useState({
-    director: "",
+    isbn: "",
     title: "",
-    releaseyear: "",
+    authors: "",
+    publisher: "",
     genreid: "",
+    publicationyear: "",
   });
 
   useEffect(() => {
@@ -71,26 +75,25 @@ const MediaForm: React.FC = () => {
   }, []);
 
   const handleInputChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
+    >
   ): void => {
     const { name, value } = e.target;
 
     // Convert numeric fields from string to number
     if (
       name === "genreid" ||
-      name === "releaseyear" ||
+      name === "publicationyear" ||
       name === "languageid" ||
-      name === "rating"
+      name === "quantity"
     ) {
-      setMediaData((prev) => ({
+      setBookData((prev) => ({
         ...prev,
-        [name]:
-          name === "rating"
-            ? Math.max(0, Math.min(100, parseInt(value, 10) || 0))
-            : parseInt(value, 10) || 0,
+        [name]: parseInt(value, 10) || 0,
       }));
     } else {
-      setMediaData((prev) => ({
+      setBookData((prev) => ({
         ...prev,
         [name]: value,
       }));
@@ -99,17 +102,22 @@ const MediaForm: React.FC = () => {
 
   const validateForm = (): boolean => {
     const newErrors = {
-      director: "",
+      isbn: "",
       title: "",
-      releaseyear: "",
+      authors: "",
+      publisher: "",
       genreid: "",
+      publicationyear: "",
     };
-    const { director, title, releaseyear, genreid } = mediaData;
+    const { isbn, title, authors, publisher, genreid, publicationyear } =
+      bookData;
 
-    if (!director) newErrors.director = "Enter a value for director";
+    if (!isbn) newErrors.isbn = "Enter a value for ISBN";
     if (!title) newErrors.title = "Enter a title";
+    if (!authors) newErrors.authors = "Enter a value for author";
+    if (!publisher) newErrors.publisher = "Enter a value for publisher";
     if (genreid === 0) newErrors.genreid = "Select a genre";
-    if (!releaseyear) newErrors.releaseyear = "Select a year";
+    if (!publicationyear) newErrors.publicationyear = "Select a year";
 
     setErrors(newErrors);
     return !Object.values(newErrors).some((error) => error);
@@ -134,7 +142,7 @@ const MediaForm: React.FC = () => {
       // Compress the image with Promise
       compressImage(file)
         .then((compressedFile) => {
-          setMediaData((prev) => ({ ...prev, photo: compressedFile }));
+          setBookData((prev) => ({ ...prev, photo: compressedFile }));
           // setIsLoading(false);
         })
         .catch((error) => {
@@ -144,7 +152,7 @@ const MediaForm: React.FC = () => {
         });
     } else {
       setFileName("");
-      setMediaData((prev) => ({ ...prev, photo: null }));
+      setBookData((prev) => ({ ...prev, photo: null }));
     }
   }
 
@@ -170,7 +178,12 @@ const MediaForm: React.FC = () => {
     e: React.FormEvent<HTMLFormElement>
   ): Promise<void> => {
     e.preventDefault();
-    console.log("Form submitted:", mediaData);
+    console.log("Form submitted:", bookData);
+
+    // If already submitting, do nothing
+    if (isSubmitting) {
+      return;
+    }
 
     const validationError = validateForm();
     if (!validationError) {
@@ -178,7 +191,10 @@ const MediaForm: React.FC = () => {
     }
 
     try {
-      const result = await addMedia(mediaData);
+      // Set submitting state to true to prevent multiple clicks
+      setIsSubmitting(true);
+
+      const result = await addBook(bookData);
 
       if (!result.success) {
         alert(`Error: ${result.error || "Registration failed"}`);
@@ -188,23 +204,28 @@ const MediaForm: React.FC = () => {
       console.log("Success:", result);
 
       // Clear form
-      setMediaData({
+      setBookData({
+        isbn: "",
         title: "",
-        typename: "Media",
-        director: "",
-        leads: "",
-        releaseyear: 0,
+        typename: "Book",
+        authors: "",
+        publisher: "",
+        publicationyear: 0,
         genreid: 0,
         languageid: 0,
         photo: null,
-        format: "",
-        rating: 0,
         createdby: email,
+        quantity: 1,
+        summary: "",
       });
-      alert("Media entered successfully!");
+      setFileName("");
+      alert("Book entered successfully!");
     } catch (error) {
       console.error("Error submitting form:", error);
       alert(`Error submitting form: ${error}`);
+    } finally {
+      // Reset submitting state regardless of success or failure
+      setIsSubmitting(false);
     }
   };
 
@@ -212,11 +233,20 @@ const MediaForm: React.FC = () => {
     <div className="admin-container">
       <form onSubmit={handleSubmit} className="admin-form">
         <input
+          className={`admin-input ${errors.isbn ? "error-field" : ""}`}
+          type="text"
+          name="isbn"
+          placeholder="ISBN"
+          value={bookData.isbn}
+          onChange={handleInputChange}
+        />
+        {errors.isbn && <div className="error-message">{errors.isbn}</div>}
+        <input
           className={`admin-input ${errors.title ? "error-field" : ""}`}
           type="text"
           name="title"
           placeholder="Title"
-          value={mediaData.title}
+          value={bookData.title}
           onChange={handleInputChange}
         />
         {errors.title && <div className="error-message">{errors.title}</div>}
@@ -225,7 +255,7 @@ const MediaForm: React.FC = () => {
         <select
           className={`admin-select ${errors.genreid ? "error-field" : ""}`}
           name="genreid"
-          value={mediaData.genreid}
+          value={bookData.genreid}
           onChange={handleInputChange}
           required
         >
@@ -241,53 +271,33 @@ const MediaForm: React.FC = () => {
         )}
 
         <input
-          className={`admin-input ${errors.director ? "error-field" : ""}`}
+          className={`admin-input ${errors.authors ? "error-field" : ""}`}
           type="text"
-          name="director"
-          placeholder="Director"
-          value={mediaData.director}
+          name="authors"
+          placeholder="Authors"
+          value={bookData.authors}
           onChange={handleInputChange}
         />
-        {errors.director && (
-          <div className="error-message">{errors.director}</div>
+        {errors.authors && (
+          <div className="error-message">{errors.authors}</div>
         )}
         <input
-          className={`admin-input`}
+          className={`admin-input ${errors.publisher ? "error-field" : ""}`}
           type="text"
-          name="leads"
-          placeholder="Leads (Optional)"
-          value={mediaData.leads}
+          name="publisher"
+          placeholder="Publisher"
+          value={bookData.publisher}
           onChange={handleInputChange}
         />
-        <input
-          className="admin-input"
-          type="text"
-          name="format"
-          placeholder="Format (e.g., DVD, Blu-ray, Digital)"
-          value={mediaData.format}
-          onChange={handleInputChange}
-        />
-
-        <div className="admin-input-group">
-          <label htmlFor="rating" className="admin-label">
-            Rating (0-100)
-          </label>
-          <input
-            className="admin-input"
-            type="number"
-            name="rating"
-            min="0"
-            max="100"
-            placeholder="Enter rating (0-100)"
-            value={mediaData.rating}
-            onChange={handleInputChange}
-          />
-        </div>
-
+        {errors.publisher && (
+          <div className="error-message">{errors.publisher}</div>
+        )}
         <select
-          className={`admin-select ${errors.releaseyear ? "error-field" : ""}`}
-          name="releaseyear"
-          value={mediaData.releaseyear || ""}
+          className={`admin-select ${
+            errors.publicationyear ? "error-field" : ""
+          }`}
+          name="publicationyear"
+          value={bookData.publicationyear || ""}
           onChange={handleInputChange}
         >
           <option value="">Select Year</option>
@@ -300,15 +310,15 @@ const MediaForm: React.FC = () => {
             </option>
           ))}
         </select>
-        {errors.releaseyear && (
-          <div className="error-message">{errors.releaseyear}</div>
+        {errors.publicationyear && (
+          <div className="error-message">{errors.publicationyear}</div>
         )}
 
         {/* Language dropdown */}
         <select
           className="admin-select"
           name="languageid"
-          value={mediaData.languageid}
+          value={bookData.languageid}
           onChange={handleInputChange}
           required
         >
@@ -344,17 +354,65 @@ const MediaForm: React.FC = () => {
             accept="image/*"
             onChange={handleFileChange}
           />
-          {mediaData.photo && (
+          {bookData.photo && (
             <span className="admin-file-name">{fileName}</span>
           )}
         </div>
 
+        {/* Quantity dropdown */}
+        <div className="form-group">
+          <label htmlFor="quantity" className="admin-label">
+            Quantity:
+          </label>
+          <select
+            id="quantity"
+            name="quantity"
+            className="admin-select"
+            value={bookData.quantity}
+            onChange={handleInputChange}
+          >
+            {[...Array(10)].map((_, i) => (
+              <option key={i + 1} value={i + 1}>
+                {i + 1}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {/* book summary field */}
+        <div className="mb-4 w-full">
+          <label
+            htmlFor="summary"
+            className="block text-sm font-medium text-gray-700 mb-1 flex items-center"
+          >
+            Summary{" "}
+            <span className="ml-2 text-xs text-gray-500 italic">
+              (optional, max 255 characters)
+            </span>
+          </label>
+          <div className="relative">
+            <textarea
+              id="summary"
+              name="summary"
+              className="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 min-h-[100px] resize-none text-gray-800"
+              placeholder="Enter book summary (optional)"
+              value={bookData.summary || ""}
+              onChange={handleInputChange}
+              maxLength={255}
+              rows={4}
+            />
+            <div className="absolute bottom-2 right-2 text-xs text-gray-500">
+              {(bookData.summary || "").length}/255
+            </div>
+          </div>
+        </div>
+
         <button type="submit" className="admin-submit">
-          Add Media
+          Add Book
         </button>
       </form>
     </div>
   );
 };
 
-export default MediaForm;
+export default BookForm;

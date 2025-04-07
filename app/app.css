@@ -31,3 +31,10 @@ body {
   font-size: 0.8rem;
   margin-top: 0.25rem;
 }
+
+.item-summary {
+  font-size: 0.5rem;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  line-height: 1.5;
+  margin-bottom: 1.2rem;
+}

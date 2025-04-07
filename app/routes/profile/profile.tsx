@@ -1,11 +1,26 @@
 //navigation bar when logging in
 import { Outlet, useOutletContext } from "react-router";
 import { type AuthData } from "~/services/api";
-import { Link } from "react-router"; // Using React Router
+import { Link } from "react-router";
+import { useNavigate } from "react-router";
+import { useEffect } from "react";
+import LoadingSpinner from "~/components/loadingspinner";
 import "./profile.css";
 
 export default function ProfilePage() {
   const authData = useOutletContext<AuthData>();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!authData.isLoggedIn) {
+      navigate("/");
+    }
+  }, [authData.isLoggedIn, navigate]);
+
+  if (!authData.isLoggedIn) {
+    return <LoadingSpinner />;
+  }
+
   return (
     <div className="bg-nav3" > 
       <div className="navbar-left w-full flex justify-between items-center">
@@ -16,6 +31,9 @@ export default function ProfilePage() {
           <li className="text-nav3">
             <Link to="/myitems">My Items</Link>
           </li>
+          <li className="text-nav3">
+              <Link to="/holds">Holds</Link>
+            </li>
           <li className="mailbox-nav3">
              <Link to="/mailbox">✉️
              </Link>
@@ -31,5 +49,4 @@ export default function ProfilePage() {
       </main>
     </div>
   );
-
 }
