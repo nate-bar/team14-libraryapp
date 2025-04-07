@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Link } from "react-router";
 import { type Genres } from "~/services/api";
 import { type Items } from "~/services/api";
+import LoadingSpinner from "~/components/loadingspinner";
 import NoImage from "~/components/imgplaceholder";
 
 const UsingFetch = () => {
@@ -172,7 +173,7 @@ const UsingFetch = () => {
 
       {/* Display items */}
       {loading ? (
-        <p className="text-center text-gray-500 text-lg">Loading items...</p>
+        <LoadingSpinner />
       ) : filteredItems.length > 0 ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
           {filteredItems.map((item) => (
