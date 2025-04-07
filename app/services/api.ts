@@ -230,25 +230,25 @@ export interface DeviceEdit {
 }
 
 export interface ItemFull {
-  itemid: number;
-  title: string;
-  typename: string;
-  status: string;
-  photo?: string;
-  isbn?: string;
-  mediaid?: number;
-  deviceid?: number;
-  authors?: string;
-  genre?: string;
-  publisher?: string;
-  publicationyear?: string;
-  summary?: string;
-  language?: string;
-  director?: string;
-  leads?: string;
-  releaseyear?: string;
-  format?: string;
-  rating?: number;
-  devicetype?: string;
-  manufacturer?: string;
+  ItemID: number;
+  Title: string;
+  TypeName: string;
+  Status: string;
+  Photo?: string;
+  ISBN?: string;
+  MediaID?: number;
+  DeviceID?: number;
+  Authors?: string;
+  GenreName?: string;
+  Publisher?: string;
+  PublicationYear?: string;
+  Summary?: string;
+  Language?: string;
+  Director?: string;
+  Leads?: string;
+  ReleaseYear?: string;
+  Format?: string;
+  Rating?: number;
+  DeviceType?: string;
+  Manufacturer?: string;
 }
