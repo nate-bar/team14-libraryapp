@@ -2,34 +2,82 @@ import { useParams } from "react-router";
 import { useEffect, useState } from "react";
 import "../ItemStyle.css";
 import { type Media } from "~/services/api";
-import { type CartItem } from "~/services/api";
 import AddToCartButton from "~/components/buttons/addtocartbutton";
+import { useOutletContext } from "react-router";
+import { type AuthData } from "~/services/api";
 
 export default function MediaDetail() {
   const { itemId } = useParams<{ itemId: string }>();
   const [media, setMedia] = useState<Media | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const authData = useOutletContext<AuthData>();
 
   useEffect(() => {
-    setLoading(true);
-    fetch(`/api/itemdetail/${itemId}`)
-      .then((response) => {
+    const fetchMediaDetails = async () => {
+      setLoading(true);
+      setError(null);
+
+      try {
+        const response = await fetch(`/api/itemdetail/${itemId}`);
+
         if (!response.ok) {
           throw new Error(`HTTP error! Status: ${response.status}`);
         }
-        return response.json();
-      })
-      .then((data) => {
+
+        const data = await response.json();
         setMedia(data);
+      } catch (error) {
+        console.error("Error fetching media:", error);
+        setError("Failed to load media details. Please try again.");
+      } finally {
         setLoading(false);
-      })
-      .catch((error) => {
-        console.error("Error fetching book:", error);
-        setError("Failed to load book details. Please try again.");
-        setLoading(false);
-      });
+      }
+    };
+
+    if (itemId) {
+      fetchMediaDetails();
+    }
   }, [itemId]);
+
+  const handleHoldRequest = async () => {
+    if (!authData.isLoggedIn) {
+      alert("Please login first");
+      return;
+    }
+
+    try {
+      const response = await fetch("/api/holdrequest", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          itemid: media?.ItemID,
+          memberid: authData.memberID,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        // api returns 409 if media is already on hold for user
+        if (response.status === 409) {
+          throw new Error(
+            data.error || "You already have a hold request for this media"
+          );
+        }
+        throw new Error(data.error || `HTTP error! Status: ${response.status}`);
+      }
+
+      alert("Hold request submitted successfully");
+    } catch (error) {
+      console.error("Error submitting hold request:", error);
+      alert(
+        error instanceof Error ? error.message : "Error submitting hold request"
+      );
+    }
+  };
 
   if (loading) {
     return (
@@ -55,6 +103,7 @@ export default function MediaDetail() {
       </div>
     );
   }
+
   return (
     <div className="item-container">
       <h1 className="item-title">{media.Title}</h1>
@@ -83,7 +132,7 @@ export default function MediaDetail() {
             <strong>Format:</strong> {media.Format}
           </p>
           <p>
-            <strong>Rating:</strong> {media.Rating}
+            <strong>Rating:</strong> {media.Rating}/10
           </p>
           <p>
             <strong>Genre:</strong> {media.GenreName}
@@ -101,9 +150,17 @@ export default function MediaDetail() {
       </div>
 
       <div className="item-actions">
-        <div className="item-actions">
-          <AddToCartButton item={media} />
-        </div>
+        {/* if media is available, show add to cart button */}
+        {media.Status === "Available" && <AddToCartButton item={media} />}
+        {/* if media is not available, show hold request button */}
+        {media.Status === "Checked Out" && (
+          <button
+            className="btn btn-secondary hold-button"
+            onClick={handleHoldRequest}
+          >
+            Place Hold Request
+          </button>
+        )}
       </div>
     </div>
   );

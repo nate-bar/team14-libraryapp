@@ -26,6 +26,11 @@ export const addBook = async (book: BookInsert): Promise<ApiResponse> => {
     formData.append("createdby", book.createdby);
     formData.append("quantity", book.quantity.toString());
 
+    // add summary if it exists
+    if (book.summary) {
+      formData.append("summary", book.summary);
+    }
+
     // Add photo if it exists
     if (book.photo) {
       formData.append("photo", book.photo);
@@ -181,6 +186,10 @@ export const editBook = async (bookEdit: BookEdit): Promise<ApiResponse> => {
     formData.append("LanguageID", bookEdit.LanguageID.toString());
     formData.append("UpdatedBy", bookEdit.UpdatedBy);
     formData.append("newISBN", bookEdit.newISBN);
+
+    if (bookEdit.Summary) {
+      formData.append("Summary", bookEdit.Summary);
+    }
 
     // Add photo if it exists
     if (bookEdit.Photo) {

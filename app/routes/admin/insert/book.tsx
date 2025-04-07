@@ -25,6 +25,7 @@ const BookForm: React.FC = () => {
     photo: null as File | null,
     createdby: email,
     quantity: 1,
+    summary: "",
   });
 
   const fetchGenres = () => {
@@ -74,7 +75,9 @@ const BookForm: React.FC = () => {
   }, []);
 
   const handleInputChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
+    >
   ): void => {
     const { name, value } = e.target;
 
@@ -82,7 +85,8 @@ const BookForm: React.FC = () => {
     if (
       name === "genreid" ||
       name === "publicationyear" ||
-      name === "languageid"
+      name === "languageid" ||
+      name === "quantity"
     ) {
       setBookData((prev) => ({
         ...prev,
@@ -212,6 +216,7 @@ const BookForm: React.FC = () => {
         photo: null,
         createdby: email,
         quantity: 1,
+        summary: "",
       });
       setFileName("");
       alert("Book entered successfully!");
@@ -372,6 +377,34 @@ const BookForm: React.FC = () => {
               </option>
             ))}
           </select>
+        </div>
+
+        {/* book summary field */}
+        <div className="mb-4 w-full">
+          <label
+            htmlFor="summary"
+            className="block text-sm font-medium text-gray-700 mb-1 flex items-center"
+          >
+            Summary{" "}
+            <span className="ml-2 text-xs text-gray-500 italic">
+              (optional, max 255 characters)
+            </span>
+          </label>
+          <div className="relative">
+            <textarea
+              id="summary"
+              name="summary"
+              className="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 min-h-[100px] resize-none text-gray-800"
+              placeholder="Enter book summary (optional)"
+              value={bookData.summary || ""}
+              onChange={handleInputChange}
+              maxLength={255}
+              rows={4}
+            />
+            <div className="absolute bottom-2 right-2 text-xs text-gray-500">
+              {(bookData.summary || "").length}/255
+            </div>
+          </div>
         </div>
 
         <button type="submit" className="admin-submit">

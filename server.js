@@ -224,6 +224,7 @@ app.post("/api/insert/:typename", upload.single("photo"), (req, res) => {
       publicationYear: item.publicationyear,
       genreId: item.genreid,
       languageId: item.languageid,
+      summary: item.summary,
       createdby: item.createdby,
       quantity: item.quantity,
     });
@@ -273,7 +274,7 @@ app.post("/api/insert/:typename", upload.single("photo"), (req, res) => {
             console.log("Generated Item ID:", returnedItemID);
 
             connection.query(
-              `INSERT INTO Books (ISBN, Authors, GenreID, Publisher, PublicationYear, LanguageID) VALUES (?, ?, ?, ?, ?, ?)`,
+              `INSERT INTO Books (ISBN, Authors, GenreID, Publisher, PublicationYear, LanguageID, Summary) VALUES (?, ?, ?, ?, ?, ?, ?)`,
               [
                 item.isbn,
                 item.authors,
@@ -281,6 +282,7 @@ app.post("/api/insert/:typename", upload.single("photo"), (req, res) => {
                 item.publisher,
                 item.publicationyear,
                 item.languageid,
+                item.summary,
               ],
               (bookErr, booksResult) => {
                 if (bookErr) {
@@ -761,6 +763,7 @@ app.post("/api/edit/:typename", upload.single("Photo"), (req, res) => {
       PublicationYear: item.PublicationYear,
       GenreID: item.GenreID,
       LanguageID: item.LanguageID,
+      Summary: item.Summary,
       UpdatedBy: item.UpdatedBy,
       newISBN: item.newISBN,
     });
@@ -807,7 +810,7 @@ app.post("/api/edit/:typename", upload.single("Photo"), (req, res) => {
             }
 
             connection.query(
-              `UPDATE Books SET ISBN = ?, Authors = ?, GenreID = ?, Publisher = ?, PublicationYear = ?, LanguageID = ? WHERE Books.ISBN = ?`,
+              `UPDATE Books SET ISBN = ?, Authors = ?, GenreID = ?, Publisher = ?, PublicationYear = ?, LanguageID = ?, Summary = ? WHERE Books.ISBN = ?`,
               [
                 item.newISBN,
                 item.Authors,
@@ -815,6 +818,7 @@ app.post("/api/edit/:typename", upload.single("Photo"), (req, res) => {
                 item.Publisher,
                 item.PublicationYear,
                 item.LanguageID,
+                item.Summary,
                 item.ISBN,
               ],
               (bookErr, booksResult) => {
@@ -1845,7 +1849,7 @@ app.get("/api/itemdetail/:itemid", (req, res) => {
         let q;
 
         if (currentType === "Book") {
-          q = `SELECT i.ItemID, TO_BASE64(i.Photo) AS Photo, i.Title, i.Status, it.TypeName, b.Authors, b.Publisher, b.PublicationYear, it.ISBN, g.GenreName, g.GenreID, l.Language, l.LanguageID
+          q = `SELECT i.ItemID, TO_BASE64(i.Photo) AS Photo, i.Title, i.Status, it.TypeName, b.Authors, b.Publisher, b.PublicationYear, b.Summary, it.ISBN, g.GenreName, g.GenreID, l.Language, l.LanguageID
        FROM Items i
        INNER JOIN ItemTypes it ON it.ItemID = i.ItemID
        INNER JOIN Books b ON it.ISBN = b.ISBN

@@ -31,6 +31,7 @@ export interface Book {
   ISBN: string;
   GenreName: string;
   Photo?: File | Blob | null;
+  Summary: string;
 }
 
 export interface Media {
@@ -65,7 +66,7 @@ export interface CartItem {
   Title: string;
   TypeName: string;
   Status: string;
-  Category: "In Cart" | "On Hold";
+  Category: "In Cart";
 }
 
 // for inserting
@@ -80,6 +81,7 @@ export interface BookInsert {
   languageid: number;
   photo?: File | Blob | null;
   createdby: string;
+  summary?: string;
   quantity: number;
 }
 
@@ -175,6 +177,7 @@ export interface BookEdit {
   PublicationYear: number;
   GenreID: number;
   LanguageID: number;
+  Summary?: string;
   Photo?: File | Blob | null;
   UpdatedBy: string;
 }

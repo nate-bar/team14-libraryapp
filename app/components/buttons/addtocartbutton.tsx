@@ -1,116 +1,58 @@
-import { useState } from "react";
-import { type Items } from "~/services/api";
-import { Outlet, useOutletContext } from "react-router";
-import { type AuthData } from "~/services/api";
+import React, { useState } from "react";
+import { useCart } from "~/context/CartContext";
 
-interface ItemActionButtonsProps {
-  item: Items;
+type CartableItem = {
+  ItemID: number;
+  Title: string;
+  TypeName: string;
+  Status: string;
+};
+
+interface AddToCartButtonProps {
+  item: CartableItem;
+  onSuccess?: () => void;
 }
 
-export default function ItemActionButtons({ item }: ItemActionButtonsProps) {
-  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
-  const authData = useOutletContext<AuthData>();
+const AddToCartButton: React.FC<AddToCartButtonProps> = ({
+  item,
+  onSuccess,
+}) => {
+  const [isAdding, setIsAdding] = useState(false);
+  const { addToCart, isItemInCart } = useCart();
 
   const handleAddToCart = () => {
-    // check if user is logged in
-    if (!authData.isLoggedIn) {
-      alert("Please login first");
-      return;
+    setIsAdding(true);
+
+    try {
+      const added = addToCart(item);
+
+      if (added) {
+        if (onSuccess) onSuccess();
+        alert("Item added to cart");
+      } else {
+        alert("Item is already in your cart");
+      }
+    } catch (error) {
+      console.error("Error adding item to cart:", error);
+      alert("Failed to add item to cart");
+    } finally {
+      setIsAdding(false);
     }
-
-    const cart = JSON.parse(sessionStorage.getItem("shoppingCart") || "[]");
-    const existingItemIndex = cart.findIndex(
-      (cartItem: any) => cartItem.ItemID === item.ItemID
-    );
-
-    // check if item already exists in cart
-    if (existingItemIndex >= 0) {
-      alert("Item is already in your cart");
-      return;
-    }
-
-    const itemWithCategory = {
-      ...item,
-      Category: "In Cart",
-    };
-
-    const updatedCart = [...cart, itemWithCategory];
-    sessionStorage.setItem("shoppingCart", JSON.stringify(updatedCart));
-    window.dispatchEvent(new Event("cartUpdated"));
-
-    alert("Item added to cart");
-  };
-
-  const handleHoldRequest = () => {
-    if (!authData.isLoggedIn) {
-      alert("Please login first");
-      return;
-    }
-
-    setIsSubmitting(true);
-
-    fetch("/api/holdrequest", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        itemid: item.ItemID,
-        memberid: authData.memberID,
-      }),
-    })
-      .then(async (response) => {
-        const data = await response.json();
-
-        if (!response.ok) {
-          // error 409 is returned by the server if user already has book on hold
-          if (response.status === 409) {
-            throw new Error(
-              data.error || "You already have a hold request for this item"
-            );
-          }
-          throw new Error(
-            data.error || `HTTP error! Status: ${response.status}`
-          );
-        }
-
-        return data;
-      })
-      .then((data) => {
-        alert("Hold request submitted successfully");
-        console.log("Server response:", data);
-        setIsSubmitting(false);
-      })
-      .catch((error) => {
-        console.error("Error submitting hold request:", error);
-        alert(error.message);
-        setIsSubmitting(false);
-      });
   };
 
   return (
-    <div className="item-actions">
-      {/* add to cart button - only shown for Available items */}
-      {item.Status === "Available" && (
-        <button
-          className="btn btn-primary"
-          onClick={handleAddToCart}
-          disabled={isSubmitting}
-        >
-          Add to Cart
-        </button>
-      )}
-
-      {/* hold request button - only shown for Checked Out items */}
-      {item.Status === "Checked Out" && (
-        <button
-          className="btn btn-secondary hold-button"
-          onClick={handleHoldRequest}
-          disabled={isSubmitting}
-        >
-          {isSubmitting ? "Processing..." : "Place Hold Request"}
-        </button>
-      )}
-    </div>
+    <button
+      className="btn btn-primary"
+      onClick={handleAddToCart}
+      disabled={isAdding || isItemInCart(item.ItemID)}
+    >
+      {isItemInCart(item.ItemID)
+        ? "In Cart"
+        : isAdding
+        ? "Adding..."
+        : "Add to Cart"}
+    </button>
   );
-}
+};
+
+export default AddToCartButton;
