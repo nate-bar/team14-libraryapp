@@ -313,6 +313,7 @@ const MediaForm: React.FC = () => {
           )}
         </div>
 
+        {/* Title */}
         <input
           className={`admin-input ${errors.Title ? "error-field" : ""}`}
           type="text"
@@ -342,6 +343,7 @@ const MediaForm: React.FC = () => {
           <div className="error-message">{errors.GenreID}</div>
         )}
 
+        {/* Director */}
         <input
           className={`admin-input ${errors.Director ? "error-field" : ""}`}
           type="text"
@@ -354,6 +356,7 @@ const MediaForm: React.FC = () => {
           <div className="error-message">{errors.Director}</div>
         )}
 
+        {/* Leads */}
         <input
           className={`admin-input`}
           type="text"
@@ -362,6 +365,7 @@ const MediaForm: React.FC = () => {
           value={mediaData.Leads}
           onChange={handleInputChange}
         />
+        {/* Format */}
         <input
           className={`admin-input ${errors.Format ? "error-field" : ""}`}
           type="text"
@@ -372,6 +376,7 @@ const MediaForm: React.FC = () => {
         />
         {errors.Format && <div className="error-message">{errors.Format}</div>}
 
+        {/* Rating */}
         <div className="admin-input-group">
           <label htmlFor="rating" className="admin-label">
             Rating (0-100)
@@ -391,6 +396,7 @@ const MediaForm: React.FC = () => {
           )}
         </div>
 
+        {/* Release Year */}
         <select
           className={`admin-select ${errors.ReleaseYear ? "error-field" : ""}`}
           name="ReleaseYear"
@@ -426,6 +432,7 @@ const MediaForm: React.FC = () => {
           ))}
         </select>
 
+        {/* Photo Uploading */}
         <div className="admin-file-wrapper">
           <label htmlFor="photo-upload" className="admin-file-label">
             <svg

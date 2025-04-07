@@ -5,6 +5,17 @@ export interface Member {
   password: string;
 }
 
+export interface Profile {
+  firstName: string;
+  lastName: string;
+  middleName: string;
+  email: string;
+  phoneNumber: string;
+  birthDate: string;
+  address: string;
+  balance: number;
+}
+
 /*******************************************
  **************ITEM INTERFACE,***************
  *******REPRESENTS ITEM IN Items TABLE*******
@@ -31,6 +42,7 @@ export interface Book {
   ISBN: string;
   GenreName: string;
   Photo?: File | Blob | null;
+  Summary: string;
 }
 
 export interface Media {
@@ -65,7 +77,7 @@ export interface CartItem {
   Title: string;
   TypeName: string;
   Status: string;
-  Category: "In Cart" | "On Hold";
+  Category: "In Cart";
 }
 
 // for inserting
@@ -80,6 +92,8 @@ export interface BookInsert {
   languageid: number;
   photo?: File | Blob | null;
   createdby: string;
+  summary?: string;
+  quantity: number;
 }
 
 // for inserting
@@ -95,6 +109,7 @@ export interface MediaInsert {
   genreid: number;
   photo?: File | Blob | null;
   createdby: string;
+  quantity: number;
 }
 
 // for inserting
@@ -132,7 +147,7 @@ export interface ApiResponse {
   message?: string;
   error?: string;
   userID?: number | string;
-  user?: Member; // Add this property
+  user?: Member; // honestly dont know what this is for
 }
 
 // (4) ADD IT IN HERE
@@ -143,9 +158,19 @@ export interface AuthData {
   groupID: string;
   firstName: string;
   lastName: string;
-  address: string | null;
-  middleName: string | null;
   email: string;
+}
+
+//edit profile --> routes/profile/settings.tsx
+export interface EditProfile {
+  memberID: number;
+  firstName: string;
+  middleName: string;
+  lastName: string;
+  address: string;
+  email: string;
+  phoneNumber: string;
+  birthDate: string;
 }
 
 export interface Genres {
@@ -170,6 +195,7 @@ export interface BookEdit {
   PublicationYear: number;
   GenreID: number;
   LanguageID: number;
+  Summary?: string;
   Photo?: File | Blob | null;
   UpdatedBy: string;
 }
@@ -201,4 +227,28 @@ export interface DeviceEdit {
   Manufacturer: string;
   Photo?: File | Blob | null;
   UpdatedBy: string;
+}
+
+export interface ItemFull {
+  ItemID: number;
+  Title: string;
+  TypeName: string;
+  Status: string;
+  Photo?: string;
+  ISBN?: string;
+  MediaID?: number;
+  DeviceID?: number;
+  Authors?: string;
+  GenreName?: string;
+  Publisher?: string;
+  PublicationYear?: string;
+  Summary?: string;
+  Language?: string;
+  Director?: string;
+  Leads?: string;
+  ReleaseYear?: string;
+  Format?: string;
+  Rating?: number;
+  DeviceType?: string;
+  Manufacturer?: string;
 }

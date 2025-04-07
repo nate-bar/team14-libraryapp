@@ -1,4 +1,3 @@
-import React, { useState } from "react";
 import { Outlet, useOutletContext } from "react-router";
 import { Link, useLocation } from "react-router";
 import { type AuthData } from "~/services/api";

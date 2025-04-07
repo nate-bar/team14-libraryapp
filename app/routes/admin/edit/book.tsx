@@ -36,6 +36,7 @@ const BookForm: React.FC = () => {
     Photo: null as File | null | Blob,
     UpdatedBy: authData.email,
     newISBN: "",
+    Summary: "",
   });
 
   useEffect(() => {
@@ -125,7 +126,9 @@ const BookForm: React.FC = () => {
   }, []);
 
   const handleInputChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
+    >
   ): void => {
     const { name, value } = e.target;
 
@@ -331,6 +334,7 @@ const BookForm: React.FC = () => {
           )}
         </div>
 
+        {/* ISBN */}
         <input
           className={`admin-input ${errors.ISBN ? "error-field" : ""}`}
           type="text"
@@ -346,6 +350,7 @@ const BookForm: React.FC = () => {
           </div>
         )}
 
+        {/* Title */}
         <input
           className={`admin-input ${errors.Title ? "error-field" : ""}`}
           type="text"
@@ -356,7 +361,7 @@ const BookForm: React.FC = () => {
         />
         {errors.Title && <div className="error-message">{errors.Title}</div>}
 
-        {/* Genre dropdown */}
+        {/* genre dropdown */}
         <select
           className={`admin-select ${errors.GenreID ? "error-field" : ""}`}
           name="GenreID"
@@ -375,6 +380,7 @@ const BookForm: React.FC = () => {
           <div className="error-message">{errors.GenreID}</div>
         )}
 
+        {/* Authors */}
         <input
           className={`admin-input ${errors.Authors ? "error-field" : ""}`}
           type="text"
@@ -387,6 +393,7 @@ const BookForm: React.FC = () => {
           <div className="error-message">{errors.Authors}</div>
         )}
 
+        {/* Publisher */}
         <input
           className={`admin-input ${errors.Publisher ? "error-field" : ""}`}
           type="text"
@@ -399,6 +406,7 @@ const BookForm: React.FC = () => {
           <div className="error-message">{errors.Publisher}</div>
         )}
 
+        {/* Publication Year */}
         <select
           className={`admin-select ${
             errors.PublicationYear ? "error-field" : ""
@@ -421,7 +429,7 @@ const BookForm: React.FC = () => {
           <div className="error-message">{errors.PublicationYear}</div>
         )}
 
-        {/* Language dropdown */}
+        {/* language dropdown */}
         <select
           className="admin-select"
           name="LanguageID"
@@ -436,6 +444,7 @@ const BookForm: React.FC = () => {
           ))}
         </select>
 
+        {/* photo uploading field */}
         <div className="admin-file-wrapper">
           <label htmlFor="photo-upload" className="admin-file-label">
             <svg
@@ -464,6 +473,34 @@ const BookForm: React.FC = () => {
           {bookData.Photo && (
             <span className="admin-file-name">{fileName}</span>
           )}
+        </div>
+
+        {/* book summary field */}
+        <div className="mb-4 w-full">
+          <label
+            htmlFor="Summary"
+            className="flex text-sm font-medium text-gray-700 mb-1 items-center"
+          >
+            Summary{" "}
+            <span className="ml-2 text-xs text-gray-500 italic">
+              (optional, max 255 characters)
+            </span>
+          </label>
+          <div className="relative">
+            <textarea
+              id="Summary"
+              name="Summary"
+              className="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 min-h-[100px] resize-none text-gray-800"
+              placeholder="Enter book summary (optional)"
+              value={bookData.Summary || ""}
+              onChange={handleInputChange}
+              maxLength={255}
+              rows={4}
+            />
+            <div className="absolute bottom-2 right-2 text-xs text-gray-500">
+              {(bookData.Summary || "").length}/255
+            </div>
+          </div>
         </div>
 
         <button type="submit" className="admin-submit">
