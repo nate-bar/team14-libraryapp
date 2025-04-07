@@ -1,26 +1,26 @@
 import { useOutletContext } from "react-router";
-import { type AuthData } from "~/services/api";
+import {type AuthData } from "~/services/api";
 import "./dashboard.css";
 
 export default function Dashboard() {
-  const authData = useOutletContext<AuthData>();
-  return (
-    <div className="flex justify-center items-center h-full">
-      <div className="dashboard-container">
-        <h1>
-          {authData.firstName} {authData.lastName}
-        </h1>
-        <h2>Welcome to your profile, {authData.firstName}! </h2>
-        <p>
-          Name: {authData.firstName} {authData.lastName}
-        </p>
-        <p>add bio here</p>
-        <p>Date of Birth: {authData.birthDate}</p>
-        <p>Phone Number: {authData.phoneNumber}</p>
-        <p> Email: {authData.email}</p>
-        <p>Address: {authData.address}</p>
-        <p>Balance: {authData.balance}</p>
-      </div>
-    </div>
-  );
+    const authData = useOutletContext<AuthData>();
+    return (
+        <div className="flex justify-center h-full w-full pl-25 pr-25">
+            <div className="dashboard-container">
+                <h1>{authData.firstName} {authData.lastName}</h1>
+                <h2>Welcome to your profile, {authData.firstName}! </h2>
+                <h3>Current Balance: </h3>
+                <p>Name: {authData.firstName} {authData.lastName}</p>
+                <p>Date of Birth: {authData.dateOfBirth}</p>
+                <p>Phone Number: {authData.phoneNumber}</p>
+                <p> Email: {authData.email}</p>
+                <p>Address: {authData.address}</p>
+            </div>
+            <div className="text-center mt-4">
+              <a href="./settings" className="edit-profile">
+                Edit Profile
+              </a>
+          </div>
+        </div>
+    );
 }

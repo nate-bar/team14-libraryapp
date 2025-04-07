@@ -1,3 +1,4 @@
+//navigation bar when logging in
 import { Outlet, useOutletContext } from "react-router";
 import { type AuthData } from "~/services/api";
 import { Link } from "react-router";
@@ -7,9 +8,6 @@ import LoadingSpinner from "~/components/loadingspinner";
 import "./profile.css";
 
 export default function ProfilePage() {
-  // This is auth data passed down from the layout.tsx
-  // so like layout is the main thing, profile page is child of that, and dashboard, myitems, etc. are childs of profile
-  // so to keep this data flowing just keep passing it down
   const authData = useOutletContext<AuthData>();
   const navigate = useNavigate();
 
@@ -46,8 +44,8 @@ export default function ProfilePage() {
           </ul>
         </div>
       </div>
-      <main>
-        {/* passing auth data to children */}
+      <main className="flex w-full py-2 px-4 justify-between items-center">
+        {/* passing authData to children */}
         <Outlet context={authData} />
       </main>
     </div>

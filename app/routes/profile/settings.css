@@ -1,4 +1,4 @@
-.dashboard-container {
+.settings-container {
     width: 600px;  /* Adjust based on your needs */
     padding: 15px;
     top: 80px; /* Space from the top */
@@ -8,26 +8,4 @@
     text-align: left;
     font-family: 'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif, sans-serif;
     position: relative;
-  }
-  
-  .dashboard-container h1 {
-    color: #01497C;
-  }
-
-  .dashboard-container h2 {
-    margin-bottom: 10px;
-    font-size: 22px;
-    color: #01497C;
-  }
-  
-  .dashboard-container h3 {
-    color:#01497C;
-  }
-  .dashboard-container p {
-    font-size: 16px;
-    color: #01497C;
-  }
-  
-  .edit-profile {
-    color: #01497c; 
   }

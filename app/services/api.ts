@@ -155,6 +155,19 @@ export interface AuthData {
   balance: string;
 }
 
+//edit profile --> routes/profile/settings.tsx 
+export interface EditProfile {
+  firstName: string;
+  lastName: string;
+  address: string;
+  middleName: string;
+  email: string;
+  phoneNumber: string;
+  dateOfBirth: string;
+  phoneNumber: string;
+  birthDate: string;
+}
+
 export interface Genres {
   GenreID: number;
   GenreName: string;
