@@ -147,7 +147,7 @@ export interface ApiResponse {
   message?: string;
   error?: string;
   userID?: number | string;
-  user?: Member; // Add this property
+  user?: Member; // honestly dont know what this is for
 }
 
 // (4) ADD IT IN HERE

@@ -223,7 +223,7 @@ app.post("/api/insert/:typename", upload.single("photo"), (req, res) => {
       createdby: item.createdby,
       quantity: item.quantity,
     });
-    console.log("Photo:", photo ? "Received" : "No photo");
+    //console.log("Photo:", photo ? "Received" : "No photo");
 
     pool.getConnection((err, connection) => {
       if (err) {
@@ -380,7 +380,7 @@ app.post("/api/insert/:typename", upload.single("photo"), (req, res) => {
       createdby: item.createdby,
       quantity: item.quantity,
     });
-    console.log("Photo:", photo ? "Received" : "No photo");
+    //console.log("Photo:", photo ? "Received" : "No photo");
 
     pool.getConnection((err, connection) => {
       if (err) {
@@ -533,7 +533,7 @@ app.post("/api/insert/:typename", upload.single("photo"), (req, res) => {
       manufacturer: item.manufacturer,
       createdby: item.createdby,
     });
-    console.log("Photo:", photo ? "Received" : "No photo");
+    //console.log("Photo:", photo ? "Received" : "No photo");
 
     pool.getConnection((err, connection) => {
       if (err) {
@@ -909,7 +909,7 @@ app.post("/api/edit/:typename", upload.single("Photo"), (req, res) => {
       UpdatedBy: item.UpdatedBy,
       newISBN: item.newISBN,
     });
-    console.log("Photo:", Photo ? "Received" : "No photo");
+    //console.log("Photo:", Photo ? "Received" : "No photo");
 
     pool.getConnection((err, connection) => {
       if (err) {
@@ -1153,7 +1153,7 @@ app.post("/api/edit/:typename", upload.single("Photo"), (req, res) => {
       Manufacturer: item.Manufacturer,
       UpdatedBy: item.UpdatedBy,
     });
-    console.log("Photo:", Photo ? "Received" : "No photo");
+    //console.log("Photo:", Photo ? "Received" : "No photo");
 
     pool.getConnection((err, connection) => {
       if (err) {
@@ -2081,8 +2081,8 @@ app.post("/api/signup", async (req, res) => {
     birthDate,
   } = req.body;
 
-  console.log(birthDate);
-  console.log(phoneNumber);
+  //console.log(birthDate);
+  //console.log(phoneNumber);
 
   // validation check to ensure email & password were passed to server
   // shouldnt ever see this just in case though
