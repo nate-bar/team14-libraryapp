@@ -11,7 +11,6 @@ import path from "path";
 import multer from "multer";
 // Load environment variables
 import dotenv from "dotenv";
-import { type } from "os";
 dotenv.config();
 
 const upload = multer({ storage: multer.memoryStorage() });
@@ -1700,6 +1699,81 @@ app.get("/api/items", (req, res) => {
           res.status(500).send("Error fetching items");
           return;
         }
+        res.json(results);
+      }
+    );
+  });
+});
+
+app.post("/profile/api/cancelhold", (req, res) => {
+  const { memberID, itemID } = req.body;
+
+  // quick validation
+  if (!memberID || !itemID) {
+    return res.status(400).json({ error: "MemberID and ItemID are required" });
+  }
+
+  pool.getConnection((err, connection) => {
+    if (err) {
+      console.error("DB Connection Error:", err);
+      return res
+        .status(500)
+        .json({ error: "Database connection error", details: err.message });
+    }
+
+    // delete from hold request table where itemID and memberID match
+    connection.query(
+      "DELETE FROM holdrequest WHERE ItemID = ? AND MemberID = ?",
+      [itemID, memberID],
+      (err, result) => {
+        connection.release();
+
+        if (err) {
+          console.error("Error canceling hold request:", err);
+          return res.status(500).json({
+            error: "Failed to cancel hold request",
+            details: err.message,
+          });
+        }
+
+        if (result.affectedRows === 0) {
+          return res.status(404).json({
+            error: "No matching hold request found",
+          });
+        }
+
+        return res.status(200).json({
+          success: true,
+          message: "Hold request cancelled successfully",
+        });
+      }
+    );
+  });
+});
+
+app.get("/profile/api/holditems/:memberID", (req, res) => {
+  const { memberID } = req.params;
+
+  pool.getConnection((err, connection) => {
+    if (err) {
+      console.error("Error getting connection:", err);
+      return res.status(500).json({ error: "Database connection error" });
+    }
+
+    connection.query(
+      `SELECT Items.ItemID, Items.Title, Items.Status, HoldRequest.MemberID, HoldRequest.CreatedAt FROM HoldRequest INNER JOIN Items ON HoldRequest.ItemID = Items.ItemID WHERE HoldRequest.MemberID = ?`,
+      [memberID],
+      (err, results) => {
+        connection.release();
+        if (err) {
+          console.error("Error fetching items on hold:", err);
+          return res.status(500).json({ error: "Database query error" });
+        }
+
+        if (results.length === 0) {
+          return res.status(404).json({ error: "hold requests not found" });
+        }
+
         res.json(results);
       }
     );
