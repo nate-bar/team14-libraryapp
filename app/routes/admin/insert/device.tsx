@@ -1,17 +1,17 @@
-import { type Device } from "~/services/api";
+import { type DeviceInsert } from "~/services/api";
 import React, { useState } from "react";
-import { addDevice } from "./queries";
-import Compressor from "compressorjs";
+import { addDevice } from "../queries";
 import { type AuthData } from "~/services/api";
 import { useOutletContext } from "react-router";
+import Compressor from "compressorjs";
 
 const DeviceForm: React.FC = () => {
   const { email } = useOutletContext<AuthData>();
   const [fileName, setFileName] = useState<string>("");
-  const [deviceData, setDeviceData] = useState<Device>({
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  const [deviceData, setDeviceData] = useState<DeviceInsert>({
     title: "",
     typename: "Device",
-    devicename: "",
     devicetype: "",
     manufacturer: "",
     photo: null as File | null,
@@ -45,9 +45,8 @@ const DeviceForm: React.FC = () => {
       devicetype: "",
       manufacturer: "",
     };
-    const { title, devicename, devicetype, manufacturer } = deviceData;
-    if (!title) newErrors.title = "Enter a title";
-    if (!devicename) newErrors.devicename = "Enter a device name";
+    const { title, devicetype, manufacturer } = deviceData;
+    if (!title) newErrors.title = "Enter a Device Name";
     if (!devicetype) newErrors.devicetype = "Enter a device type";
     if (!manufacturer)
       newErrors.manufacturer = "Enter a value for manufacturer";
@@ -113,12 +112,18 @@ const DeviceForm: React.FC = () => {
     e.preventDefault();
     console.log("Form submitted:", deviceData);
 
+    if (isSubmitting) {
+      return;
+    }
+
     const validationError = validateForm();
     if (!validationError) {
       return;
     }
 
     try {
+      setIsSubmitting(true);
+
       const result = await addDevice(deviceData);
 
       if (!result.success) {
@@ -132,16 +137,19 @@ const DeviceForm: React.FC = () => {
       setDeviceData({
         title: "",
         typename: "Device",
-        devicename: "",
         devicetype: "",
         manufacturer: "",
         photo: null,
         createdby: email,
       });
+      setFileName("");
       alert("Device entered successfully!");
     } catch (error) {
       console.error("Error submitting form:", error);
       alert(`Error submitting form: ${error}`);
+    } finally {
+      // Reset submitting state regardless of success or failure
+      setIsSubmitting(false);
     }
   };
 
@@ -152,23 +160,12 @@ const DeviceForm: React.FC = () => {
           className={`admin-input ${errors.title ? "error-field" : ""}`}
           type="text"
           name="title"
-          placeholder="Title"
+          placeholder="Device Name"
           value={deviceData.title}
           onChange={handleInputChange}
         />
         {errors.title && <div className="error-message">{errors.title}</div>}
 
-        <input
-          className={`admin-input ${errors.devicename ? "error-field" : ""}`}
-          type="text"
-          name="devicename"
-          placeholder="Device name"
-          value={deviceData.devicename}
-          onChange={handleInputChange}
-        />
-        {errors.devicename && (
-          <div className="error-message">{errors.devicename}</div>
-        )}
         <input
           className={`admin-input ${errors.devicetype ? "error-field" : ""}`}
           type="text"

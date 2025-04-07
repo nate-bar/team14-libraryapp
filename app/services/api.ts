@@ -19,15 +19,58 @@ export interface Items {
   Photo?: string; // Optional for item images
 }
 
+export interface Book {
+  ItemID: number;
+  Title: string;
+  TypeName: string;
+  Status: string;
+  Authors: string;
+  Publisher: string;
+  PublicationYear: number;
+  Language: string;
+  ISBN: string;
+  GenreName: string;
+  Photo?: File | Blob | null;
+  Summary: string;
+}
+
+export interface Media {
+  ItemID: number;
+  Title: string;
+  TypeName: string;
+  Status: string;
+  MediaID: number;
+  Director: string;
+  Leads: string;
+  ReleaseYear: number;
+  GenreName: string;
+  Language: string;
+  Format: string;
+  Rating: number;
+  Photo?: File | Blob | null;
+}
+
+export interface Device {
+  ItemID: number;
+  Title: string;
+  TypeName: string;
+  Status: string;
+  DeviceID: number;
+  DeviceType: string;
+  Manufacturer: string;
+  Photo?: File | Blob | null;
+}
+
 export interface CartItem {
   ItemID: number;
   Title: string;
   TypeName: string;
   Status: string;
-  Category: "In Cart" | "On Hold";
+  Category: "In Cart";
 }
 
-export interface Book {
+// for inserting
+export interface BookInsert {
   isbn: string;
   title: string;
   typename: string;
@@ -38,9 +81,12 @@ export interface Book {
   languageid: number;
   photo?: File | Blob | null;
   createdby: string;
+  summary?: string;
+  quantity: number;
 }
 
-export interface Media {
+// for inserting
+export interface MediaInsert {
   title: string;
   typename: string;
   director: string;
@@ -52,12 +98,13 @@ export interface Media {
   genreid: number;
   photo?: File | Blob | null;
   createdby: string;
+  quantity: number;
 }
 
-export interface Device {
+// for inserting
+export interface DeviceInsert {
   title: string;
   typename: string;
-  devicename: string;
   devicetype: string;
   manufacturer: string;
   photo?: File | Blob | null;
@@ -103,8 +150,9 @@ export interface AuthData {
   address: string | null;
   middleName: string | null;
   email: string;
-  phoneNumber: string | null;
-  dateOfBirth: string | null;
+  phoneNumber: string;
+  birthDate: string;
+  balance: string;
 }
 
 //edit profile --> routes/profile/settings.tsx 
@@ -116,6 +164,8 @@ export interface EditProfile {
   email: string;
   phoneNumber: string;
   dateOfBirth: string;
+  phoneNumber: string;
+  birthDate: string;
 }
 
 export interface Genres {
@@ -126,4 +176,50 @@ export interface Genres {
 export interface Languages {
   LanguageID: number;
   Language: string;
+}
+
+// for editing
+export interface BookEdit {
+  ItemID: number;
+  ISBN: string;
+  newISBN: string;
+  Title: string;
+  TypeName: string;
+  Authors: string;
+  Publisher: string;
+  PublicationYear: number;
+  GenreID: number;
+  LanguageID: number;
+  Summary?: string;
+  Photo?: File | Blob | null;
+  UpdatedBy: string;
+}
+
+// for editing
+export interface MediaEdit {
+  ItemID: number;
+  MediaID: number;
+  Title: string;
+  TypeName: string;
+  Director: string;
+  Leads: string;
+  ReleaseYear: number;
+  Format: string;
+  Rating: number;
+  LanguageID: number;
+  GenreID: number;
+  Photo?: File | Blob | null;
+  UpdatedBy: string;
+}
+
+// for editing
+export interface DeviceEdit {
+  ItemID: number;
+  DeviceID: number;
+  Title: string;
+  TypeName: string;
+  DeviceType: string;
+  Manufacturer: string;
+  Photo?: File | Blob | null;
+  UpdatedBy: string;
 }
