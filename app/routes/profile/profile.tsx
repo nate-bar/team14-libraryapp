@@ -1,4 +1,3 @@
-//navigation bar when logging in
 import { Outlet, useOutletContext } from "react-router";
 import { type AuthData } from "~/services/api";
 import { Link } from "react-router";
@@ -45,7 +44,6 @@ export default function ProfilePage() {
         </div>
       </div>
       <main className="flex w-full py-2 px-4 justify-between items-center">
-        {/* passing authData to children */}
         <Outlet context={authData} />
       </main>
     </div>

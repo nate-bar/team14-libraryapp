@@ -15,6 +15,15 @@ export interface Profile {
   address: string;
   balance: number;
 }
+export interface Notification {
+  id: number;
+  memberID: number;
+  message: string;
+  created_at: string; // or Date if you're converting to a JS Date object
+  is_read: boolean;
+  BorrowID: number;
+  type: string;
+}
 
 /*******************************************
  **************ITEM INTERFACE,***************

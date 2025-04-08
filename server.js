@@ -64,27 +64,39 @@ app.get("/api/members", (req, res) => {
 /*
 //---------------------CODE FOR API'S HERE--------------------
 */
+// Serve API routes before frontend routes
+// Fetch notifications for a specific member
 
-app.get("/api/users", (req, res) => {
+app.get("/api/notifications/:memberid", (req, res) => {
+  const memberId = req.params.memberid;
   pool.getConnection((err, connection) => {
     if (err) {
-      console.error("Error getting connection:", err);
-      return res.status(500).json({ error: "Database connection error." });
+      console.error("Database connection error:", err);
+      return res.status(500).json({ error: "Database connection error" });
     }
+    connection.query(
+      "SELECT id, message, type, created_at, is_read, BorrowID FROM notifications WHERE MemberID = ? ORDER BY created_at DESC",
+      [memberId],
+      (err, results) => {
+        connection.release();
+    
+        if (err) {
+          return res.status(500).json({ error: "Database query error" });
+        }
 
-    const query = "SELECT * FROM user_view";
-
-    connection.query(query, (err, results) => {
-      connection.release(); // Release the connection back to the pool
-      if (err) {
-        console.error("Error executing query:", err);
-        return res.status(500).json({ error: "Error fetching users." });
+        if (results.length === 0) {
+          return res.status(404).json({ error: "Member not found" });
+        }
+    
+        res.json(results);  // Send the response with multiple notifications
       }
-
-      res.json(results);
-    });
+    );
+    
+    
   });
 });
+
+
 
 // -----------------------------------------FROM JOHNS BRANCH 3.0-----------------------------------------
 // Define the /api/admin/add-media route

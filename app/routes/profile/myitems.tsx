@@ -88,7 +88,7 @@ export default function MyItems() {
 
     const itemIds = selectedItems.map((item) => item.ItemID);
 
-    fetch(`api/return`, {
+    fetch(`/profile/api/return`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
