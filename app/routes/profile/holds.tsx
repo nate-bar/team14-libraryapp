@@ -77,6 +77,7 @@ export default function MyHolds() {
 
   return (
     <div className="flex-grow justify-center h-full w-full pl-25 pr-25">
+            <ProfilePage/>
       {isLoading ? (
         <p>Loading hold requests...</p>
       ) : error ? (

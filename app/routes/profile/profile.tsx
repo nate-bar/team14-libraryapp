@@ -27,19 +27,19 @@ export default function ProfilePage() {
         <div className="navbar-left w-full flex justify-between items-center">
           <ul className="flex space-x-10">
             <li className="text-nav3">
-              <Link to="./dashboard">Dashboard</Link>
+              <Link to="/dashboard">Dashboard</Link>
             </li>
             <li className="text-nav3">
-              <Link to="./myitems">My Items</Link>
+              <Link to="/myitems">My Items</Link>
             </li>
             <li className="text-nav3">
-              <Link to="./holds">Holds</Link>
+              <Link to="/holds">Holds</Link>
             </li>
             <li className="mailbox-nav3">
               <Link to="/mailbox">✉️</Link>
             </li>
             <li className="settings-nav3">
-              <Link to="./settings">⚙️</Link>
+              <Link to="/settings">⚙️</Link>
             </li>
           </ul>
         </div>

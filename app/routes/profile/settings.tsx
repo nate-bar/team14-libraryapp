@@ -6,6 +6,7 @@ import { useOutletContext } from "react-router";
 import { type AuthData } from "~/services/api";
 import LoadingSpinner from "~/components/loadingspinner";
 import "./settings.css";
+import ProfilePage from "./profile";
 
 const UpdateProfile: React.FC = () => {
   const navigate = useNavigate();
@@ -133,126 +134,116 @@ const UpdateProfile: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className="flex justify-center items-center h-full p-6">
+      <div className="loading-spinner-container">
         <LoadingSpinner />
       </div>
     );
   }
 
   return (
-    <div className="p-6 max-w-2xl mx-auto bg-white shadow rounded-xl">
-      <h2 className="text-2xl font-bold mb-4">Edit Your Profile:</h2>
+    <div>
+    <ProfilePage />
+    <div className="update-profile-container">
+      
+      <h2>Edit Your Profile:</h2>
 
       {error && (
-        <div className="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 mb-4">
+        <div className="error-message-box">
           <p>{error}</p>
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="space-y-4">
-        {/*First Name*/}
+      <form onSubmit={handleSubmit}>
+        {/* First Name */}
         <input
           type="text"
           name="firstName"
           value={userData.firstName}
           onChange={handleChange}
           placeholder="First Name"
-          className={`w-full p-2 border rounded ${
-            errors.firstName ? "error-field" : ""
-          }`}
+          className={errors.firstName ? "error-field" : ""}
         />
         {errors.firstName && (
           <div className="error-message">{errors.firstName}</div>
         )}
 
-        {/*Middle Name*/}
+        {/* Middle Name */}
         <input
           type="text"
           name="middleName"
           value={userData.middleName}
           onChange={handleChange}
           placeholder="Middle Name"
-          className="w-full p-2 border rounded"
         />
 
-        {/*Last Name*/}
+        {/* Last Name */}
         <input
           type="text"
           name="lastName"
           value={userData.lastName}
           onChange={handleChange}
           placeholder="Last Name"
-          className={`w-full p-2 border rounded ${
-            errors.lastName ? "error-field" : ""
-          }`}
+          className={errors.lastName ? "error-field" : ""}
         />
         {errors.lastName && (
           <div className="error-message">{errors.lastName}</div>
         )}
 
-        {/*Email*/}
+        {/* Email */}
         <input
           type="email"
           name="email"
           value={userData.email}
           onChange={handleChange}
           placeholder="Email"
-          className={`w-full p-2 border rounded ${
-            errors.email ? "error-field" : ""
-          }`}
+          className={errors.email ? "error-field" : ""}
         />
         {errors.email && <div className="error-message">{errors.email}</div>}
 
-        {/*Phone Number*/}
+        {/* Phone Number */}
         <input
           type="tel"
           name="phoneNumber"
           value={userData.phoneNumber}
           onChange={handleChange}
           placeholder="Phone Number (e.g. 123-456-7890)"
-          className={`w-full p-2 border rounded ${
-            errors.phoneNumber ? "error-field" : ""
-          }`}
+          className={errors.phoneNumber ? "error-field" : ""}
         />
         {errors.phoneNumber && (
           <div className="error-message">{errors.phoneNumber}</div>
         )}
 
-        {/*Birth Date*/}
+        {/* Birth Date */}
         <input
           type="date"
           name="birthDate"
           value={userData.birthDate}
           onChange={handleChange}
-          className={`w-full p-2 border rounded ${
-            errors.birthDate ? "error-field" : ""
-          }`}
+          className={errors.birthDate ? "error-field" : ""}
         />
         {errors.birthDate && (
           <div className="error-message">{errors.birthDate}</div>
         )}
 
-        {/*Address*/}
+        {/* Address */}
         <input
           type="text"
           name="address"
           value={userData.address}
           onChange={handleChange}
           placeholder="Address"
-          className="w-full p-2 border rounded"
         />
 
-        {/*Submit Button*/}
+        {/* Submit Button */}
         <button
           type="submit"
           disabled={isSubmitting}
-          className={`w-full ${
-            isSubmitting ? "bg-blue-300" : "bg-blue-500 hover:bg-blue-600"
-          } text-white p-2 rounded`}
+          className="submit-button"
         >
           {isSubmitting ? "Saving..." : "Save Changes"}
         </button>
       </form>
+    </div>
     </div>
   );
 };

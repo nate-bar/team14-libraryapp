@@ -1,15 +1,26 @@
-import { useOutletContext } from "react-router";
 import { useState, useEffect } from "react";
+import { useOutletContext } from "react-router";
 import { type AuthData } from "~/services/api";
 import { type Profile } from "~/services/api";
 import LoadingSpinner from "~/components/loadingspinner";
 import "./dashboard.css";
+import ProfilePage from "./profile";
 
 export default function Dashboard() {
   const authData = useOutletContext<AuthData>();
   const [profileData, setProfileData] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);  // Modal state
+  const [selectedAvatar, setSelectedAvatar] = useState<string>("avatar-placeholder.png"); // Default avatar
+
+  // Load selected avatar from localStorage on mount
+  useEffect(() => {
+    const savedAvatar = localStorage.getItem("selectedAvatar");
+    if (savedAvatar) {
+      setSelectedAvatar(savedAvatar);
+    }
+  }, []);
 
   useEffect(() => {
     const fetchProfileData = async () => {
@@ -35,32 +46,28 @@ export default function Dashboard() {
     fetchProfileData();
   }, [authData.memberID]);
 
-  // Format birth date to MM-DD-YYYY
   const formatBirthDate = (dateString: string): string => {
     if (!dateString) return "Not provided";
-
     const date = new Date(dateString);
-    // Check if date is valid
     if (isNaN(date.getTime())) return dateString;
-
     const month = String(date.getMonth() + 1).padStart(2, "0");
     const day = String(date.getDate()).padStart(2, "0");
     const year = date.getFullYear();
-
     return `${month}-${day}-${year}`;
   };
 
-  // Format balance as currency
   const formatCurrency = (balance: string | number): string => {
     if (balance === null || balance === undefined) return "$0.00";
+    const numericBalance = typeof balance === "string" ? parseFloat(balance) : balance;
+    return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(numericBalance);
+  };
 
-    const numericBalance =
-      typeof balance === "string" ? parseFloat(balance) : balance;
-
-    return new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: "USD",
-    }).format(numericBalance);
+  const openModal = () => setIsModalOpen(true);  // Open the modal
+  const closeModal = () => setIsModalOpen(false);  // Close the modal
+  const selectAvatar = (avatar: string) => {
+    setSelectedAvatar(avatar);
+    localStorage.setItem("selectedAvatar", avatar);  // Save the selected avatar to localStorage
+    closeModal();  // Close modal after selecting avatar
   };
 
   if (loading) {
@@ -80,26 +87,88 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="flex justify-center h-full w-full pl-25 pr-25">
+    <div>
+      <ProfilePage />
       <div className="dashboard-container">
-        <h1>
+        <div className="profile-header">
+          <div className="profile-avatar" onClick={openModal}>
+            <img src={`/public/${selectedAvatar}`} alt="User Avatar" />
+          </div>
+        </div>
+        <div className="profile-name">
           {profileData.firstName} {profileData.lastName}
-        </h1>
-        <h2>Welcome to your profile, {profileData.firstName}! </h2>
-        <h3>Current Balance: {formatCurrency(profileData.balance)}</h3>
-        <p>
-          Name: {profileData.firstName} {profileData.lastName}
-        </p>
-        <p>Date of Birth: {formatBirthDate(profileData.birthDate)}</p>
-        <p>Phone Number: {profileData.phoneNumber}</p>
-        <p>Email: {profileData.email}</p>
-        <p>Address: {profileData.address || "Not provided"}</p>
+        </div>
+        <div className="current-balance">
+          <strong>Current Balance:</strong> {formatCurrency(profileData.balance)}
+        </div>
+        <div className="profile-info">
+          <div className="info-item">
+            <div className="info-item-label">Full Name</div>
+            <div className="info-item-value">
+              <i className="fas fa-user"></i>
+              {profileData.firstName} {profileData.lastName}
+            </div>
+          </div>
+
+          <div className="info-item">
+            <div className="info-item-label">Birth Date</div>
+            <div className="info-item-value">
+              <i className="fas fa-birthday-cake"></i>
+              {formatBirthDate(profileData.birthDate)}
+            </div>
+          </div>
+
+          <div className="info-item">
+            <div className="info-item-label">Phone Number</div>
+            <div className="info-item-value">
+              <i className="fas fa-phone"></i>
+              {profileData.phoneNumber}
+            </div>
+          </div>
+
+          <div className="info-item">
+            <div className="info-item-label">Email</div>
+            <div className="info-item-value">
+              <i className="fas fa-envelope"></i>
+              {profileData.email}
+            </div>
+          </div>
+
+          <div className="info-item">
+            <div className="info-item-label">Address</div>
+            <div className="info-item-value">
+              <i className="fas fa-map-marker-alt"></i>
+              {profileData.address || "Not provided"}
+            </div>
+          </div>
+        </div>
+        <div className="text-center">
+          <a href="./settings" className="edit-button">Edit Profile</a>
+        </div>
       </div>
-      <div className="text-center mt-4">
-        <a href="./settings" className="edit-profile">
-          Edit Profile
-        </a>
-      </div>
+
+      {/* Modal for Avatar Selection */}
+      {isModalOpen && (
+        <div className="avatar-modal">
+          <div className="modal-overlay" onClick={closeModal}></div>
+          <div className="modal-content">
+            <h3>Select Avatar</h3>
+            <div className="avatar-options">
+              <img src="/avatar1.png" alt="Avatar 1" onClick={() => selectAvatar("avatar1.png")} />
+              <img src="/avatar2.png" alt="Avatar 2" onClick={() => selectAvatar("avatar2.png")} />
+              <img src="/avatar3.png" alt="Avatar 3" onClick={() => selectAvatar("avatar3.png")} />
+              <img src="/avatar4.png" alt="Avatar 4" onClick={() => selectAvatar("avatar4.png")} />
+              <img src="/avatar5.png" alt="Avatar 5" onClick={() => selectAvatar("avatar5.png")} />
+              <img src="/avatar6.png" alt="Avatar 6" onClick={() => selectAvatar("avatar6.png")} />
+              <img src="/avatar7.png" alt="Avatar 7" onClick={() => selectAvatar("avatar7.png")} />
+              <img src="/avatar8.png" alt="Avatar 8" onClick={() => selectAvatar("avatar8.png")} />
+              <img src="/avatar9.png" alt="Avatar 9" onClick={() => selectAvatar("avatar9.png")} />
+            </div>
+            <button className="close-modal" onClick={closeModal}>Close</button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
+
