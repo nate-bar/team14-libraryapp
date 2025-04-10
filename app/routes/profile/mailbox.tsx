@@ -27,7 +27,7 @@ export default function Mailbox() {
         setError(null);
       } catch (err) {
         console.error("Error fetching notifications:", err);
-        setError("Could not load notifications. Please try again later.");
+        setError("No Notifications at this time. Check Again Later");
       } finally {
         setLoading(false);
       }

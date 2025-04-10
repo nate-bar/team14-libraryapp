@@ -87,7 +87,9 @@ app.get("/api/notifications/:memberid", (req, res) => {
         if (results.length === 0) {
           return res.status(404).json({ error: "Member not found" });
         }
-    
+        console.log("Fetched notifications for memberID:", memberId);
+        console.table(results); // Nicely formats the output in the console
+
         res.json(results);  // Send the response with multiple notifications
       }
     );
@@ -669,11 +671,8 @@ app.post("/api/insert/:typename", upload.single("photo"), (req, res) => {
     res.status(400).json({ error: "Invalid type name" });
   }
 });
-
 app.post("/api/holdrequest", (req, res) => {
   const { itemid, memberid } = req.body;
-  //console.log(itemid);
-  //console.log(memberid);
 
   // quick validation of input
   if (!itemid || !memberid) {
@@ -707,7 +706,7 @@ app.post("/api/holdrequest", (req, res) => {
           });
         }
 
-        // return error emssage if hold exists
+        // return error message if hold exists
         if (existingHolds.length > 0) {
           connection.release();
           return res.status(409).json({
@@ -720,7 +719,7 @@ app.post("/api/holdrequest", (req, res) => {
           `INSERT INTO holdrequest (ItemID, MemberID, CreatedAt) VALUES (?, ?, NOW())`,
           [itemid, memberid],
           (err, results) => {
-            // release conenction
+            // release connection
             connection.release();
 
             if (err) {
@@ -748,6 +747,7 @@ app.post("/api/holdrequest", (req, res) => {
     );
   });
 });
+
 
 app.get("/api/profile/:memberid", (req, res) => {
   const memberId = req.params.memberid;
@@ -1554,26 +1554,22 @@ const checkLimits = (memberID, itemIDs, connection) => {
 app.post("/profile/api/return", (req, res) => {
   try {
     const { items } = req.body;
-
     console.log(items);
 
     if (!items || !Array.isArray(items) || items.length === 0) {
-      res.status(400).json({ error: "Invalid or empty items array" });
-      return;
+      return res.status(400).json({ error: "Invalid or empty items array" });
     }
 
     pool.getConnection((err, connection) => {
       if (err) {
         console.error("Error getting connection:", err);
-        res.status(500).json({ error: "Database connection error" });
-        return;
+        return res.status(500).json({ error: "Database connection error" });
       }
 
       connection.beginTransaction((err) => {
         if (err) {
           connection.release();
-          res.status(500).json({ error: "Transaction error" });
-          return;
+          return res.status(500).json({ error: "Transaction error" });
         }
 
         const returnedItems = [];
@@ -1582,49 +1578,41 @@ app.post("/profile/api/return", (req, res) => {
         const returnItem = (index) => {
           if (index >= items.length || hasErrors) {
             if (hasErrors) {
-              connection.rollback(() => {
+              return connection.rollback(() => {
                 connection.release();
                 res.status(500).json({
                   error: "Failed to return some items",
                   returned: returnedItems,
                 });
               });
-            } else {
-              connection.commit((err) => {
-                if (err) {
-                  connection.rollback(() => {
-                    connection.release();
-                    res.status(500).json({ error: "Failed to return item" });
-                    return;
-                  });
-                } else {
-                  connection.release();
-                  res.status(200).json({
-                    success: true,
-                    message: `${returnedItems.length} Items returned successfully`,
-                    items: returnedItems,
-                  });
-                }
-              });
             }
-            return;
+
+            return connection.commit((err) => {
+              connection.release();
+              if (err) {
+                console.error("Commit error:", err);
+                return res.status(500).json({ error: "Failed to commit transaction" });
+              }
+
+              res.status(200).json({
+                success: true,
+                message: `${returnedItems.length} item(s) returned successfully`,
+                items: returnedItems,
+              });
+            });
           }
 
           const itemid = items[index];
 
-          // First get the current record
+          // Get current borrow record
           connection.query(
             `SELECT * FROM borrowrecord WHERE ItemID = ? AND ReturnDate IS NULL`,
             [itemid],
             (err, rows) => {
               if (err || rows.length === 0) {
-                console.error(
-                  `Error finding borrow record for Item ${itemid}:`,
-                  err
-                );
+                console.error(`Error finding borrow record for Item ${itemid}:`, err);
                 hasErrors = true;
-                returnItem(index + 1);
-                return;
+                return returnItem(index + 1);
               }
 
               const record = rows[0];
@@ -1632,13 +1620,7 @@ app.post("/profile/api/return", (req, res) => {
               // Insert into returnrecord
               connection.query(
                 `INSERT INTO returnrecord (
-                  ReturnID, 
-                  MemberID, 
-                  ItemID, 
-                  BorrowDate, 
-                  DueDate, 
-                  ReturnDate, 
-                  FineAccrued
+                  ReturnID, MemberID, ItemID, BorrowDate, DueDate, ReturnDate, FineAccrued
                 ) VALUES (?, ?, ?, ?, ?, NOW(), ?)`,
                 [
                   record.BorrowID,
@@ -1650,45 +1632,56 @@ app.post("/profile/api/return", (req, res) => {
                 ],
                 (err) => {
                   if (err) {
-                    console.error(
-                      `Error inserting return record for Item ${itemid}:`,
-                      err
-                    );
+                    console.error(`Error inserting return record for Item ${itemid}:`, err);
                     hasErrors = true;
-                    returnItem(index + 1);
-                    return;
+                    return returnItem(index + 1);
                   }
 
-                  // Delete from borrowrecord
+                  // Delete borrow record
                   connection.query(
                     `DELETE FROM borrowrecord WHERE ItemID = ? AND ReturnDate IS NULL`,
                     [itemid],
                     (err) => {
                       if (err) {
-                        console.error(
-                          `Error deleting borrow record for Item ${itemid}:`,
-                          err
-                        );
+                        console.error(`Error deleting borrow record for Item ${itemid}:`, err);
                         hasErrors = true;
-                        returnItem(index + 1);
-                        return;
+                        return returnItem(index + 1);
                       }
 
-                      // update item status
+                      // Update item status
                       connection.query(
                         `UPDATE Items SET Status = 'Available', LastUpdated = NOW() WHERE ItemID = ?`,
                         [itemid],
-                        (err, updateResult) => {
+                        (err) => {
                           if (err) {
-                            console.error(
-                              `Error updating Item ${itemid}:`,
-                              err
-                            );
+                            console.error(`Error updating Item ${itemid}:`, err);
                             hasErrors = true;
                           } else {
                             returnedItems.push(itemid);
                           }
-                          returnItem(index + 1);
+
+                          // Check if there's an active hold
+                          connection.query(
+                            `SELECT * FROM HoldRequest WHERE ItemID = ? AND HoldStatus = 'active'`,
+                            [itemid],
+                            (err, holdRows) => {
+                              if (err) {
+                                console.error(`Error checking hold requests for Item ${itemid}:`, err);
+                              } else if (holdRows.length > 0) {
+                                console.log(`Active hold found for ItemID ${itemid}, updating NextInLine...`);
+                                
+                                setImmediate(() => {
+                                  console.log('Calling updateNextInLine for ItemID:', itemid);
+                                  updateNextInLine(itemid).catch(err => {
+                                    console.error(`Error updating NextInLine for Item ${itemid}:`, err);
+                                  });
+                                });
+                              }
+                          
+                              console.log('Moving to the next item:', index + 1);
+                              returnItem(index + 1); // Continue to next item
+                            }
+                          );                          
                         }
                       );
                     }
@@ -1698,16 +1691,15 @@ app.post("/profile/api/return", (req, res) => {
             }
           );
         };
-
-        returnItem(0);
+        returnItem(0); // Start processing items
       });
     });
   } catch (err) {
-    console.error("Checkout error:", err);
-    res.status(500).json({ error: "Server error processing checkout" });
-    return;
+    console.error("Return error:", err);
+    res.status(500).json({ error: "Server error processing return" });
   }
 });
+
 
 app.post("/api/checkout", (req, res) => {
   try {
@@ -1910,34 +1902,236 @@ app.post("/profile/api/cancelhold", (req, res) => {
     );
   });
 });
-
-app.get("/profile/api/holditems/:memberID", (req, res) => {
+// Function to fetch hold items for a member
+app.get("/profile/api/holditems/:memberID", async (req, res) => {
   const { memberID } = req.params;
+  console.log("Fetching hold items for memberID:", memberID);
 
-  pool.getConnection((err, connection) => {
-    if (err) {
-      console.error("Error getting connection:", err);
-      return res.status(500).json({ error: "Database connection error" });
+  try {
+    const connection = await getConnectionFromPool();
+
+    const results = await new Promise((resolve, reject) => {
+      connection.query(
+        `SELECT Items.ItemID, Items.Title, Items.Status, HoldRequest.MemberID, HoldRequest.CreatedAt, HoldRequest.HoldStatus, HoldRequest.NextInLine 
+         FROM HoldRequest 
+         INNER JOIN Items ON HoldRequest.ItemID = Items.ItemID 
+         WHERE HoldRequest.MemberID = ?`,
+        [memberID],
+        (err, results) => {
+          if (err) {
+            reject(new Error("Error fetching items on hold from database"));
+          } else {
+            resolve(results);
+          }
+        }
+      );
+    });
+
+    connection.release();
+
+    if (results.length === 0) {
+      console.log("No hold requests found for memberID:", memberID);
+      return res.status(404).json({ error: "No hold requests found for this member" });
     }
 
-    connection.query(
-      `SELECT Items.ItemID, Items.Title, Items.Status, HoldRequest.MemberID, HoldRequest.CreatedAt FROM HoldRequest INNER JOIN Items ON HoldRequest.ItemID = Items.ItemID WHERE HoldRequest.MemberID = ?`,
-      [memberID],
+    // Enrich holds with NextInLine status
+    const enrichedHolds = await Promise.all(
+      results.map(async (hold) => {
+        const isNextInLine = await isMemberNextInLineForItem(hold.ItemID, memberID);
+        return { ...hold, NextInLine: isNextInLine };
+      })
+    );
+
+    console.log("Fetched and enriched hold items:", enrichedHolds);
+    res.json(enrichedHolds);
+  } catch (error) {
+    console.error("Error fetching hold items:", error.message);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Function to get a connection from the pool
+function getConnectionFromPool() {
+  return new Promise((resolve, reject) => {
+    pool.getConnection((err, connection) => {
+      if (err) {
+        reject(new Error("Error getting database connection"));
+      } else {
+        resolve(connection);
+      }
+    });
+  });
+}
+
+// Function to check if a member is the next in line for an item with HoldStatus 'active' and NextInLine 1
+async function isMemberNextInLineForItem(itemID, memberID) {
+  try {
+    const connection = await getConnectionFromPool();
+
+    const results = await new Promise((resolve, reject) => {
+      connection.query(
+        `SELECT * FROM HoldRequest 
+         WHERE ItemID = ? AND MemberID = ? AND HoldStatus = 'active' AND NextInLine = 1`,
+        [itemID, memberID],
+        (err, results) => {
+          if (err) {
+            reject(new Error("Error fetching hold queue from database"));
+          } else {
+            resolve(results);
+          }
+        }
+      );
+    });
+
+    connection.release();
+
+    // Check if a record is found for the given conditions
+    if (results.length > 0) {
+      return true; // Member is the next in line with 'active' hold and 'NextInLine' set to 1
+    }
+
+    return false; // Member is not the next in line
+  } catch (error) {
+    console.error("Error checking member's hold status:", error.message);
+    throw error; // Rethrow the error so the caller can handle it
+  }
+}
+
+async function updateNextInLine(itemID) {
+  console.log(`Updating NextInLine for ItemID: ${itemID}`);
+
+  // Check for active requests first
+  const [rows] = await new Promise((resolve, reject) => {
+    pool.query(
+      `SELECT * FROM HoldRequest WHERE ItemID = ? AND HoldStatus = 'active' ORDER BY CreatedAt ASC LIMIT 1`,
+      [itemID],
       (err, results) => {
-        connection.release();
         if (err) {
-          console.error("Error fetching items on hold:", err);
-          return res.status(500).json({ error: "Database query error" });
+          reject(err);
+        } else {
+          resolve(results);
         }
-
-        if (results.length === 0) {
-          return res.status(404).json({ error: "hold requests not found" });
-        }
-
-        res.json(results);
       }
     );
   });
+
+  // Log the type and structure of rows
+  console.log('Type of rows:', typeof rows);
+  console.log('Structure of rows:', rows);
+
+  // Check if rows is not null or undefined (it should contain the row data)
+  if (rows) {
+    const memberID = rows.MemberID;  // Directly access MemberID from the object
+    console.log(`Found NextInLine MemberID: ${memberID} for ItemID: ${itemID}`);
+
+    // Set NextInLine to 1 for the earliest active request (i.e., the returned row)
+    const updateResult = await new Promise((resolve, reject) => {
+      pool.query(
+        `UPDATE HoldRequest SET NextInLine = 1 WHERE ItemID = ? AND MemberID = ? AND HoldStatus = 'active'`,
+        [itemID, memberID],
+        (err, results) => {
+          if (err) {
+            reject(err);
+          } else {
+            resolve(results);
+          }
+        }
+      );
+    });
+
+    // Log the updated result
+    if (updateResult.affectedRows > 0) {
+      console.log(`NextInLine updated for ItemID: ${itemID}, MemberID: ${memberID}`);
+    } else {
+      console.log(`Failed to update NextInLine for ItemID: ${itemID}, MemberID: ${memberID}`);
+    }
+
+    // Re-check and log the row after the update to confirm the change
+    const [updatedRows] = await new Promise((resolve, reject) => {
+      pool.query(
+        `SELECT * FROM HoldRequest WHERE ItemID = ? AND HoldStatus = 'active' ORDER BY CreatedAt ASC LIMIT 1`,
+        [itemID],
+        (err, results) => {
+          if (err) {
+            reject(err);
+          } else {
+            resolve(results);
+          }
+        }
+      );
+    });
+
+    // Log the updated row to confirm NextInLine was set
+    console.log(`Updated row for ItemID ${itemID}:`, updatedRows);
+  } else {
+    console.log(`No active requests found for ItemID: ${itemID}`);
+  }
+}
+
+
+// Endpoint to cancel hold and update the next in line
+app.post("/api/cancelhold", async (req, res) => {
+  const { itemID, memberID } = req.body;
+
+  try {
+    console.log(`Canceling hold for ItemID: ${itemID} and MemberID: ${memberID}`);
+
+    // Update the hold status to cancelled
+    await new Promise((resolve, reject) => {
+      pool.query(
+        `UPDATE HoldRequest SET HoldStatus = 'cancelled' 
+         WHERE ItemID = ? AND MemberID = ?`,
+        [itemID, memberID],
+        (err, results) => {
+          if (err) {
+            reject(err);
+          } else {
+            resolve(results);
+          }
+        }
+      );
+    });
+
+    // Update the next in line status after the hold is cancelled
+    await updateNextInLine(itemID);
+
+    res.json({ success: true });
+  } catch (error) {
+    console.error("Cancel hold error:", error);
+    res.status(500).send("Failed to cancel hold");
+  }
+});
+
+// Endpoint to fulfill hold and update the next in line
+app.post("/api/fulfillhold", async (req, res) => {
+  const { itemID, memberID } = req.body;
+
+  try {
+    // Update the hold status to fulfilled and reset NextInLine
+    await new Promise((resolve, reject) => {
+      pool.query(
+        `UPDATE HoldRequest 
+         SET HoldStatus = 'fulfilled', NextInLine = 0
+         WHERE ItemID = ? AND MemberID = ?`,
+        [itemID, memberID],
+        (err, results) => {
+          if (err) {
+            reject(err);
+          } else {
+            resolve(results);
+          }
+        }
+      );
+    });
+
+    // Update the next in line status after fulfilling the hold
+    await updateNextInLine(itemID);
+
+    res.json({ success: true });
+  } catch (error) {
+    console.error("Fulfill hold error:", error);
+    res.status(500).send("Failed to fulfill hold");
+  }
 });
 
 app.get("/profile/api/borroweditems/:memberID", (req, res) => {
