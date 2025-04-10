@@ -26,6 +26,7 @@ export default [
     route("holds", "routes/profile/holds.tsx"),
     route("mailbox", "routes/profile/mailbox.tsx"),
     route("settings", "routes/profile/settings.tsx"),
+    route("borrowinghistory", "routes/profile/borrowinghistory.tsx"),
    route("admin", "routes/admin/admin.tsx", [
       route("reports", "routes/admin/reports.tsx"),
       route("edit", "routes/admin/edit.tsx"),
