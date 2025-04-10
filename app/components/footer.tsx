@@ -1,6 +1,4 @@
-import { Link, useNavigate } from "react-router";
 import "../components/footer.css";
-import { useState } from "react";
 
 export function Footer() {
   return (

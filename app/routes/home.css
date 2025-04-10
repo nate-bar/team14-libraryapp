@@ -2,7 +2,7 @@
 
 .welcome-container {
   padding: 0px;
-  }
+}
 
 .welcome-title {
   font-size: 40px;
@@ -11,17 +11,17 @@
   color: #01497c;
   margin-left: 25px;
   letter-spacing: 1px;
-  }
+}
 
-  /*Gallery Slider Container*/
-  .gallery-slider {
-    display: flex;
-    align-items: center;
-    padding: 20px;
-    background-color: white;
-    border-radius:10px;
-    margin:20px;
-  }
+/*Gallery Slider Container*/
+.gallery-slider {
+  display: flex;
+  align-items: center;
+  padding: 20px;
+  background-color: white;
+  border-radius: 10px;
+  margin: 20px;
+}
 
   /* Sliding Gallery Header*/
   .featured-title {
@@ -133,11 +133,11 @@
     right: 10px;
   }
 
-  /*Scrolling Gallery Container*/
-  .scrolling-gallery {
+/*Scrolling Gallery Container*/
+.scrolling-gallery {
   margin-top: 40px;
   text-align: left;
-  }
+}
 
   /*Scrolling Gallery Text*/
   .gallery-header {

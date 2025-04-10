@@ -46,7 +46,7 @@ const LoginForm: React.FC = () => {
       });
 
       // Show success message
-      alert("Login successful! Redirecting to home page...");
+      //alert("Login successful! Redirecting to home page...");
 
       // Instead of trying to call createUserSession directly,
       // just navigate to the homepage - the session should
@@ -114,7 +114,7 @@ const LoginForm: React.FC = () => {
           <div className="text-center mt-4">
             <p className="text-gray-600">
               Don't have an account?{" "}
-              <a href="/signup" className="text-blue-500 hover:text-blue-600">
+              <a href="/signup" className="sign">
                 Sign up
               </a>
             </p>

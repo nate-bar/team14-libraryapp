@@ -1,18 +1,22 @@
 import { useState, useEffect, useRef } from "react";
-import { Link, useNavigate } from "react-router"; // Using React Router
+import { Link, useNavigate } from "react-router";
 import { type Items } from "~/services/api";
 import "../components/navbar.css";
-import { type CartItem } from "~/services/api";
+import { useCart } from "~/context/CartContext";
 
 export function NavBar2() {
   const [searchQuery, setSearchQuery] = useState("");
   const [showResults, setShowResults] = useState(false);
-  const [items, setItems] = useState<Items[]>([]); // Store fetched items
-  const [cartCount, setCartCount] = useState(0);
+  const [items, setItems] = useState<Items[]>([]);
   const searchRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
+  const { cartItems } = useCart();
 
-  // Fetch items from API
+  const triggerFilterReset = () => {
+    window.dispatchEvent(new Event("resetCatalogFilters"));
+  };
+
+  // fetch items from api
   useEffect(() => {
     fetch("/api/items")
       .then((response) => response.json())
@@ -37,30 +41,6 @@ export function NavBar2() {
     };
   }, []);
 
-  //************************FOR UPDATING CART COUNTER************
-  // ***********************ON ICON IN NAVBAR***************** */
-  useEffect(() => {
-    const updateCartCount = () => {
-      try {
-        const cartData = sessionStorage.getItem("shoppingCart");
-        if (cartData) {
-          const cart: CartItem[] = JSON.parse(cartData);
-          setCartCount(cart.length);
-        } else {
-          setCartCount(0);
-        }
-      } catch (error) {
-        console.error("Error reading cart data:", error);
-        setCartCount(0);
-      }
-    };
-    updateCartCount();
-    window.addEventListener("cartUpdated", updateCartCount);
-    return () => {
-      window.removeEventListener("cartUpdated", updateCartCount);
-    };
-  }, []);
-
   // Filter items based on search query
   const filteredItems = items.filter((item) =>
     item.Title.toLowerCase().includes(searchQuery.toLowerCase())
@@ -70,13 +50,14 @@ export function NavBar2() {
   const handleSearch = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (searchQuery.trim() !== "") {
-      navigate(`/items?q=${encodeURIComponent(searchQuery)}`);
+      navigate(`/search?q=${encodeURIComponent(searchQuery)}`);
+      setSearchQuery("");
       setShowResults(false);
     }
   };
 
   return (
-    <div className="bg-nav2">
+    <div className="bg-nav2 w-full">
       {/* Navigation Links */}
       <div className="navbar-left w-full flex justify-between items-center">
         <ul className="flex space-x-10">
@@ -84,14 +65,16 @@ export function NavBar2() {
             <Link to="/">Home</Link>
           </li>
           <li className="text-nav2">
-            <Link to="/items">Items</Link>
+            <Link to="/catalog" onClick={triggerFilterReset}>
+              Catalog
+            </Link>
           </li>
           <li className="text-nav2 relative">
             <Link to="/cart">
               🛒
-              {cartCount > 0 && (
+              {cartItems.length > 0 && (
                 <span className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs">
-                  {cartCount}
+                  {cartItems.length}
                 </span>
               )}
             </Link>
@@ -127,7 +110,6 @@ export function NavBar2() {
             <div className="search-results absolute top-12 left-0 bg-white border border-gray-300 rounded-lg shadow-lg w-full max-h-60 overflow-auto">
               {filteredItems.length > 0 ? (
                 filteredItems.map((item) => {
-                  // Determine the category for navigation
                   let category = "items"; // Default
                   if (item.TypeName === "Device") category = "device";
                   else if (item.TypeName === "Media") category = "media";

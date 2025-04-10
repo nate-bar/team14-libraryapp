@@ -9,12 +9,12 @@ import express from "express";
 // (2) add middleName here and in getLoadContext
 declare module "react-router" {
   interface AppLoadContext {
-    memberID: number | null;
+    memberID: number;
     isAuthenticated: boolean;
-    groupID: string | null;
-    firstName: string | null;
-    lastName: string | null;
-    middleName: string | null;
+    groupID: string;
+    firstName: string;
+    lastName: string;
+    email: string;
   }
 }
 
@@ -38,8 +38,7 @@ app.use(
         groupID: session?.groupID || null,
         firstName: session?.firstName,
         lastName: session?.lastName,
-        address: session?.address,
-        middleName: session?.middleName,
+        email: session?.email,
         // (2) alright now go to //utils/auth.ts
       };
     },

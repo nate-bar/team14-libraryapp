@@ -1,0 +1,57 @@
+.resources-container {
+  max-width: 900px;
+  margin: 40px auto;
+  padding: 40px;
+  background-color: #ffffff;
+  border-radius: 18px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+  font-family: "Segoe UI", sans-serif;
+  color: #1e293b;
+}
+
+.resources-title {
+  font-size: 36px;
+  text-align: center;
+  color: #04197c;
+  margin-bottom: 20px;
+}
+
+.resources-intro {
+  font-size: 18px;
+  text-align: center;
+  margin-bottom: 40px;
+  color: #475569;
+}
+
+.resource-list {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 30px;
+}
+
+.resource-card {
+  background-color: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-left: 6px solid #04197c;
+  padding: 24px;
+  border-radius: 12px;
+  transition: transform 0.2s ease;
+}
+
+.resource-card:hover {
+  transform: scale(1.01);
+  background-color: #f1f5f9;
+}
+
+.resource-card h2 {
+  font-size: 22px;
+  color: #0f172a;
+  margin-bottom: 12px;
+}
+
+.resource-card p {
+  font-size: 16px;
+  color: #334155;
+  margin-bottom: 10px;
+  line-height: 1.6;
+}
