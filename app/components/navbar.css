@@ -44,20 +44,20 @@
 }
 
 .bg-nav2 {
-    background-color: white;
-    background-size: 150% auto;
-    background-position: center 45%; 
-    background-repeat: no-repeat;
-    height: 60px;
-    display: flex;
-    align-items: center;
-    padding: 0 20px;
-    border-radius: 15px; 
-    margin: 20px auto;
-    max-width: 90%;
-    margin-bottom: 20px;
+  background-color: white;
+  background-size: 150% auto;
+  background-position: center 45%;
+  background-repeat: no-repeat;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  padding: 0 20px;
+  border-radius: 15px;
+  margin: 20px auto;
+  max-width: 90%;
+  margin-bottom: 20px;
 
-    box-shadow: 10px 10px 4px rgba(0, 0, 0, 0.25);
+  box-shadow: 10px 10px 4px rgba(0, 0, 0, 0.25);
 }
 
 .text-nav2 {
@@ -129,5 +129,5 @@
 }
 
 .search-button:hover {
-    color: #2563eb;
+  color: #2563eb;
 }

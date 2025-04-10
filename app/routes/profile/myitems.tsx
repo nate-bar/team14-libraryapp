@@ -88,7 +88,7 @@ export default function MyItems() {
 
     const itemIds = selectedItems.map((item) => item.ItemID);
 
-    fetch(`api/return`, {
+    fetch(`/profile/api/return`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -125,7 +125,7 @@ export default function MyItems() {
 
   return (
     <div className="flex-grow justify-center h-full w-full pl-25 pr-25">
-      <ProfilePage/>
+        <ProfilePage/>
       {isLoading ? (
         <p>Loading borrowed items...</p>
       ) : error ? (

@@ -2,7 +2,9 @@ import React, { useEffect, useState } from "react";
 import { Link } from "react-router";
 import { type Genres } from "~/services/api";
 import { type Items } from "~/services/api";
+import LoadingSpinner from "~/components/loadingspinner";
 import NoImage from "~/components/imgplaceholder";
+import './catalog.css';  // Importing the CSS file
 
 const UsingFetch = () => {
   const [genres, setGenres] = useState<Genres[]>([]);
@@ -11,6 +13,10 @@ const UsingFetch = () => {
   const [loading, setLoading] = useState(true);
   const [typeFilter, setTypeFilter] = useState(""); // State for the type dropdown filter
   const [genreFilter, setGenreFilter] = useState(""); // State for the genre dropdown filter
+  const [itemsPerPage, setItemsPerPage] = useState(25); // State for items per page
+  const [currentPage, setCurrentPage] = useState(1); // State for the current page
+  const [sortBy, setSortBy] = useState<string>(""); // Sorting field (e.g., Title, PublicationYear)
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc"); // Ascending or Descending order
 
   const resetFilters = () => {
     setTypeFilter("");
@@ -49,7 +55,6 @@ const UsingFetch = () => {
       });
   };
 
-  // Fetch data from the /api/items endpoint
   const fetchData = () => {
     fetch("/api/items")
       .then((response) => {
@@ -60,8 +65,8 @@ const UsingFetch = () => {
       })
       .then((data) => {
         if (Array.isArray(data)) {
-          setItems(data); // Set the fetched items
-          setFilteredItems(data); // Initialize filtered items
+          setItems(data);
+          setFilteredItems(data);
         } else {
           console.error("API did not return an array:", data);
           setItems([]);
@@ -78,7 +83,6 @@ const UsingFetch = () => {
       });
   };
 
-  // Fetch items on component mount
   useEffect(() => {
     fetchData();
   }, []);
@@ -90,62 +94,92 @@ const UsingFetch = () => {
 
     window.addEventListener("resetCatalogFilters", handleFilterReset);
 
-    // Cleanup listener
     return () => {
       window.removeEventListener("resetCatalogFilters", handleFilterReset);
     };
   }, [items]);
 
-  // Handle type dropdown filter change
   const handleTypeFilterChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const selectedType = e.target.value;
     setTypeFilter(selectedType);
-    setGenreFilter(""); // Reset genre filter when type changes
+    setGenreFilter("");
 
     if (selectedType === "Book" || selectedType === "Media") {
       fetchGenres(selectedType);
     } else {
-      setGenres([]); // Clear genres for other types
+      setGenres([]);
     }
 
     if (selectedType === "") {
-      setFilteredItems(items); // Show all items if no type is selected
+      setFilteredItems(items);
     } else {
       setFilteredItems(items.filter((item) => item.TypeName === selectedType));
     }
   };
 
-  // Handle genre dropdown filter change
   const handleGenreFilterChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const selectedGenre = e.target.value;
     setGenreFilter(selectedGenre);
 
-    if (selectedGenre === "") {
-      setFilteredItems(items.filter((item) => item.TypeName === typeFilter));
-    } else {
-      setFilteredItems(
-        items.filter(
-          (item) =>
-            item.TypeName === typeFilter &&
-            item.GenreID === parseInt(selectedGenre)
-        )
-      );
-    }
+    setFilteredItems(
+      items.filter(
+        (item) =>
+          item.TypeName === typeFilter &&
+          (selectedGenre === "" || item.GenreID === parseInt(selectedGenre))
+      )
+    );
   };
 
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
+
+  const handleItemsPerPageChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setItemsPerPage(parseInt(e.target.value, 10));
+    setCurrentPage(1); // Reset to page 1 when changing items per page
+  };
+
+  const handleSortChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const selectedSortBy = e.target.value;
+    setSortBy(selectedSortBy);
+  };
+
+  const handleSortOrderChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const selectedSortOrder = e.target.value as "asc" | "desc";
+    setSortOrder(selectedSortOrder);
+  };
+
+  const sortItems = (items: Items[]) => {
+    if (!sortBy) return items;
+
+    return items.sort((a, b) => {
+      const aValue = a[sortBy];
+      const bValue = b[sortBy];
+
+      if (aValue < bValue) return sortOrder === "asc" ? -1 : 1;
+      if (aValue > bValue) return sortOrder === "asc" ? 1 : -1;
+      return 0;
+    });
+  };
+
+  const paginateItems = (items: Items[]) => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    return items.slice(startIndex, startIndex + itemsPerPage);
+  };
+
+  const sortedAndPaginatedItems = paginateItems(sortItems(filteredItems));
+
   return (
-    <div className="container mx-auto p-6 pb-24">
+    <div className="container">
       <h1 className="text-4xl font-bold text-center mb-8 text-gray-800">
         Library Items
       </h1>
 
-      {/* Dropdown Filters */}
       <div className="flex justify-center gap-4 mb-8">
-        {/* Type Filter */}
         <select
           value={typeFilter}
           onChange={handleTypeFilterChange}
-          className="w-64 p-3 text-sm border border-gray-300 rounded-lg shadow focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="select"
         >
           <option value="">All Types</option>
           <option value="Book">Book</option>
@@ -153,12 +187,11 @@ const UsingFetch = () => {
           <option value="Device">Device</option>
         </select>
 
-        {/* Genre Filter (only show if "Book" or "Media" is selected) */}
         {(typeFilter === "Book" || typeFilter === "Media") && (
           <select
             value={genreFilter}
             onChange={handleGenreFilterChange}
-            className="w-64 p-3 text-sm border border-gray-300 rounded-lg shadow focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="select"
           >
             <option value="">All Genres</option>
             {genres.map((genre) => (
@@ -168,22 +201,60 @@ const UsingFetch = () => {
             ))}
           </select>
         )}
+
+        {typeFilter === "Book" && (
+          <select
+            value={sortBy}
+            onChange={handleSortChange}
+            className="select"
+          >
+            <option value="">Sort By</option>
+            <option value="Title">Title</option>
+          </select>
+        )}
+
+        {typeFilter === "Device" && (
+          <select
+            value={sortBy}
+            onChange={handleSortChange}
+            className="select"
+          >
+            <option value="">Sort By</option>
+            <option value="DeviceType">Device Type</option>
+          </select>
+        )}
+
+        <select
+          value={itemsPerPage}
+          onChange={handleItemsPerPageChange}
+          className="select"
+        >
+          <option value={25}>25 items per page</option>
+          <option value={50}>50 items per page</option>
+          <option value={100}>100 items per page</option>
+        </select>
+
+        <select
+          value={sortOrder}
+          onChange={handleSortOrderChange}
+          className="select"
+        >
+          <option value="asc">Ascending</option>
+          <option value="desc">Descending</option>
+        </select>
       </div>
 
-      {/* Display items */}
       {loading ? (
-        <p className="text-center text-gray-500 text-lg">Loading items...</p>
+        <LoadingSpinner />
       ) : filteredItems.length > 0 ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-          {filteredItems.map((item) => (
+          {sortedAndPaginatedItems.map((item) => (
             <Link
               key={item.ItemID}
               to={`/${item.TypeName}/${item.ItemID}`}
-              className="bg-white p-4 rounded-lg shadow-lg flex flex-col items-center"
+              className="card"
             >
-              <h2 className="text-lg font-bold mb-2 text-center">
-                {item.Title}
-              </h2>
+              <h2 className="text-lg font-bold mb-2 text-center">{item.Title}</h2>
               {item.Photo ? (
                 <img
                   src={`data:image/jpeg;base64,${item.Photo}`}
@@ -208,17 +279,39 @@ const UsingFetch = () => {
                   {item.Status}
                 </span>
               </p>
-              {item.GenreName ? (
+              {item.GenreName && (
                 <p className="text-sm text-gray-700">
                   <strong>Genre:</strong> {item.GenreName}
                 </p>
-              ) : null}
+              )}
             </Link>
           ))}
         </div>
       ) : (
         <p className="text-center text-gray-500 text-lg">No items found.</p>
       )}
+
+      {/* Pagination Controls */}
+      <div className="pagination-controls">
+        <button
+          onClick={() => handlePageChange(currentPage - 1)}
+          disabled={currentPage === 1}
+          className="button"
+        >
+          Previous
+        </button>
+        <button
+          onClick={() => handlePageChange(currentPage + 1)}
+          disabled={currentPage * itemsPerPage >= filteredItems.length}
+          className="button"
+        >
+          Next
+        </button>
+
+        <p className="text-center mt-4">
+          Page {currentPage} of {Math.ceil(filteredItems.length / itemsPerPage)}
+        </p>
+      </div>
     </div>
   );
 };

@@ -7,49 +7,49 @@ import { type ApiResponse } from "~/services/api";
  * * @param userData - The data to update the user's profile
  * * @returns A promise that resolves to an ApiResponse object
  */
-
 export const updateProfile = async (
-    userData: EditProfile
+  userData: EditProfile
 ): Promise<ApiResponse> => {
-    try {
-        // Prepare data for API call
-        const profileData = {
-            email: userData.email,
-            firstName: userData.firstName,
-            middleName: userData.middleName || null,
-            lastName: userData.lastName,
-            address: userData.address || null,
-            phoneNumber: userData.phoneNumber,
-            birthDate: userData.dateOfBirth || null,
-        };
+  try {
+    // Prepare data for API call
+    const profileData = {
+      memberID: userData.memberID,
+      email: userData.email,
+      firstName: userData.firstName,
+      middleName: userData.middleName || null,
+      lastName: userData.lastName,
+      address: userData.address || null,
+      phoneNumber: userData.phoneNumber,
+      birthDate: userData.birthDate || null,
+    };
 
-        // Make the API call
-        const response = await fetch("/api/profile", {
-            method: "PUT",
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify(profileData),
-        });
+    // Make the API call
+    const response = await fetch("/profile/api/edit", {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(profileData),
+    });
 
-        const result = await response.json();
+    const result = await response.json();
 
-        if (!response.ok) {
-            return {
-                success: false,
-                error: result.error || "Profile update failed",
-            };
-        }
-
-        return {
-            success: true,
-            message: "Profile updated successfully",
-        };
-    } catch (error: any) {
-        console.error("Error updating account:", error);
-        return {
-            success: false,
-            error: error.message || "An unexpected error occurred",
-        };
+    if (!response.ok) {
+      return {
+        success: false,
+        error: result.error || "Profile update failed",
+      };
     }
+
+    return {
+      success: true,
+      message: "Profile updated successfully",
+    };
+  } catch (error: any) {
+    console.error("Error updating account:", error);
+    return {
+      success: false,
+      error: error.message || "An unexpected error occurred",
+    };
+  }
 };

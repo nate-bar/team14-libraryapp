@@ -64,52 +64,63 @@ app.get("/api/members", (req, res) => {
 /*
 //---------------------CODE FOR API'S HERE--------------------
 */
+// Serve API routes before frontend routes
+// Fetch notifications for a specific member
 
-app.get("/api/users", (req, res) => {
+app.get("/api/notifications/:memberid", (req, res) => {
+  const memberId = req.params.memberid;
+  pool.getConnection((err, connection) => {
+    if (err) {
+      console.error("Database connection error:", err);
+      return res.status(500).json({ error: "Database connection error" });
+    }
+    connection.query(
+      "SELECT id, message, type, created_at, is_read, BorrowID FROM notifications WHERE MemberID = ? ORDER BY created_at DESC",
+      [memberId],
+      (err, results) => {
+        connection.release();
+    
+        if (err) {
+          return res.status(500).json({ error: "Database query error" });
+        }
+
+        if (results.length === 0) {
+          return res.status(404).json({ error: "Member not found" });
+        }
+        console.log("Fetched notifications for memberID:", memberId);
+        console.table(results); // Nicely formats the output in the console
+
+        res.json(results);  // Send the response with multiple notifications
+      }
+    );
+    
+    
+  });
+});
+
+
+
+// -----------------------------------------FROM JOHNS BRANCH 3.0-----------------------------------------
+// Define the /api/admin/add-media route
+app.get("/api/user-borrowed-items-report", (req, res) => {
   pool.getConnection((err, connection) => {
     if (err) {
       console.error("Error getting connection:", err);
       return res.status(500).json({ error: "Database connection error." });
     }
 
-    const query = "SELECT * FROM user_view";
+    const query = "SELECT * FROM user_borrowed_items_report";
 
     connection.query(query, (err, results) => {
       connection.release(); // Release the connection back to the pool
       if (err) {
         console.error("Error executing query:", err);
-        return res.status(500).json({ error: "Error fetching users." });
+        return res.status(500).json({ error: "Error fetching book details." });
       }
 
       res.json(results);
     });
   });
-});
-
-app.get("/api/borrow-summary", (req, res) => {
-  let connection;
-
-  try {
-    pool
-      .getConnection()
-      .then((conn) => {
-        connection = conn;
-        return connection.query("SELECT * FROM borrow_summary_view");
-      })
-      .then((results) => {
-        res.json(results);
-      })
-      .catch((err) => {
-        console.error("Database error:", err);
-        res.status(500).json({ error: "Error fetching borrow summary." });
-      })
-      .finally(() => {
-        if (connection) connection.release();
-      });
-  } catch (err) {
-    console.error("Unexpected error:", err);
-    res.status(500).json({ error: "An unexpected error occurred." });
-  }
 });
 
 function handleQuantityInserts(
@@ -228,7 +239,7 @@ app.post("/api/insert/:typename", upload.single("photo"), (req, res) => {
       createdby: item.createdby,
       quantity: item.quantity,
     });
-    console.log("Photo:", photo ? "Received" : "No photo");
+    //console.log("Photo:", photo ? "Received" : "No photo");
 
     pool.getConnection((err, connection) => {
       if (err) {
@@ -385,7 +396,7 @@ app.post("/api/insert/:typename", upload.single("photo"), (req, res) => {
       createdby: item.createdby,
       quantity: item.quantity,
     });
-    console.log("Photo:", photo ? "Received" : "No photo");
+    //console.log("Photo:", photo ? "Received" : "No photo");
 
     pool.getConnection((err, connection) => {
       if (err) {
@@ -538,7 +549,7 @@ app.post("/api/insert/:typename", upload.single("photo"), (req, res) => {
       manufacturer: item.manufacturer,
       createdby: item.createdby,
     });
-    console.log("Photo:", photo ? "Received" : "No photo");
+    //console.log("Photo:", photo ? "Received" : "No photo");
 
     pool.getConnection((err, connection) => {
       if (err) {
@@ -660,11 +671,8 @@ app.post("/api/insert/:typename", upload.single("photo"), (req, res) => {
     res.status(400).json({ error: "Invalid type name" });
   }
 });
-
 app.post("/api/holdrequest", (req, res) => {
   const { itemid, memberid } = req.body;
-  //console.log(itemid);
-  //console.log(memberid);
 
   // quick validation of input
   if (!itemid || !memberid) {
@@ -698,7 +706,7 @@ app.post("/api/holdrequest", (req, res) => {
           });
         }
 
-        // return error emssage if hold exists
+        // return error message if hold exists
         if (existingHolds.length > 0) {
           connection.release();
           return res.status(409).json({
@@ -711,7 +719,7 @@ app.post("/api/holdrequest", (req, res) => {
           `INSERT INTO holdrequest (ItemID, MemberID, CreatedAt) VALUES (?, ?, NOW())`,
           [itemid, memberid],
           (err, results) => {
-            // release conenction
+            // release connection
             connection.release();
 
             if (err) {
@@ -738,6 +746,154 @@ app.post("/api/holdrequest", (req, res) => {
       }
     );
   });
+});
+
+
+app.get("/api/profile/:memberid", (req, res) => {
+  const memberId = req.params.memberid;
+
+  pool.getConnection((err, connection) => {
+    if (err) {
+      console.error("Database connection error:", err);
+      return res.status(500).json({ error: "Database connection error" });
+    }
+
+    connection.query(
+      "SELECT FirstName, LastName, MiddleName, Email, PhoneNumber, BirthDate, Address, Balance FROM Members WHERE MemberID = ?",
+      [memberId],
+      (err, results) => {
+        connection.release();
+
+        if (err) {
+          return res.status(500).json({ error: "Database query error" });
+        }
+
+        if (results.length === 0) {
+          return res.status(404).json({ error: "Member not found" });
+        }
+
+        const member = results[0];
+        res.json({
+          firstName: member.FirstName,
+          lastName: member.LastName,
+          middleName: member.MiddleName,
+          email: member.Email,
+          phoneNumber: member.PhoneNumber,
+          birthDate: member.BirthDate,
+          address: member.Address,
+          balance: member.Balance,
+        });
+      }
+    );
+  });
+});
+
+app.put("/profile/api/edit", async (req, res) => {
+  const profile = req.body;
+  console.log(profile);
+
+  // validation check to ensure email was passed to server
+  if (!profile.email) {
+    return res.status(400).json({ error: "Email is required" });
+  }
+
+  // double up email regex cause why not
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(profile.email)) {
+    return res.status(400).json({ error: "Invalid email format" });
+  }
+
+  try {
+    // Check if email or phone already exists for a DIFFERENT user
+    const checkExistingUser = () => {
+      return new Promise((resolve, reject) => {
+        pool.getConnection((err, connection) => {
+          if (err) {
+            console.error("Error getting connection: ", err);
+            reject(err);
+            return;
+          }
+
+          // Check if another user has this email or phone
+          connection.query(
+            "SELECT 1 FROM Members WHERE (Email = ? OR PhoneNumber = ?) AND MemberID != ? LIMIT 1",
+            [profile.email, profile.phoneNumber, profile.memberID],
+            (err, result) => {
+              connection.release();
+
+              if (err) {
+                reject(err);
+                return;
+              }
+              resolve(result && result.length > 0);
+            }
+          );
+        });
+      });
+    };
+
+    // Update user function
+    const updateUser = () => {
+      return new Promise((resolve, reject) => {
+        pool.getConnection((err, connection) => {
+          if (err) {
+            console.error("Error getting connection: ", err);
+            reject(err);
+            return;
+          }
+
+          connection.query(
+            `UPDATE Members 
+             SET FirstName = ?, 
+                 MiddleName = ?, 
+                 LastName = ?, 
+                 Email = ?, 
+                 PhoneNumber = ?, 
+                 BirthDate = ?, 
+                 Address = ?
+             WHERE MemberID = ?`,
+            [
+              profile.firstName,
+              profile.middleName,
+              profile.lastName,
+              profile.email,
+              profile.phoneNumber,
+              profile.birthDate,
+              profile.address,
+              profile.memberID,
+            ],
+            (err, result) => {
+              connection.release();
+              if (err) {
+                reject(err);
+                return;
+              }
+              resolve(result);
+            }
+          );
+        });
+      });
+    };
+
+    // Check if email/phone already exists for another user
+    const userExists = await checkExistingUser();
+    if (userExists) {
+      return res.status(409).json({
+        error: "Email or phone number already in use by another account",
+      });
+    }
+
+    // Update the user
+    await updateUser();
+
+    // Return success response
+    return res
+      .status(200)
+      .json({ success: true, message: "Account updated successfully!" });
+  } catch (error) {
+    console.error("Error in update process:", error);
+    return res.status(500).json({ error: "Update failed" });
+  }
 });
 
 app.post("/api/edit/:typename", upload.single("Photo"), (req, res) => {
@@ -767,7 +923,7 @@ app.post("/api/edit/:typename", upload.single("Photo"), (req, res) => {
       UpdatedBy: item.UpdatedBy,
       newISBN: item.newISBN,
     });
-    console.log("Photo:", Photo ? "Received" : "No photo");
+    //console.log("Photo:", Photo ? "Received" : "No photo");
 
     pool.getConnection((err, connection) => {
       if (err) {
@@ -1011,7 +1167,7 @@ app.post("/api/edit/:typename", upload.single("Photo"), (req, res) => {
       Manufacturer: item.Manufacturer,
       UpdatedBy: item.UpdatedBy,
     });
-    console.log("Photo:", Photo ? "Received" : "No photo");
+    //console.log("Photo:", Photo ? "Received" : "No photo");
 
     pool.getConnection((err, connection) => {
       if (err) {
@@ -1104,7 +1260,23 @@ app.post("/api/edit/:typename", upload.single("Photo"), (req, res) => {
     res.status(400).json({ error: "Invalid type name" });
   }
 });
-
+app.get("/api/most-borrowed-items", (req, res) => {
+  pool.getConnection((err, connection) => {
+    if (err) {
+      console.error("Error getting connection:", err);
+      return res.status(500).json({ error: "Database connection error." });
+    }
+    const query = "SELECT * FROM most_borrowed_items_view";
+    connection.query(query, (err, results) => {
+      connection.release(); // Release the connection back to the pool
+      if (err) {
+        console.error("Error executing query:", err);
+        return res.status(500).json({ error: "Error fetching most borrowed items." });
+      }
+      res.json(results);
+    });
+  });
+});
 app.get("/api/book-details", (req, res) => {
   pool.getConnection((err, connection) => {
     if (err) {
@@ -1398,26 +1570,22 @@ const checkLimits = (memberID, itemIDs, connection) => {
 app.post("/profile/api/return", (req, res) => {
   try {
     const { items } = req.body;
-
     console.log(items);
 
     if (!items || !Array.isArray(items) || items.length === 0) {
-      res.status(400).json({ error: "Invalid or empty items array" });
-      return;
+      return res.status(400).json({ error: "Invalid or empty items array" });
     }
 
     pool.getConnection((err, connection) => {
       if (err) {
         console.error("Error getting connection:", err);
-        res.status(500).json({ error: "Database connection error" });
-        return;
+        return res.status(500).json({ error: "Database connection error" });
       }
 
       connection.beginTransaction((err) => {
         if (err) {
           connection.release();
-          res.status(500).json({ error: "Transaction error" });
-          return;
+          return res.status(500).json({ error: "Transaction error" });
         }
 
         const returnedItems = [];
@@ -1426,49 +1594,41 @@ app.post("/profile/api/return", (req, res) => {
         const returnItem = (index) => {
           if (index >= items.length || hasErrors) {
             if (hasErrors) {
-              connection.rollback(() => {
+              return connection.rollback(() => {
                 connection.release();
                 res.status(500).json({
                   error: "Failed to return some items",
                   returned: returnedItems,
                 });
               });
-            } else {
-              connection.commit((err) => {
-                if (err) {
-                  connection.rollback(() => {
-                    connection.release();
-                    res.status(500).json({ error: "Failed to return item" });
-                    return;
-                  });
-                } else {
-                  connection.release();
-                  res.status(200).json({
-                    success: true,
-                    message: `${returnedItems.length} Items returned successfully`,
-                    items: returnedItems,
-                  });
-                }
-              });
             }
-            return;
+
+            return connection.commit((err) => {
+              connection.release();
+              if (err) {
+                console.error("Commit error:", err);
+                return res.status(500).json({ error: "Failed to commit transaction" });
+              }
+
+              res.status(200).json({
+                success: true,
+                message: `${returnedItems.length} item(s) returned successfully`,
+                items: returnedItems,
+              });
+            });
           }
 
           const itemid = items[index];
 
-          // First get the current record
+          // Get current borrow record
           connection.query(
             `SELECT * FROM borrowrecord WHERE ItemID = ? AND ReturnDate IS NULL`,
             [itemid],
             (err, rows) => {
               if (err || rows.length === 0) {
-                console.error(
-                  `Error finding borrow record for Item ${itemid}:`,
-                  err
-                );
+                console.error(`Error finding borrow record for Item ${itemid}:`, err);
                 hasErrors = true;
-                returnItem(index + 1);
-                return;
+                return returnItem(index + 1);
               }
 
               const record = rows[0];
@@ -1476,13 +1636,7 @@ app.post("/profile/api/return", (req, res) => {
               // Insert into returnrecord
               connection.query(
                 `INSERT INTO returnrecord (
-                  ReturnID, 
-                  MemberID, 
-                  ItemID, 
-                  BorrowDate, 
-                  DueDate, 
-                  ReturnDate, 
-                  FineAccrued
+                  ReturnID, MemberID, ItemID, BorrowDate, DueDate, ReturnDate, FineAccrued
                 ) VALUES (?, ?, ?, ?, ?, NOW(), ?)`,
                 [
                   record.BorrowID,
@@ -1494,45 +1648,56 @@ app.post("/profile/api/return", (req, res) => {
                 ],
                 (err) => {
                   if (err) {
-                    console.error(
-                      `Error inserting return record for Item ${itemid}:`,
-                      err
-                    );
+                    console.error(`Error inserting return record for Item ${itemid}:`, err);
                     hasErrors = true;
-                    returnItem(index + 1);
-                    return;
+                    return returnItem(index + 1);
                   }
 
-                  // Delete from borrowrecord
+                  // Delete borrow record
                   connection.query(
                     `DELETE FROM borrowrecord WHERE ItemID = ? AND ReturnDate IS NULL`,
                     [itemid],
                     (err) => {
                       if (err) {
-                        console.error(
-                          `Error deleting borrow record for Item ${itemid}:`,
-                          err
-                        );
+                        console.error(`Error deleting borrow record for Item ${itemid}:`, err);
                         hasErrors = true;
-                        returnItem(index + 1);
-                        return;
+                        return returnItem(index + 1);
                       }
 
-                      // update item status
+                      // Update item status
                       connection.query(
                         `UPDATE Items SET Status = 'Available', LastUpdated = NOW() WHERE ItemID = ?`,
                         [itemid],
-                        (err, updateResult) => {
+                        (err) => {
                           if (err) {
-                            console.error(
-                              `Error updating Item ${itemid}:`,
-                              err
-                            );
+                            console.error(`Error updating Item ${itemid}:`, err);
                             hasErrors = true;
                           } else {
                             returnedItems.push(itemid);
                           }
-                          returnItem(index + 1);
+
+                          // Check if there's an active hold
+                          connection.query(
+                            `SELECT * FROM HoldRequest WHERE ItemID = ? AND HoldStatus = 'active'`,
+                            [itemid],
+                            (err, holdRows) => {
+                              if (err) {
+                                console.error(`Error checking hold requests for Item ${itemid}:`, err);
+                              } else if (holdRows.length > 0) {
+                                console.log(`Active hold found for ItemID ${itemid}, updating NextInLine...`);
+                                
+                                setImmediate(() => {
+                                  console.log('Calling updateNextInLine for ItemID:', itemid);
+                                  updateNextInLine(itemid).catch(err => {
+                                    console.error(`Error updating NextInLine for Item ${itemid}:`, err);
+                                  });
+                                });
+                              }
+                          
+                              console.log('Moving to the next item:', index + 1);
+                              returnItem(index + 1); // Continue to next item
+                            }
+                          );                          
                         }
                       );
                     }
@@ -1542,8 +1707,7 @@ app.post("/profile/api/return", (req, res) => {
             }
           );
         };
-
-        returnItem(0);
+        returnItem(0); // Start processing items
       });
     });
   } catch (err) {
@@ -1552,7 +1716,76 @@ app.post("/profile/api/return", (req, res) => {
     return;
   }
 });
+app.get("/api/borrowing-history/:memberid", (req, res) => {
+  const memberId = req.params.memberid;
 
+  pool.getConnection((err, connection) => {
+    if (err) {
+      console.error("Database connection error:", err);
+      return res.status(500).json({ error: "Database connection error" });
+    }
+
+    // First, get current borrows from borrowrecord table
+    const currentBorrowsQuery = `
+      SELECT 
+        br.BorrowID,
+        br.ItemID,
+        i.Title,
+        it.TypeName,
+        br.BorrowDate,
+        br.DueDate,
+        NULL as ReturnDate,
+        br.FineAccrued
+      FROM borrowrecord br
+      JOIN Items i ON br.ItemID = i.ItemID
+      JOIN ItemTypes it ON i.ItemID = it.ItemID
+      WHERE br.MemberID = ?
+    `;
+
+    // Then, get past borrows from returnrecord table
+    const pastBorrowsQuery = `
+      SELECT 
+        rr.ReturnID as BorrowID,
+        rr.ItemID,
+        i.Title,
+        it.TypeName,
+        rr.BorrowDate,
+        rr.DueDate,
+        rr.ReturnDate,
+        rr.FineAccrued
+      FROM returnrecord rr
+      JOIN Items i ON rr.ItemID = i.ItemID
+      JOIN ItemTypes it ON i.ItemID = it.ItemID
+      WHERE rr.MemberID = ?
+    `;
+
+    // Run both queries and combine the results
+    connection.query(currentBorrowsQuery, [memberId], (err, currentBorrows) => {
+      if (err) {
+        connection.release();
+        console.error("Error fetching current borrows:", err);
+        return res.status(500).json({ error: "Database query error" });
+      }
+
+      connection.query(pastBorrowsQuery, [memberId], (err, pastBorrows) => {
+        connection.release();
+        
+        if (err) {
+          console.error("Error fetching past borrows:", err);
+          return res.status(500).json({ error: "Database query error" });
+        }
+
+        // Combine both result sets
+        const allBorrows = [...currentBorrows, ...pastBorrows];
+        
+        // Sort by borrow date (newest first)
+        allBorrows.sort((a, b) => new Date(b.BorrowDate) - new Date(a.BorrowDate));
+        
+        res.json(allBorrows);
+      });
+    });
+  });
+});
 app.post("/api/checkout", (req, res) => {
   try {
     const { items, memberID } = req.body;
@@ -1754,34 +1987,236 @@ app.post("/profile/api/cancelhold", (req, res) => {
     );
   });
 });
-
-app.get("/profile/api/holditems/:memberID", (req, res) => {
+// Function to fetch hold items for a member
+app.get("/profile/api/holditems/:memberID", async (req, res) => {
   const { memberID } = req.params;
+  console.log("Fetching hold items for memberID:", memberID);
 
-  pool.getConnection((err, connection) => {
-    if (err) {
-      console.error("Error getting connection:", err);
-      return res.status(500).json({ error: "Database connection error" });
+  try {
+    const connection = await getConnectionFromPool();
+
+    const results = await new Promise((resolve, reject) => {
+      connection.query(
+        `SELECT Items.ItemID, Items.Title, Items.Status, HoldRequest.MemberID, HoldRequest.CreatedAt, HoldRequest.HoldStatus, HoldRequest.NextInLine 
+         FROM HoldRequest 
+         INNER JOIN Items ON HoldRequest.ItemID = Items.ItemID 
+         WHERE HoldRequest.MemberID = ?`,
+        [memberID],
+        (err, results) => {
+          if (err) {
+            reject(new Error("Error fetching items on hold from database"));
+          } else {
+            resolve(results);
+          }
+        }
+      );
+    });
+
+    connection.release();
+
+    if (results.length === 0) {
+      console.log("No hold requests found for memberID:", memberID);
+      return res.status(404).json({ error: "No hold requests found for this member" });
     }
 
-    connection.query(
-      `SELECT Items.ItemID, Items.Title, Items.Status, HoldRequest.MemberID, HoldRequest.CreatedAt FROM HoldRequest INNER JOIN Items ON HoldRequest.ItemID = Items.ItemID WHERE HoldRequest.MemberID = ?`,
-      [memberID],
+    // Enrich holds with NextInLine status
+    const enrichedHolds = await Promise.all(
+      results.map(async (hold) => {
+        const isNextInLine = await isMemberNextInLineForItem(hold.ItemID, memberID);
+        return { ...hold, NextInLine: isNextInLine };
+      })
+    );
+
+    console.log("Fetched and enriched hold items:", enrichedHolds);
+    res.json(enrichedHolds);
+  } catch (error) {
+    console.error("Error fetching hold items:", error.message);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Function to get a connection from the pool
+function getConnectionFromPool() {
+  return new Promise((resolve, reject) => {
+    pool.getConnection((err, connection) => {
+      if (err) {
+        reject(new Error("Error getting database connection"));
+      } else {
+        resolve(connection);
+      }
+    });
+  });
+}
+
+// Function to check if a member is the next in line for an item with HoldStatus 'active' and NextInLine 1
+async function isMemberNextInLineForItem(itemID, memberID) {
+  try {
+    const connection = await getConnectionFromPool();
+
+    const results = await new Promise((resolve, reject) => {
+      connection.query(
+        `SELECT * FROM HoldRequest 
+         WHERE ItemID = ? AND MemberID = ? AND HoldStatus = 'active' AND NextInLine = 1`,
+        [itemID, memberID],
+        (err, results) => {
+          if (err) {
+            reject(new Error("Error fetching hold queue from database"));
+          } else {
+            resolve(results);
+          }
+        }
+      );
+    });
+
+    connection.release();
+
+    // Check if a record is found for the given conditions
+    if (results.length > 0) {
+      return true; // Member is the next in line with 'active' hold and 'NextInLine' set to 1
+    }
+
+    return false; // Member is not the next in line
+  } catch (error) {
+    console.error("Error checking member's hold status:", error.message);
+    throw error; // Rethrow the error so the caller can handle it
+  }
+}
+
+async function updateNextInLine(itemID) {
+  console.log(`Updating NextInLine for ItemID: ${itemID}`);
+
+  // Check for active requests first
+  const [rows] = await new Promise((resolve, reject) => {
+    pool.query(
+      `SELECT * FROM HoldRequest WHERE ItemID = ? AND HoldStatus = 'active' ORDER BY CreatedAt ASC LIMIT 1`,
+      [itemID],
       (err, results) => {
-        connection.release();
         if (err) {
-          console.error("Error fetching items on hold:", err);
-          return res.status(500).json({ error: "Database query error" });
+          reject(err);
+        } else {
+          resolve(results);
         }
-
-        if (results.length === 0) {
-          return res.status(404).json({ error: "hold requests not found" });
-        }
-
-        res.json(results);
       }
     );
   });
+
+  // Log the type and structure of rows
+  console.log('Type of rows:', typeof rows);
+  console.log('Structure of rows:', rows);
+
+  // Check if rows is not null or undefined (it should contain the row data)
+  if (rows) {
+    const memberID = rows.MemberID;  // Directly access MemberID from the object
+    console.log(`Found NextInLine MemberID: ${memberID} for ItemID: ${itemID}`);
+
+    // Set NextInLine to 1 for the earliest active request (i.e., the returned row)
+    const updateResult = await new Promise((resolve, reject) => {
+      pool.query(
+        `UPDATE HoldRequest SET NextInLine = 1 WHERE ItemID = ? AND MemberID = ? AND HoldStatus = 'active'`,
+        [itemID, memberID],
+        (err, results) => {
+          if (err) {
+            reject(err);
+          } else {
+            resolve(results);
+          }
+        }
+      );
+    });
+
+    // Log the updated result
+    if (updateResult.affectedRows > 0) {
+      console.log(`NextInLine updated for ItemID: ${itemID}, MemberID: ${memberID}`);
+    } else {
+      console.log(`Failed to update NextInLine for ItemID: ${itemID}, MemberID: ${memberID}`);
+    }
+
+    // Re-check and log the row after the update to confirm the change
+    const [updatedRows] = await new Promise((resolve, reject) => {
+      pool.query(
+        `SELECT * FROM HoldRequest WHERE ItemID = ? AND HoldStatus = 'active' ORDER BY CreatedAt ASC LIMIT 1`,
+        [itemID],
+        (err, results) => {
+          if (err) {
+            reject(err);
+          } else {
+            resolve(results);
+          }
+        }
+      );
+    });
+
+    // Log the updated row to confirm NextInLine was set
+    console.log(`Updated row for ItemID ${itemID}:`, updatedRows);
+  } else {
+    console.log(`No active requests found for ItemID: ${itemID}`);
+  }
+}
+
+
+// Endpoint to cancel hold and update the next in line
+app.post("/api/cancelhold", async (req, res) => {
+  const { itemID, memberID } = req.body;
+
+  try {
+    console.log(`Canceling hold for ItemID: ${itemID} and MemberID: ${memberID}`);
+
+    // Update the hold status to cancelled
+    await new Promise((resolve, reject) => {
+      pool.query(
+        `UPDATE HoldRequest SET HoldStatus = 'cancelled' 
+         WHERE ItemID = ? AND MemberID = ?`,
+        [itemID, memberID],
+        (err, results) => {
+          if (err) {
+            reject(err);
+          } else {
+            resolve(results);
+          }
+        }
+      );
+    });
+
+    // Update the next in line status after the hold is cancelled
+    await updateNextInLine(itemID);
+
+    res.json({ success: true });
+  } catch (error) {
+    console.error("Cancel hold error:", error);
+    res.status(500).send("Failed to cancel hold");
+  }
+});
+
+// Endpoint to fulfill hold and update the next in line
+app.post("/api/fulfillhold", async (req, res) => {
+  const { itemID, memberID } = req.body;
+
+  try {
+    // Update the hold status to fulfilled and reset NextInLine
+    await new Promise((resolve, reject) => {
+      pool.query(
+        `UPDATE HoldRequest 
+         SET HoldStatus = 'fulfilled', NextInLine = 0
+         WHERE ItemID = ? AND MemberID = ?`,
+        [itemID, memberID],
+        (err, results) => {
+          if (err) {
+            reject(err);
+          } else {
+            resolve(results);
+          }
+        }
+      );
+    });
+
+    // Update the next in line status after fulfilling the hold
+    await updateNextInLine(itemID);
+
+    res.json({ success: true });
+  } catch (error) {
+    console.error("Fulfill hold error:", error);
+    res.status(500).send("Failed to fulfill hold");
+  }
 });
 
 app.get("/profile/api/borroweditems/:memberID", (req, res) => {
@@ -1894,6 +2329,61 @@ app.get("/api/itemdetail/:itemid", (req, res) => {
   });
 });
 
+app.get("/api/itemfull", (req, res) => {
+  pool.getConnection((err, connection) => {
+    if (err) {
+      console.error("Error getting connection:", err);
+      res.status(500).json({ error: "Database connection error" });
+      return;
+    }
+
+    let q = `SELECT
+                i.ItemID,
+                i.Title,
+                i.Status,
+                it.TypeName,
+                it.ISBN,
+                b.Authors,
+                b.Publisher,
+                b.PublicationYear,
+                b.Summary,
+                g.GenreName,
+                g.GenreID,
+                l.LanguageID,
+                l.Language,
+                m.Director,
+                m.Leads,
+                m.ReleaseYear,
+                m.Format,
+                m.Rating,
+                d.DeviceType,
+                d.Manufacturer
+            FROM Items i
+            INNER JOIN ItemTypes it ON it.ItemID = i.ItemID
+            LEFT JOIN Books b ON b.ISBN = it.ISBN
+            LEFT JOIN Media m ON m.MediaID = it.MediaID
+            LEFT JOIN ItemDevice d ON d.DeviceID = it.DeviceID
+            LEFT JOIN Genres g ON b.GenreID = g.GenreID OR m.GenreID = g.GenreID
+            LEFT JOIN Languages l ON b.LanguageID = l.LanguageID OR m.LanguageID = l.LanguageID`;
+
+    connection.query(q, (err, results) => {
+      connection.release();
+
+      if (err) {
+        console.error("Error fetching details", err);
+        res.status(500).json({ error: "Database query error" });
+        return;
+      }
+
+      if (results.length === 0) {
+        return res.status(404).json({ error: "Item not found" });
+      }
+
+      res.json(results);
+    });
+  });
+});
+
 //--------------------------------------------------------------------------------------------------------------------------------------------------------------
 //----------------------------------------------------------- SHOULD NOT HAVE TO GO BELOW THIS LINE ------------------------------------------------------------
 //--------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -1939,8 +2429,8 @@ app.post("/api/signup", async (req, res) => {
     birthDate,
   } = req.body;
 
-  console.log(birthDate);
-  console.log(phoneNumber);
+  //console.log(birthDate);
+  //console.log(phoneNumber);
 
   // validation check to ensure email & password were passed to server
   // shouldnt ever see this just in case though
@@ -2144,13 +2634,8 @@ app.post("/api/login", async (req, res) => {
 
       // just work you way up through app.ts, auth.ts, api.ts, layout.tsx, then wherever
       req.session.firstName = member.FirstName;
-      req.session.middleName = member.MiddleName;
       req.session.lastName = member.LastName;
-      req.session.address = member.Address;
       req.session.email = member.Email;
-      req.session.phoneNumber = member.PhoneNumber;
-      req.session.birthDate = member.BirthDate;
-      req.session.balance = member.Balance;
 
       // Debug check
       //console.log("Session after setting memberID:", req.session);
