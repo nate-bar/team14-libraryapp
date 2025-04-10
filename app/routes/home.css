@@ -5,7 +5,7 @@
   }
 
 .welcome-title {
-  font-size: 25px;
+  font-size: 40px;
   font-weight: bold;
   font-family: "Arial", sans-serif;
   color: #01497c;
@@ -25,7 +25,7 @@
 
   /* Sliding Gallery Header*/
   .featured-title {
-    font-size: 22px;
+    font-size: 40px;
     font-weight: bold;
     font-family: "Arial", sans-serif;
     color: #01497c;
@@ -37,45 +37,60 @@
     font-size: 16px;
   }
 
-  /* Sliding Gallery idk*/
+  /* Sliding Gallery Text Container*/
+  .slider-left {
+    flex: 1;
+    padding-right: 20px;
+  }
+
+  /* Sliding Gallery Images Container*/
   .slider-right {
     flex: 2;
     position: relative;
-    overflow: hidden; /* Important! */
+    overflow: hidden;
     display: flex;
     align-items: center;
+    /*border: 10px solid rgb(255, 225, 0);*/
   }
   
   .slider-images-container {
     width: 100%;
     overflow: hidden;
-    display: flex; /* Important! */
+    display: flex;
+    padding-right: 40px;
+    /*border: 10px solid rgb(0, 255, 0);*/
   }
   
   .slider-images {
     display: flex;
     transition: transform 0.5s ease-in-out;
     gap: 20px;
-    width: 96%; /* Ensure enough space for all images */
+    padding: 10px;
+    width: 100%;
+    /*border: 10px solid rgb(0, 0, 0);*/
   }
   
   .slider-image {
-    width: 50%; /* Each image takes 50% of the container */
+    width: 50%;
     flex-shrink: 0;
     position: relative;
+    /*border: 10px solid rgb(255, 0, 255);*/
   }
   
   .slider-image img {
-    width: 100%;
+    width: 500px;
+    height: 300px;
     border-radius: 8px;
     object-fit: cover;
+    padding: 10px;
+    /*border: 10px solid rgb(0, 0, 255);*/
   }
   
   .slider-caption {
     position: absolute;
-    bottom: 0;
-    left: 0;
-    width: 100%;
+    bottom: 4%; /*Was 0 (no %)*/
+    left: 3%; /*Was 0 (no %)*/
+    width: 94%; /*Was 100%*/
     background: rgba(0, 0, 0, 0.6);
     color: white;
     text-align: center;
@@ -84,8 +99,13 @@
     border-bottom-left-radius: 8px;
     border-bottom-right-radius: 8px;
   }
+
+  .slider-right:hover .slider-button {
+    opacity: 1;
+  }
   
   .slider-button {
+    opacity: 0;
     position: absolute;
     top: 50%;
     transform: translateY(-50%);
@@ -104,6 +124,10 @@
   .slider-button:hover {
     background: #f0f0f0; 
   }
+
+  .slider-button-left {
+    left: 10px;
+  }
   
   .slider-button-right {
     right: 10px;
@@ -117,11 +141,21 @@
 
   /*Scrolling Gallery Text*/
   .gallery-header {
-    font-size: 24px;
+    font-size: 40px;
     font-weight: bold;
     color: #01497c;
     margin-bottom: 20px;
     padding: 20px;
+  }
+
+  .gallery-subheader {
+    text-align: left;
+    padding: 40px;
+    font-size: 25px;
+    font-weight: bold;
+    color: #01497c;
+    margin-top: -60px;
+    font-style: italic;
   }
   
   .gallery-container {
@@ -139,14 +173,17 @@
     gap: 20px;
   }
   
+  /* Left Column Text */
   .gallery-nav button {
     background: none;
     border: none;
-    font-size: 18px;
+    font-size: 24px;
     font-weight: bold;
     cursor: pointer;
     color: #01497c;
     transition: color 0.3s;
+    text-decoration: underline;
+    text-underline-position: under;
   }
   
   .gallery-nav button:hover {
@@ -171,10 +208,73 @@
     object-fit: scale-down;
     border-radius: 10px;
   }
-  
 
+  .gallery-item img:hover {
+  transform: scale(1.03);
+  cursor: pointer;
+}
   
-  .slider-left {
-    flex: 1;
-    padding-right: 20px;
+  .modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background-color: rgba(255, 255, 255, 0.6);
+    backdrop-filter: blur(6px);
+    z-index: 50;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .modal-content {
+    background: white;
+    padding: 1.5rem;
+    border-radius: 1rem;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+    max-width: 750px;
+    width: 100%;
+    position: relative;
+    animation: fadeIn 0.3s ease;
+  }
+  
+  .modal-content img {
+    width: 100%;
+    height: 200px;
+    object-fit: contain;
+    margin-bottom: 1rem;
+  }
+  
+  .modal-content h2 {
+    font-size: 1.3rem;
+    margin-bottom: 0.5rem;
+  }
+  
+  .modal-content p {
+    font-size: 0.95rem;
+    color: #444;
+  }
+  
+  .modal-close-button {
+    position: absolute;
+    top: 0.75rem;
+    right: 1rem;
+    font-size: 1.5rem;
+    color: #666;
+    cursor: pointer;
+    background: none;
+    border: none;
+  }
+  
+  .modal-close-button:hover {
+    color: black;
+  }
+  
+  @keyframes fadeIn {
+    from {
+      transform: scale(0.95);
+      opacity: 0;
+    }
+    to {
+      transform: scale(1);
+      opacity: 1;
+    }
   }

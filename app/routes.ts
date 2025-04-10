@@ -8,7 +8,11 @@ import {
 export default [
   layout("routes/layout.tsx", [
     index("routes/home.tsx"),
-    route("about", "routes/about.tsx"),
+    route("events/event1", "routes/events/event1.tsx"),
+    route("events/event2", "routes/events/event2.tsx"),
+    route("events/event3", "routes/events/event3.tsx"),
+    route("events/event4", "routes/events/event4.tsx"),
+    route("about", "routes/info/about.tsx"),
     route("items", "routes/items.tsx"),
     route("search", "routes/search.tsx"),
     route("admin", "routes/admin.tsx"),
