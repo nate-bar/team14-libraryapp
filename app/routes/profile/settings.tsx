@@ -120,7 +120,7 @@ const UpdateProfile: React.FC = () => {
 
       if (result.success) {
         alert("Profile updated successfully!");
-        navigate("/profile/dashboard"); // Redirect to the dashboard after successful update
+        navigate("/dashboard"); // Redirect to the dashboard after successful update
       } else {
         alert(`Error: ${result.error}`); // Fixed template literal syntax
       }

@@ -22,7 +22,7 @@ const Event1 = () => {
           const filtered = data.filter(
             (item) =>
               (item.TypeName === "Book" || item.TypeName === "Media") &&
-            (item.GenreID === GENRE_ID || item.GenreID === 114)
+            (item.GenreID === GENRE_ID || item.GenreID === 130)
           );
           setItems(filtered);
         } else {

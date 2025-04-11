@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useOutletContext } from "react-router";
-import AddToCartButton from "app/components/buttons/addtocartbutton.tsx";
+import { type AuthData } from "~/services/api";
+import AddToCartButton from "~/components/buttons/addtocartbutton";
 import ProfilePage from "./profile";
 interface Item {
   ItemID: number;
@@ -35,8 +36,7 @@ interface HoldItem {
 }
 
 export default function Holds() {
-  const authData = useOutletContext(); // Get auth data from router context
-  const memberID = authData?.memberID || "";
+  const { memberID } = useOutletContext<AuthData>();
 
   const [holdItems, setHoldItems] = useState<HoldItem[]>([]);
 

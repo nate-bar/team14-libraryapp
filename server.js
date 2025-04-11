@@ -9,14 +9,10 @@ import morgan from "morgan";
 import mysql from "mysql"; // mysql package, should be self explanitory
 import crypto from "crypto"; // for salting and hashing passwords
 import session from "express-session"; // for session storage
-import path from "path";
-import multer from "multer";
 // Load environment variables
 import dotenv from 'dotenv';
 const upload = multer({ storage: multer.memoryStorage() });
 dotenv.config();
-
-const upload = multer({ storage: multer.memoryStorage() });
 
 // Short-circuit the type-checking of the built output.
 const BUILD_PATH = "./build/server/index.js";
@@ -1301,7 +1297,7 @@ app.get("/api/book-details", (req, res) => {
   });
 });
 
-/*
+
 // displays all users in the system
 app.get("/api/users", (req, res) => {
   pool.getConnection((err, connection) => {
@@ -1330,7 +1326,7 @@ app.get("/api/users", (req, res) => {
     });
   });
 });
-*/
+
 
 // deletes a user from the system
 app.delete("/api/usersdelete/:userId", (req, res) => {
@@ -1818,6 +1814,7 @@ app.get("/api/borrowing-history/:memberid", (req, res) => {
     });
   });
 });
+
 app.post("/api/checkout", (req, res) => {
   try {
     const { items, memberID } = req.body;
@@ -2425,9 +2422,13 @@ app.get("/api/itemfull", (req, res) => {
  * Generates a secure password hash with salt
  * @param {string} password - The password to hash
  */
-
+function generatePassword(password) {
+  const salt = crypto.randomBytes(32).toString("hex");
+  const genHash = crypto
+    .pbkdf2Sync(password, salt, 10000, 64, "sha512")
+    .toString("hex");
   return `${salt}:${genHash}`;
-}
+} 
 /**
  * Generates a secure password hash with salt
  * @param {string} password - The password to hash
