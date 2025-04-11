@@ -31,14 +31,35 @@
   // Images for Scrolling Gallery
   const images2 = [
     { id: "books", src: "/D-Book.jpg", alt: "Books",
-      description: "We proudly keep our collection of books well stocked, with a wide selection of various genres, ranging from manga to educational materials!",
+      description: (
+        <>
+        We proudly keep our collection of books well stocked, with a wide selection of various genres, ranging from manga to educational materials!{" "}
+        <a href="/quickcatalog/books" className="modal-link">
+          Explore our books &rarr;
+        </a>
+      </>
+      ),
     },
     //{ id: "magazines", src: "/Magazines.jpg", alt: "Magazines" },
     { id: "films", src: "/Films.jpg", alt: "Films",
-      description: "Watch thought-provoking documentaries, blockbuster hits, and indie gems in our film archive, guaranteed to satisfy any film enthusiast or casual viewer!",
+      description: (
+        <>
+        Watch thought-provoking documentaries, blockbuster hits, and indie gems in our film archive, guaranteed to satisfy any film enthusiast or casual viewer!{" "}
+        <a href="/quickcatalog/media" className="modal-link">
+          Watch now &rarr;
+        </a>
+      </>
+    ),
     },
     { id: "tech", src: "/Tech.jpg", alt: "Technology",
-      description: "Dreaming of producing your own indie film or starting a podcast? Or perhaps you're just looking for devices to help you study! Access our latest tech devices and educational tools to support your learning and creativity.",
+      description: (
+        <>
+        Dreaming of producing your own indie film or starting a podcast? Or perhaps you're just looking for devices to help you study! Access our latest tech devices and educational tools to support your learning and creativity.{" "}
+        <a href="/quickcatalog/devices" className="modal-link">
+          See available tech &rarr;
+        </a>
+      </>
+    ),
     },
   ];
 
@@ -97,11 +118,7 @@ const handleLeftClick = () => {
               >
                 {images.map((image, index) => (
                   <div className="slider-image" key={index}>
-                    <a
-                      href={image.link}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
+                    <a href={image.link}>
                       <img src={image.src} alt={`Slide ${index + 1}`} />
                       <div className="slider-caption">{image.caption}</div>
                     </a>
@@ -141,7 +158,7 @@ const handleLeftClick = () => {
     content: {
       src: string;
       alt: string;
-      description?: string;
+      description?: React.ReactNode;
     } | null;
   };
 
@@ -171,10 +188,10 @@ const handleLeftClick = () => {
     const [selectedImage, setSelectedImage] = useState<{
       src: string;
       alt: string;
-      description?: string;
+      description?: React.ReactNode;
     } | null>(null);
 
-    const handleImageClick = (img: { src: string; alt: string; description?: string }) => {
+    const handleImageClick = (img: { src: string; alt: string; description?: React.ReactNode }) => {
       setSelectedImage(img);
       setModalOpen(true);
     };

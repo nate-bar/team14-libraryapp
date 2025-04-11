@@ -267,6 +267,16 @@
   .modal-close-button:hover {
     color: black;
   }
+
+  .modal-link{
+    color: #01497c;
+    text-decoration: underline;
+    font-weight: bold;
+  }
+
+  .modal-link:hover{
+    color: #012a4a;
+  }
   
   @keyframes fadeIn {
     from {
