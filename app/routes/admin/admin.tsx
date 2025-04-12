@@ -28,50 +28,33 @@ export default function Admin() {
     return location.pathname.startsWith(path);
   };
 
+  const adminTabs = [
+    { name: "Reports", path: "/admin/reports" },
+    { name: "Add Item", path: "/admin/insert" },
+    { name: "Edit Item", path: "/admin/edit" },
+    { name: "Create Event", path: "/admin/createevent" },
+    { name: "Add Items to Event", path: "/admin/addeventitems" },
+    { name: "Edit Event", path: "/admin/editevent" },
+    { name: "Users", path: "/admin/usermanagement" },
+  ];
+
   return (
     <>
       <nav className="px-6 py-2 flex justify-between items-center border-b">
         <div className="flex space-x-12">
-          <Link
-            to="/admin/reports"
-            className={`text-xl font-bold ${
-              isLinkActive("/admin/reports")
-                ? "text-blue-800 border-b-2 border-blue-600"
-                : "text-gray-800 hover:text-blue-500"
-            }`}
-          >
-            Reports
-          </Link>
-          <Link
-            to="/admin/insert"
-            className={`text-xl font-bold ${
-              isLinkActive("/admin/insert")
-                ? "text-blue-800 border-b-2 border-blue-600"
-                : "text-gray-800 hover:text-blue-500"
-            }`}
-          >
-            Add Item
-          </Link>
-          <Link
-            to="/admin/edit"
-            className={`text-xl font-bold ${
-              isLinkActive("/admin/edit")
-                ? "text-blue-800 border-b-2 border-blue-600"
-                : "text-gray-800 hover:text-blue-500"
-            }`}
-          >
-            Edit
-          </Link>
-          <Link
-            to="/admin/usermanagement"
-            className={`text-xl font-bold ${
-              isLinkActive("/admin/usermanagement")
-                ? "text-blue-800 border-b-2 border-blue-600"
-                : "text-gray-800 hover:text-blue-500"
-            }`}
-          >
-            Users
-          </Link>
+          {adminTabs.map(({ name, path }) => (
+            <Link
+              key={name}
+              to={path}
+              className={`text-xl font-bold ${
+                isLinkActive(path)
+                  ? "text-blue-800 border-b-2 border-blue-600"
+                  : "text-gray-800 hover:text-blue-500"
+              }`}
+            >
+              {name}
+            </Link>
+          ))}
         </div>
       </nav>
       <main className="p-4">

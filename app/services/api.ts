@@ -261,3 +261,32 @@ export interface ItemFull {
   DeviceType?: string;
   Manufacturer?: string;
 }
+
+// creating event
+export interface CreateEventRequest {
+  EventName: string;
+  StartDate: string;
+  EndDate: string;
+  photo: File | null;
+}
+
+export interface Event {
+  EventID: number;
+  EventName: string;
+  StartDate: string;
+  EndDate: string;
+}
+
+export async function createEvent(formData: FormData) {
+  const response = await fetch("/api/createevent", {
+    method: "POST",
+    body: formData,
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(errorData.error || errorData.details || "Failed to create event"); 
+  }
+
+  return await response.json();
+}

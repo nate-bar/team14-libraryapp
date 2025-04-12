@@ -97,7 +97,74 @@ app.get("/api/notifications/:memberid", (req, res) => {
   });
 });
 
+// -----------------------------------------CREATE EVENT-----------------------------------------
+app.post("/api/createevent", upload.single("photo"), (req, res) => {
+  const { EventName, StartDate, EndDate } = req.body;
+  const photo = req.file ? req.file.buffer : null;
 
+  if (!EventName || !StartDate || !EndDate || !photo) {
+    return res.status(400).json({ error: "All fields and photo are required." });
+  }
+
+  pool.getConnection((err, connection) => {
+    if (err) {
+      console.error("DB Connection Error:", err);
+      return res.status(500).json({ error: "Database connection failed" });
+    }
+
+    const query = `
+      INSERT INTO events (EventName, StartDate, EndDate, EventPhoto)
+      VALUES (?, ?, ?, ?);
+    `;
+
+    // Use connection.query instead of connection.execute
+    connection.query(query, [EventName, StartDate, EndDate, photo], (error, results) => {
+      connection.release();
+
+      if (error) {
+        console.error("Event Insert Error:", error);
+        return res.status(500).json({ error: "Failed to create event", details: error.message });
+      }
+
+      res.status(201).json({
+        success: true,
+        message: "Event created successfully",
+        eventId: results.insertId,
+      });
+    });
+  });
+});
+
+// Serve event photo from the database
+app.get("/api/eventphoto/:eventId", (req, res) => {
+  const eventId = req.params.eventId;
+
+  pool.getConnection((err, connection) => {
+    if (err) {
+      console.error("DB Connection Error:", err);
+      return res.status(500).send("Database connection failed");
+    }
+
+    const query = `SELECT EventPhoto FROM events WHERE id = ?`;
+    connection.query(query, [eventId], (error, results) => {
+      connection.release();
+
+      if (error) {
+        console.error("Error fetching event photo:", error);
+        return res.status(500).send("Failed to fetch event photo");
+      }
+
+      if (results.length > 0 && results[0].EventPhoto) {
+        res.writeHead(200, {
+          'Content-Type': 'image/jpeg', // Adjust the content type based on your image type
+        });
+        res.end(results[0].EventPhoto, 'binary');
+      } else {
+        res.status(404).send("Photo not found");
+      }
+    });
+  });
+});
 
 // -----------------------------------------FROM JOHNS BRANCH 3.0-----------------------------------------
 // Define the /api/admin/add-media route
