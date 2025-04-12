@@ -78,11 +78,11 @@ export default function CreateEventPage() {
     startDate !== "" &&
     endDate !== "" &&
     photo !== null &&
-    new Date(startDate) < new Date(endDate);
+    new Date(startDate) <= new Date(endDate);
 
   return (
     <div className="create-event-container">
-      <h1 className="create-event-title">Create Event</h1>
+      <h1 className="create-event-title">Event Creation Form</h1>
       <form onSubmit={handleSubmit} className="create-event-form">
       <label className="create-event-label">Event Name</label>
         <input

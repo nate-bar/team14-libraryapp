@@ -117,7 +117,6 @@ app.post("/api/createevent", upload.single("photo"), (req, res) => {
       VALUES (?, ?, ?, ?);
     `;
 
-    // Use connection.query instead of connection.execute
     connection.query(query, [EventName, StartDate, EndDate, photo], (error, results) => {
       connection.release();
 
@@ -135,34 +134,146 @@ app.post("/api/createevent", upload.single("photo"), (req, res) => {
   });
 });
 
-// Serve event photo from the database
-app.get("/api/eventphoto/:eventId", (req, res) => {
-  const eventId = req.params.eventId;
+// -----------------------------------------GET EVENTS-----------------------------------------
+app.get("/api/events", (req, res) => {
+  pool.query("SELECT EventID, EventName, StartDate, EndDate, EventPhoto AS eventPhoto FROM events", (err, results) => {
+    if (err) {
+      console.error("Error executing query: " + err.stack);
+      res.status(500).send("Error fetching events");
+      return;
+    }
+    res.json(results);
+  });
+});
+
+// -----------------------------------------ADD ITEMS TO EVENT----------------------------------------- 
+app.post("/api/events/:EventID/items", async (req, res) => {
+  const { EventID } = req.params;
+  const { ItemID } = req.body;
+
+  if (!ItemID) {
+      return res.status(400).json({ error: "ItemID is required in the request body." });
+  }
 
   pool.getConnection((err, connection) => {
-    if (err) {
-      console.error("DB Connection Error:", err);
-      return res.status(500).send("Database connection failed");
-    }
-
-    const query = `SELECT EventPhoto FROM events WHERE id = ?`;
-    connection.query(query, [eventId], (error, results) => {
-      connection.release();
-
-      if (error) {
-        console.error("Error fetching event photo:", error);
-        return res.status(500).send("Failed to fetch event photo");
+      if (err) {
+          console.error("Error getting connection: ", err);
+          return res.status(500).send("Error connecting to database");
       }
 
-      if (results.length > 0 && results[0].EventPhoto) {
-        res.writeHead(200, {
-          'Content-Type': 'image/jpeg', // Adjust the content type based on your image type
-        });
-        res.end(results[0].EventPhoto, 'binary');
-      } else {
-        res.status(404).send("Photo not found");
-      }
-    });
+      connection.beginTransaction((err) => {
+          if (err) {
+              connection.release();
+              console.error("Error starting transaction:", err);
+              return res.status(500).send("Error starting transaction");
+          }
+          let EventName = "";
+          let ItemName = "";
+
+          connection.query(
+              'SELECT EventID, EventName FROM events WHERE EventID = ?',
+              [EventID],
+              (err, eventRows) => {
+                  if (err) {
+                      return connection.rollback(() => {
+                          connection.release();
+                          console.error("Error checking event:", err);
+                          return res.status(500).send("Error checking event");
+                      });
+                  }
+                  if (eventRows.length === 0) {
+                      return connection.rollback(() => {
+                          connection.release();
+                          return res.status(404).json({ error: `Event with ID ${EventID} not found.` });
+                      });
+                  }
+
+                  EventName = eventRows[0].EventName;
+
+                  connection.query(
+                      `SELECT it.TypeName, it.ISBN, it.MediaID, i.Title
+                       FROM Items i
+                       INNER JOIN ItemTypes it ON i.ItemID = it.ItemID
+                       WHERE i.ItemID = ?`,
+                      [ItemID],
+                      (err, itemDetails) => {
+                          if (err) {
+                              return connection.rollback(() => {
+                                  connection.release();
+                                  console.error("Error fetching item details:", err);
+                                  return res.status(500).send("Error fetching item details");
+                              });
+                          }
+                          if (itemDetails.length === 0) {
+                              return connection.rollback(() => {
+                                  connection.release();
+                                  return res.status(404).json({ error: `Item with ID ${ItemID} not found.` });
+                              });
+                          }
+
+                          ItemName = itemDetails[0].Title;
+
+                          const itemType = itemDetails[0].TypeName;
+                          const isbn = itemDetails[0].ISBN;
+                          const mediaID = itemDetails[0].MediaID;
+                          let isbnToInsert = null;
+                          let mediaIDToInsert = null;
+
+                          if (itemType === 'Book') {
+                              isbnToInsert = isbn;
+                          } else if (itemType === 'Media') {
+                              mediaIDToInsert = mediaID;
+                          }
+
+                          connection.query(
+                              'SELECT eventID, ItemID FROM eventitems WHERE eventID = ? AND ItemID = ?',
+                              [EventID, ItemID],
+                              (err, existingLink) => {
+                                  if (err) {
+                                      return connection.rollback(() => {
+                                          connection.release();
+                                          console.error("Error checking existing link:", err);
+                                          return res.status(500).send("Error checking existing link");
+                                      });
+                                  }
+                                  if (existingLink.length > 0) {
+                                      return connection.rollback(() => {
+                                          connection.release();
+                                          return res.status(409).json({ error: `Item with ID ${ItemID} is already associated with Event ID ${EventID}.` });
+                                      });
+                                  }
+
+                                  connection.query(
+                                      'INSERT INTO eventitems (eventID, ItemID, ISBN, mediaID) VALUES (?, ?, ?, ?)',
+                                      [EventID, ItemID, isbnToInsert, mediaIDToInsert],
+                                      (err, result) => {
+                                          if (err) {
+                                              return connection.rollback(() => {
+                                                  connection.release();
+                                                  console.error("Error adding item to event:", err);
+                                                  return res.status(500).json({ error: `Failed to add item to event: ${err.message}` });
+                                              });
+                                          }
+                                          connection.commit((err) => {
+                                              if (err) {
+                                                  return connection.rollback(() => {
+                                                      connection.release();
+                                                      console.error("Error committing transaction:", err);
+                                                      return res.status(500).send("Error committing transaction");
+                                                  });
+                                              }
+                                              connection.release();
+                                              res.status(201).json({message: `${ItemName} added to ${EventName} event successfully!`, itemName: ItemName, eventName: EventName });
+                                          });
+                                      }
+                                  );
+                              }
+                          );
+                      }
+                  );
+              }
+          );
+      });
   });
 });
 

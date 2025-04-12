@@ -44,7 +44,7 @@ export default [
         route("device", "routes/admin/insert/device.tsx"),
       ]),
       route("createevent", "routes/admin/event/createevent.tsx"),
-      route("addeeventitems", "routes/admin/event/addeventitems.tsx"),
+      route("addeventitems", "routes/admin/event/addeventitems.tsx"),
       route("editevent", "routes/admin/event/editevent.tsx"),
       route("edit/book/:itemId", "routes/admin/edit/book.tsx"),
       route("edit/media/:itemId", "routes/admin/edit/media.tsx"),
