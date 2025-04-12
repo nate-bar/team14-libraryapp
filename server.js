@@ -1260,7 +1260,23 @@ app.post("/api/edit/:typename", upload.single("Photo"), (req, res) => {
     res.status(400).json({ error: "Invalid type name" });
   }
 });
-
+app.get("/api/most-borrowed-items", (req, res) => {
+  pool.getConnection((err, connection) => {
+    if (err) {
+      console.error("Error getting connection:", err);
+      return res.status(500).json({ error: "Database connection error." });
+    }
+    const query = "SELECT * FROM most_borrowed_items_view";
+    connection.query(query, (err, results) => {
+      connection.release(); // Release the connection back to the pool
+      if (err) {
+        console.error("Error executing query:", err);
+        return res.status(500).json({ error: "Error fetching most borrowed items." });
+      }
+      res.json(results);
+    });
+  });
+});
 app.get("/api/book-details", (req, res) => {
   pool.getConnection((err, connection) => {
     if (err) {
@@ -1696,11 +1712,81 @@ app.post("/profile/api/return", (req, res) => {
       });
     });
   } catch (err) {
-    console.error("Return error:", err);
-    res.status(500).json({ error: "Server error processing return" });
+    console.error("Checkout error:", err);
+    res.status(500).json({ error: "Server error processing checkout" });
+    return;
   }
 });
+app.get("/api/borrowing-history/:memberid", (req, res) => {
+  const memberId = req.params.memberid;
 
+  pool.getConnection((err, connection) => {
+    if (err) {
+      console.error("Database connection error:", err);
+      return res.status(500).json({ error: "Database connection error" });
+    }
+
+    // First, get current borrows from borrowrecord table
+    const currentBorrowsQuery = `
+      SELECT 
+        br.BorrowID,
+        br.ItemID,
+        i.Title,
+        it.TypeName,
+        br.BorrowDate,
+        br.DueDate,
+        NULL as ReturnDate,
+        br.FineAccrued
+      FROM borrowrecord br
+      JOIN Items i ON br.ItemID = i.ItemID
+      JOIN ItemTypes it ON i.ItemID = it.ItemID
+      WHERE br.MemberID = ?
+    `;
+
+    // Then, get past borrows from returnrecord table
+    const pastBorrowsQuery = `
+      SELECT 
+        rr.ReturnID as BorrowID,
+        rr.ItemID,
+        i.Title,
+        it.TypeName,
+        rr.BorrowDate,
+        rr.DueDate,
+        rr.ReturnDate,
+        rr.FineAccrued
+      FROM returnrecord rr
+      JOIN Items i ON rr.ItemID = i.ItemID
+      JOIN ItemTypes it ON i.ItemID = it.ItemID
+      WHERE rr.MemberID = ?
+    `;
+
+    // Run both queries and combine the results
+    connection.query(currentBorrowsQuery, [memberId], (err, currentBorrows) => {
+      if (err) {
+        connection.release();
+        console.error("Error fetching current borrows:", err);
+        return res.status(500).json({ error: "Database query error" });
+      }
+
+      connection.query(pastBorrowsQuery, [memberId], (err, pastBorrows) => {
+        connection.release();
+        
+        if (err) {
+          console.error("Error fetching past borrows:", err);
+          return res.status(500).json({ error: "Database query error" });
+        }
+
+        // Combine both result sets
+        const allBorrows = [...currentBorrows, ...pastBorrows];
+        
+        // Sort by borrow date (newest first)
+        allBorrows.sort((a, b) => new Date(b.BorrowDate) - new Date(a.BorrowDate));
+        
+        res.json(allBorrows);
+      });
+    });
+  });
+});
 app.post("/api/checkout", (req, res) => {
   try {
     const { items, memberID } = req.body;
