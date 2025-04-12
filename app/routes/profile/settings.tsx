@@ -11,6 +11,7 @@ import ProfilePage from "./profile";
 const UpdateProfile: React.FC = () => {
   const navigate = useNavigate();
   const authData = useOutletContext<AuthData>();
+  const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -117,17 +118,21 @@ const UpdateProfile: React.FC = () => {
       setIsSubmitting(true);
 
       const result = await updateProfile(userData);
-
+      
       if (result.success) {
-        alert("Profile updated successfully!");
-        navigate("/profile/dashboard"); // Redirect to the dashboard after successful update
+        setStatusMessage("✅ Profile updated successfully!");
+        setTimeout(() => {
+          navigate("/dashboard");
+        }, 1500);
       } else {
-        alert(`Error: ${result.error}`); // Fixed template literal syntax
+        setStatusMessage(`❌ Error: ${result.error}`);
       }
+      
     } catch (error) {
       console.error("Error updating profile:", error);
-      alert("An error occurred while updating your profile.");
-    } finally {
+      setStatusMessage("❌ An error occurred while updating your profile.");
+    }
+     finally {
       setIsSubmitting(false);
     }
   };
@@ -146,12 +151,17 @@ const UpdateProfile: React.FC = () => {
     <div className="update-profile-container">
       
       <h2>Edit Your Profile:</h2>
-
+      {statusMessage && (
+  <div className="status-message-box">
+    <p>{statusMessage}</p>
+  </div>
+)}
       {error && (
         <div className="error-message-box">
           <p>{error}</p>
         </div>
       )}
+
 
       <form onSubmit={handleSubmit}>
         {/* First Name */}

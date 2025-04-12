@@ -123,3 +123,26 @@
   z-index: 9999;
   position: relative;
 }
+/* General message container */
+.message-container {
+  margin-top: 20px;
+  padding: 15px;
+  border-radius: 4px;
+  font-size: 14px;
+  display: none; /* Hidden by default, will be displayed when set */
+  text-align: center;
+}
+
+/* Success message */
+.success-message {
+  background-color: #38a169;
+  color: white;
+  border: 1px solid #2f855a;
+}
+
+/* Error message */
+.error-message {
+  background-color: #e53e3e;
+  color: white;
+  border: 1px solid #c53030;
+}

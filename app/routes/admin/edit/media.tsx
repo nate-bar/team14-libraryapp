@@ -7,6 +7,7 @@ import { useOutletContext } from "react-router";
 import { useNavigate } from "react-router";
 import { useParams } from "react-router";
 import LoadingSpinner from "~/components/loadingspinner";
+import AlertPopup from "~/components/buttons/AlertPopup";
 import "../edit.css";
 import "../admin.css";
 
@@ -22,6 +23,7 @@ const MediaForm: React.FC = () => {
   const [formError, setFormError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [originalPhoto, setOriginalPhoto] = useState<Blob | null>();
+  const [alert, setAlert] = useState<{ message: string; type: 'success' | 'error' | null }>({ message: '', type: null });
   const [mediaData, setMediaData] = useState<MediaEdit>({
     ItemID: numericItemId,
     MediaID: 0,
@@ -271,10 +273,10 @@ const MediaForm: React.FC = () => {
 
       // Success - redirect or show success message
       setFileName("");
-      alert("Media updated successfully!");
+      setAlert({ message: 'Media entered successfully!', type: 'success' });
       navigate("/admin/edit");
     } catch (error) {
-      console.error("Error submitting form:", error);
+      setAlert({ message: `Error submitting form: ${error}`, type: 'error' });
       setFormError(
         `Error submitting form: ${
           error instanceof Error ? error.message : String(error)
@@ -291,6 +293,13 @@ const MediaForm: React.FC = () => {
 
   return (
     <div className="admin-container">
+                  {alert.message && (
+        <AlertPopup
+          message={alert.message}
+          type={alert.type!}
+          onClose={() => setAlert({ message: '', type: null })}
+        />
+      )}
       {formError && <div className="error-message form-error">{formError}</div>}
 
       <form onSubmit={handleSubmit} className="admin-form">

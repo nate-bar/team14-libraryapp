@@ -1282,7 +1282,7 @@ app.get("/api/book-details", (req, res) => {
   });
 });
 
-/*
+
 // displays all users in the system
 app.get("/api/users", (req, res) => {
   pool.getConnection((err, connection) => {
@@ -1311,7 +1311,7 @@ app.get("/api/users", (req, res) => {
     });
   });
 });
-*/
+
 
 // deletes a user from the system
 app.delete("/api/usersdelete/:userId", (req, res) => {
@@ -1670,6 +1670,7 @@ app.post("/profile/api/return", (req, res) => {
                               } else if (holdRows.length > 0) {
                                 console.log(`Active hold found for ItemID ${itemid}, updating NextInLine...`);
                                 
+                                // Call updateNextInLine function after the return logic
                                 setImmediate(() => {
                                   console.log('Calling updateNextInLine for ItemID:', itemid);
                                   updateNextInLine(itemid).catch(err => {
@@ -1677,11 +1678,11 @@ app.post("/profile/api/return", (req, res) => {
                                   });
                                 });
                               }
-                          
+                              
                               console.log('Moving to the next item:', index + 1);
                               returnItem(index + 1); // Continue to next item
                             }
-                          );                          
+                          );                           
                         }
                       );
                     }
@@ -1699,7 +1700,6 @@ app.post("/profile/api/return", (req, res) => {
     res.status(500).json({ error: "Server error processing return" });
   }
 });
-
 
 app.post("/api/checkout", (req, res) => {
   try {

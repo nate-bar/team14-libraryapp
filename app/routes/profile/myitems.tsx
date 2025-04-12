@@ -3,6 +3,7 @@ import { useOutletContext } from "react-router";
 import React, { useEffect, useState } from "react";
 import { Navigate } from "react-router";
 import ProfilePage from "./profile";
+
 interface borrowedItems {
   ItemID: number;
   Title: string;
@@ -12,16 +13,15 @@ interface borrowedItems {
 export default function MyItems() {
   const { isLoggedIn, memberID } = useOutletContext<AuthData>();
   const [overdueCount, setOverdueCount] = useState(0);
-  const [items, setItems] = React.useState<borrowedItems[]>([]);
+  const [items, setItems] = useState<borrowedItems[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedItems, setSelectedItems] = useState<borrowedItems[]>([]);
   const [returnStatus, setReturnStatus] = useState<string | null>(null);
   const [isReturning, setIsReturning] = useState(false);
 
-  // Count overdue items
   const calculateOverdueItems = (items: borrowedItems[]) => {
-    const today = new Date().toISOString().split("T")[0]; // Get today's date in YYYY-MM-DD format
+    const today = new Date().toISOString().split("T")[0];
     const overdue = items.filter((item) => item.DueDate < today).length;
     setOverdueCount(overdue);
   };
@@ -31,17 +31,13 @@ export default function MyItems() {
     setError(null);
     fetch(`/profile/api/borroweditems/${memberID}`)
       .then((response) => {
-        // return an empty array here if borroweditems returns 404
-        if (response.status === 404) {
-          return [];
-        }
-        if (!response.ok) {
-          throw new Error(`HTTP error! Status: ${response.status}`);
-        }
+        if (response.status === 404) return [];
+        if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
         return response.json();
       })
       .then((data) => {
         setItems(data);
+        calculateOverdueItems(data);
         setIsLoading(false);
       })
       .catch((error) => {
@@ -56,20 +52,10 @@ export default function MyItems() {
 
   const handleSelectItem = (item: borrowedItems) => {
     setSelectedItems((prev) => {
-      // Check if item is already selected
-      const isSelected = prev.some(
-        (selectedItem) => selectedItem.ItemID === item.ItemID
-      );
-
-      if (isSelected) {
-        // Remove item if already selected
-        return prev.filter(
-          (selectedItem) => selectedItem.ItemID !== item.ItemID
-        );
-      } else {
-        // Add item if not selected
-        return [...prev, item];
-      }
+      const isSelected = prev.some((selectedItem) => selectedItem.ItemID === item.ItemID);
+      return isSelected
+        ? prev.filter((selectedItem) => selectedItem.ItemID !== item.ItemID)
+        : [...prev, item];
     });
   };
 
@@ -90,125 +76,115 @@ export default function MyItems() {
 
     fetch(`/profile/api/return`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        items: itemIds,
-      }),
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ items: itemIds }),
     })
       .then((response) => {
-        if (!response.ok) {
-          throw new Error(`HTTP error! Status: ${response.status}`);
-        }
+        if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
         return response.json();
       })
-      .then((data) => {
-        setReturnStatus(
-          `Successfully returned ${selectedItems.length} item(s)`
-        );
+      .then(() => {
+        setReturnStatus(`✅ Successfully returned ${selectedItems.length} item(s)`);
         setSelectedItems([]);
-        // Refresh the list after successful return
         fetchData();
         setIsReturning(false);
       })
       .catch((error) => {
-        setReturnStatus(`Failed to return items: ${error.message}`);
+        setReturnStatus(`❌ Failed to return items: ${error.message}`);
         setIsReturning(false);
       });
   };
 
-  // if user is not logged in
   if (!isLoggedIn) {
     return <Navigate to="/login" />;
   }
 
   return (
-    <div className="flex-grow justify-center h-full w-full pl-25 pr-25">
-        <ProfilePage/>
-      {isLoading ? (
-        <p>Loading borrowed items...</p>
-      ) : error ? (
-        <p style={{ color: "red" }}>{error}</p>
-      ) : items.length > 0 ? (
-        <div>
-          <h3>Borrowed Items</h3>
+    <div className="w-full h-full px-6 py-4">
+      <ProfilePage />
 
-          {returnStatus && (
-            <div
-              style={{
-                margin: "10px 0",
-                padding: "10px",
-                backgroundColor: returnStatus.includes("Failed")
-                  ? "#ffebee"
-                  : "#e8f5e9",
-                borderRadius: "4px",
-              }}
-            >
-              {returnStatus}
-            </div>
-          )}
+      <div className="max-w-4xl mx-auto bg-white rounded-lg shadow-md p-6">
+        <h2 className="text-2xl font-bold mb-4 text-center text-gray-800">
+          📚 My Borrowed Items
+        </h2>
 
-          <table style={{ width: "100%", borderCollapse: "collapse" }}>
-            <thead>
-              <tr>
-                <th style={{ textAlign: "left", padding: "8px" }}>Select</th>
-                <th style={{ textAlign: "left", padding: "8px" }}>Title</th>
-                <th style={{ textAlign: "left", padding: "8px" }}>Due Date</th>
-              </tr>
-            </thead>
-            <tbody>
-              {items.map((item) => (
-                <tr
-                  key={item.ItemID}
-                  style={{
-                    backgroundColor: isItemSelected(item.ItemID)
-                      ? "#f0f0ff"
-                      : "transparent",
-                    border: "1px solid #ddd",
-                  }}
-                >
-                  <td style={{ padding: "8px" }}>
-                    <input
-                      type="checkbox"
-                      checked={isItemSelected(item.ItemID)}
-                      onChange={() => handleSelectItem(item)}
-                    />
-                  </td>
-                  <td style={{ padding: "8px" }}>{item.Title}</td>
-                  <td style={{ padding: "8px" }}>
-                    {item.DueDate &&
-                      new Date(item.DueDate).toLocaleDateString()}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-
-          {selectedItems.length > 0 && (
-            <div style={{ marginTop: "20px" }}>
-              <p>{selectedItems.length} item(s) selected</p>
-              <button
-                onClick={handleReturnItems}
-                disabled={isReturning}
-                style={{
-                  padding: "10px 16px",
-                  backgroundColor: "#4CAF50",
-                  color: "white",
-                  border: "none",
-                  borderRadius: "4px",
-                  cursor: isReturning ? "not-allowed" : "pointer",
-                  opacity: isReturning ? 0.7 : 1,
-                }}
+        {isLoading ? (
+          <p className="text-center text-gray-500">Loading borrowed items...</p>
+        ) : error ? (
+          <p className="text-red-600 font-medium text-center">{error}</p>
+        ) : items.length > 0 ? (
+          <>
+            {returnStatus && (
+              <div
+                className={`mb-4 p-3 rounded-md text-sm font-medium ${
+                  returnStatus.includes("Failed")
+                    ? "bg-red-100 text-red-700"
+                    : "bg-green-100 text-green-700"
+                }`}
               >
-                {isReturning ? "Processing..." : "Return Selected Items"}
-              </button>
+                {returnStatus}
+              </div>
+            )}
+
+            <div className="overflow-x-auto">
+              <table className="min-w-full border border-gray-200">
+                <thead className="bg-[#76c6de] text-gray-700">
+                  <tr>
+                    <th className="text-left py-2 px-4">Select</th>
+                    <th className="text-left py-2 px-4">Title</th>
+                    <th className="text-left py-2 px-4">Due Date</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {items.map((item) => (
+                    <tr
+                      key={item.ItemID}
+                      className={`transition hover:bg-indigo-50 ${
+                        isItemSelected(item.ItemID) ? "bg-[#e4c9a8]" : ""
+                      } border-t`}
+                    >
+                      <td className="py-2 px-4">
+                        <input
+                          type="checkbox"
+                          checked={isItemSelected(item.ItemID)}
+                          onChange={() => handleSelectItem(item)}
+                          className="h-4 w-4 text-indigo-600 rounded"
+                        />
+                      </td>
+                      <td className="py-2 px-4">{item.Title}</td>
+                      <td className="py-2 px-4">
+                        {item.DueDate &&
+                          new Date(item.DueDate).toLocaleDateString()}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
-          )}
-        </div>
-      ) : (
-        <div>No items checked out</div>
-      )}
+
+            {selectedItems.length > 0 && (
+              <div className="mt-6 text-center">
+                <p className="mb-2 text-gray-600">
+                  {selectedItems.length} item(s) selected
+                </p>
+                <button
+                  onClick={handleReturnItems}
+                  disabled={isReturning}
+                  className={`px-5 py-2 rounded-lg text-white font-medium transition ${
+                    isReturning
+                      ? "bg-[#76c6de] cursor-not-allowed"
+                      : "bg-[#01497c] hover:bg-[#75c6de]"
+                  }`}
+                >
+                  {isReturning ? "Processing..." : "Return Selected Items"}
+                </button>
+              </div>
+            )}
+          </>
+        ) : (
+          <p className="text-center text-gray-500">You have no borrowed items.</p>
+        )}
+      </div>
     </div>
   );
 }
