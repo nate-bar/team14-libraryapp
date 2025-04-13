@@ -118,6 +118,17 @@ export default function BorrowingHistory() {
     );
   }
 
+  if (borrowingRecords.length === 0) {
+    return (
+      <div>
+        <ProfilePage />
+        <div className="error-container">
+          <p className="text-gray-600">You don’t have any borrowing records.</p>
+        </div>
+      </div>
+    );
+  }
+
   if (error) {
     return (
       <div>
