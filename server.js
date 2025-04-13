@@ -391,30 +391,48 @@ app.post("/api/insert/:typename", upload.single("photo"), (req, res) => {
                         });
                       }
 
+                      const insertPromises = [];
+
                       for (let i = 0; i < item.quantity - 1; i++) {
-                        handleQuantityInserts(
-                          item.title,
-                          photo,
-                          item.createdby,
-                          typename,
-                          item.isbn,
-                          (err, result) => {
-                            if (err) {
-                              console.error("Error:", err);
-                              res.status(500).json(err);
-                            } else {
-                              res.status(200).json(result);
-                            }
-                          }
+                        insertPromises.push(
+                          new Promise((resolve, reject) => {
+                            handleQuantityInserts(
+                              item.title,
+                              photo,
+                              item.createdby,
+                              typename,
+                              item.isbn,
+                              (err, result) => {
+                                if (err) reject(err);
+                                else resolve(result);
+                              }
+                            );
+                          })
                         );
                       }
 
-                      connection.release();
-                      return res.status(201).json({
-                        success: true,
-                        message: "Book added successfully!",
-                        itemId: returnedItemID,
-                      });
+                      Promise.all(insertPromises)
+                        .then((results) => {
+                          connection.release();
+                          res.status(201).json({
+                            success: true,
+                            message: `${item.quantity} copies of book added successfully!`,
+                            itemId: returnedItemID,
+                            additionalCopies: results,
+                          });
+                        })
+                        .catch((error) => {
+                          connection.release();
+                          console.error(
+                            "Error inserting additional copies:",
+                            error
+                          );
+                          res.status(500).json({
+                            error:
+                              "Some additional copies could not be inserted",
+                            details: error.message,
+                          });
+                        });
                     });
                   }
                 );
@@ -550,30 +568,48 @@ app.post("/api/insert/:typename", upload.single("photo"), (req, res) => {
                         });
                       }
 
+                      const insertPromises = [];
+
                       for (let i = 0; i < item.quantity - 1; i++) {
-                        handleQuantityInserts(
-                          item.title,
-                          photo,
-                          item.createdby,
-                          typename,
-                          item.returnedMediaID,
-                          (err, result) => {
-                            if (err) {
-                              console.error("Error:", err);
-                              res.status(500).json(err);
-                            } else {
-                              res.status(200).json(result);
-                            }
-                          }
+                        insertPromises.push(
+                          new Promise((resolve, reject) => {
+                            handleQuantityInserts(
+                              item.title,
+                              photo,
+                              item.createdby,
+                              typename,
+                              item.isbn,
+                              (err, result) => {
+                                if (err) reject(err);
+                                else resolve(result);
+                              }
+                            );
+                          })
                         );
                       }
 
-                      connection.release();
-                      return res.status(201).json({
-                        success: true,
-                        message: "Media added successfully!",
-                        itemId: returnedItemID,
-                      });
+                      Promise.all(insertPromises)
+                        .then((results) => {
+                          connection.release();
+                          res.status(201).json({
+                            success: true,
+                            message: `${item.quantity} copies of book added successfully!`,
+                            itemId: returnedItemID,
+                            additionalCopies: results,
+                          });
+                        })
+                        .catch((error) => {
+                          connection.release();
+                          console.error(
+                            "Error inserting additional copies:",
+                            error
+                          );
+                          res.status(500).json({
+                            error:
+                              "Some additional copies could not be inserted",
+                            details: error.message,
+                          });
+                        });
                     });
                   }
                 );
@@ -987,108 +1023,124 @@ app.post("/api/edit/:typename", upload.single("Photo"), (req, res) => {
           });
         }
 
-        connection.query(
-          `UPDATE Items SET Title = ?, Photo = ?, UpdatedBy = ? WHERE ItemID = ?`,
-          [item.Title, Photo, item.UpdatedBy, item.ItemID],
-          (itemErr, itemsResult) => {
-            if (itemErr) {
-              console.error("Items update Error:", {
-                message: itemErr.message,
-                sqlMessage: itemErr.sqlMessage,
-                code: itemErr.code,
-                sql: itemErr.sql,
+        // temporarily disable foreign key checks
+        connection.query(`SET FOREIGN_KEY_CHECKS=0;`, (fkErr) => {
+          if (fkErr) {
+            connection.rollback(() => {
+              connection.release();
+              res.status(500).json({
+                error: "Failed to disable foreign key checks",
+                details: fkErr.message,
               });
+            });
+            return;
+          }
 
-              return connection.rollback(() => {
-                connection.release();
-                res.status(500).json({
-                  error: "Item update failed",
-                  details: itemErr.message,
-                  sqlMessage: itemErr.sqlMessage,
+          // update items
+          connection.query(
+            `UPDATE Items SET Title = ?, Photo = ?, UpdatedBy = ? WHERE ItemID = ?`,
+            [item.Title, Photo, item.UpdatedBy, item.ItemID],
+            (itemErr, itemsResult) => {
+              if (itemErr) {
+                // error handling
+                connection.query(`SET FOREIGN_KEY_CHECKS=1;`); // if errors out, re-enable foreign key checks
+                return connection.rollback(() => {
+                  connection.release();
+                  res.status(500).json({
+                    error: "Item update failed",
+                    details: itemErr.message,
+                    sqlMessage: itemErr.sqlMessage,
+                  });
                 });
-              });
-            }
+              }
 
-            connection.query(
-              `UPDATE Books SET ISBN = ?, Authors = ?, GenreID = ?, Publisher = ?, PublicationYear = ?, LanguageID = ?, Summary = ? WHERE Books.ISBN = ?`,
-              [
-                item.newISBN,
-                item.Authors,
-                item.GenreID,
-                item.Publisher,
-                item.PublicationYear,
-                item.LanguageID,
-                item.Summary,
-                item.ISBN,
-              ],
-              (bookErr, booksResult) => {
-                if (bookErr) {
-                  console.error("Books update Error:", {
-                    message: bookErr.message,
-                    sqlMessage: bookErr.sqlMessage,
-                    code: bookErr.code,
-                    sql: bookErr.sql,
-                  });
-
-                  return connection.rollback(() => {
-                    connection.release();
-                    res.status(500).json({
-                      error: "Book update failed",
-                      details: bookErr.message,
-                      sqlMessage: bookErr.sqlMessage,
+              // update books table
+              connection.query(
+                `UPDATE Books SET ISBN = ?, Authors = ?, GenreID = ?, Publisher = ?, PublicationYear = ?, LanguageID = ?, Summary = ? WHERE Books.ISBN = ?`,
+                [
+                  item.newISBN,
+                  item.Authors,
+                  item.GenreID,
+                  item.Publisher,
+                  item.PublicationYear,
+                  item.LanguageID,
+                  item.Summary,
+                  item.ISBN,
+                ],
+                (bookErr, booksResult) => {
+                  if (bookErr) {
+                    connection.query(`SET FOREIGN_KEY_CHECKS=1;`);
+                    return connection.rollback(() => {
+                      connection.release();
+                      res.status(500).json({
+                        error: "Book update failed",
+                        details: bookErr.message,
+                        sqlMessage: bookErr.sqlMessage,
+                      });
                     });
-                  });
-                }
+                  }
 
-                console.log("Books Insert Result:", booksResult);
-
-                connection.query(
-                  `UPDATE ItemTypes SET ISBN = ? WHERE ItemTypes.ISBN = ?`,
-                  [item.newISBN, item.ISBN],
-                  (itemTypeErr, itResult) => {
-                    if (itemTypeErr) {
-                      console.error("ItemTypes Update Error:", {
-                        message: itemTypeErr.message,
-                        sqlMessage: itemTypeErr.sqlMessage,
-                        code: itemTypeErr.code,
-                        sql: itemTypeErr.sql,
-                      });
-
-                      return connection.rollback(() => {
-                        connection.release();
-                        res.status(500).json({
-                          error: "Item Types Update failed",
-                          details: itemTypeErr.message,
-                          sqlMessage: itemTypeErr.sqlMessage,
-                        });
-                      });
-                    }
-
-                    connection.commit((commitErr) => {
-                      if (commitErr) {
-                        console.error("Commit Error:", commitErr);
+                  // update itemtypes table
+                  connection.query(
+                    `UPDATE ItemTypes SET ISBN = ? WHERE ItemTypes.ISBN = ?`,
+                    [item.newISBN, item.ISBN],
+                    (itemTypeErr, itResult) => {
+                      if (itemTypeErr) {
+                        // Error handling...
+                        connection.query(`SET FOREIGN_KEY_CHECKS=1;`);
                         return connection.rollback(() => {
                           connection.release();
                           res.status(500).json({
-                            error: "Commit error",
-                            details: commitErr.message,
+                            error: "Item Types Update failed",
+                            details: itemTypeErr.message,
+                            sqlMessage: itemTypeErr.sqlMessage,
                           });
                         });
                       }
 
-                      connection.release();
-                      return res.status(201).json({
-                        success: true,
-                        message: "Book updated successfully!",
-                        itemId: item.ItemID,
-                      });
-                    });
-                  }
-                );
-              }
-            );
-          }
-        );
+                      // if no errors, re-enable foreign key checks
+                      connection.query(
+                        `SET FOREIGN_KEY_CHECKS=1;`,
+                        (enableErr) => {
+                          if (enableErr) {
+                            return connection.rollback(() => {
+                              connection.release();
+                              res.status(500).json({
+                                error: "Failed to re-enable foreign key checks",
+                                details: enableErr.message,
+                              });
+                            });
+                          }
+
+                          // commit transaction
+                          connection.commit((commitErr) => {
+                            if (commitErr) {
+                              console.error("Commit Error:", commitErr);
+                              return connection.rollback(() => {
+                                connection.release();
+                                res.status(500).json({
+                                  error: "Commit error",
+                                  details: commitErr.message,
+                                });
+                              });
+                            }
+
+                            connection.release();
+                            return res.status(201).json({
+                              success: true,
+                              message: "Book updated successfully!",
+                              itemId: item.ItemID,
+                            });
+                          });
+                        }
+                      );
+                    }
+                  );
+                }
+              );
+            }
+          );
+        });
       });
     });
   } else if (typename === "Media") {
