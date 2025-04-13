@@ -84,7 +84,7 @@ export default function CreateEventPage() {
     <div className="create-event-container">
       <h1 className="create-event-title">Event Creation Form</h1>
       <form onSubmit={handleSubmit} className="create-event-form">
-      <label className="create-event-label">Event Name</label>
+      <label className="create-event-label">Event Name:</label>
         <input
           type="text"
           value={eventName}
@@ -92,7 +92,7 @@ export default function CreateEventPage() {
           className="create-event-name"
           required
         />
-        <label className="create-event-label">Event Start Date</label>
+        <label className="create-event-label">Event Start Date:</label>
         <input
           type="date"
           value={startDate}
@@ -107,7 +107,7 @@ export default function CreateEventPage() {
           className="create-event-date"
           required
         />
-        <label className="create-event-label">Event End Date</label>
+        <label className="create-event-label">Event End Date:</label>
         <input
           type="date"
           value={endDate}

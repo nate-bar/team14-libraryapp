@@ -24,6 +24,7 @@
   .create-event-label {
     font-weight: bold;
     display: block;
+    color: #01497c;
   }
   
   /* Event Name AND Event Date Fields */
