@@ -1635,7 +1635,7 @@ const checkLimits = (memberID, itemIDs, connection) => {
 
                     // Ensure limits exist
                     const bookLimit = limits.ItemLimit;
-                    const mediaLimit = limits.MediaLimit;
+                    const mediaLimit = limits.MediaItemLimit;
                     const deviceLimit = limits.DeviceLimit;
 
                     if (booksBorrowed + newBooks > bookLimit) {
@@ -2009,6 +2009,7 @@ app.get("/api/items", (req, res) => {
   });
 });
 
+/*
 app.post("/api/profile/cancelhold", (req, res) => {
   const { memberID, itemID } = req.body;
 
@@ -2054,6 +2055,7 @@ app.post("/api/profile/cancelhold", (req, res) => {
     );
   });
 });
+*/
 
 // Function to fetch hold items for a member
 app.get("/api/profile/holditems/:memberID", async (req, res) => {
