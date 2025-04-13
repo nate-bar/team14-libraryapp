@@ -98,7 +98,7 @@ export default function Dashboard() {
       <div className="dashboard-container">
         <div className="profile-header">
           <div className="profile-avatar" onClick={openModal}>
-            <img src={`/public/${selectedAvatar}`} alt="User Avatar" />
+            <img src={`/${selectedAvatar}`} alt="User Avatar" />
           </div>
         </div>
         <div className="profile-name">
@@ -146,6 +146,46 @@ export default function Dashboard() {
             <div className="info-item-value">
               <i className="fas fa-map-marker-alt"></i>
               {profileData.address || "Not provided"}
+            </div>
+          </div>
+
+          <div className="info-item">
+            <div className="info-item-label">Group</div>
+            <div className="info-item-value">
+              <i className="fas fa-map-marker-alt"></i>
+              {profileData.memberGroup || "Not provided"}
+            </div>
+          </div>
+
+          <div className="info-item">
+            <div className="info-item-label">Lending Period</div>
+            <div className="info-item-value">
+              <i className="fas fa-map-marker-alt"></i>
+              {profileData.lendingPeriod + " Weeks" || "Not provided"}
+            </div>
+          </div>
+
+          <div className="info-item">
+            <div className="info-item-label">Item Limit</div>
+            <div className="info-item-value">
+              <i className="fas fa-map-marker-alt"></i>
+              {profileData.itemLimit || "Not provided"}
+            </div>
+          </div>
+
+          <div className="info-item">
+            <div className="info-item-label">Media Item Limit</div>
+            <div className="info-item-value">
+              <i className="fas fa-map-marker-alt"></i>
+              {profileData.mediaItemLimit || "Not provided"}
+            </div>
+          </div>
+
+          <div className="info-item">
+            <div className="info-item-label">Device Limit</div>
+            <div className="info-item-value">
+              <i className="fas fa-map-marker-alt"></i>
+              {profileData.deviceLimit || "Not provided"}
             </div>
           </div>
         </div>

@@ -14,6 +14,11 @@ export interface Profile {
   birthDate: string;
   address: string;
   balance: number;
+  memberGroup: string;
+  lendingPeriod: number;
+  itemLimit: number;
+  mediaItemLimit: number;
+  deviceLimit: number;
 }
 export interface Notification {
   id: number;

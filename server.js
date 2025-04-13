@@ -837,7 +837,7 @@ app.get("/api/profile/:memberid", (req, res) => {
     }
 
     connection.query(
-      "SELECT FirstName, LastName, MiddleName, Email, PhoneNumber, BirthDate, Address, Balance FROM Members WHERE MemberID = ?",
+      "SELECT m.FirstName, m.LastName, m.MiddleName, m.Email, m.PhoneNumber, m.BirthDate, m.Address, m.Balance, m.GroupID, mg.LendingPeriod, mg.ItemLimit, mg.MediaItemLimit, mg.DeviceLimit FROM Members m INNER JOIN membergroups mg ON mg.GroupID = m.GroupID WHERE MemberID = ?",
       [memberId],
       (err, results) => {
         connection.release();
@@ -860,6 +860,11 @@ app.get("/api/profile/:memberid", (req, res) => {
           birthDate: member.BirthDate,
           address: member.Address,
           balance: member.Balance,
+          memberGroup: member.GroupID,
+          lendingPeriod: member.LendingPeriod,
+          itemLimit: member.ItemLimit,
+          mediaItemLimit: member.MediaItemLimit,
+          deviceLimit: member.DeviceLimit,
         });
       }
     );
