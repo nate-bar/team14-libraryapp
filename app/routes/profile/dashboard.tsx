@@ -98,7 +98,7 @@ export default function Dashboard() {
       <div className="dashboard-container">
         <div className="profile-header">
           <div className="profile-avatar" onClick={openModal}>
-            <img src={`/${selectedAvatar}`} alt="User Avatar" />
+            <img src={`./${selectedAvatar}`} alt="User Avatar" />
           </div>
         </div>
         <div className="profile-name">
