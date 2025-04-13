@@ -65,7 +65,7 @@ const UpdateProfile: React.FC = () => {
         setError(null);
       } catch (err) {
         console.error("Error fetching profile data:", err);
-        setError("Failed to load profile data. ");
+        setError("Failed to load profile data.");
       } finally {
         setIsLoading(false);
       }
@@ -147,113 +147,111 @@ const UpdateProfile: React.FC = () => {
 
   return (
     <div>
-    <ProfilePage />
-    <div className="update-profile-container">
-      
-      <h2>Edit Your Profile:</h2>
-      {statusMessage && (
-  <div className="status-message-box">
-    <p>{statusMessage}</p>
-  </div>
-)}
-      {error && (
-        <div className="error-message-box">
-          <p>{error}</p>
-        </div>
-      )}
-
-
-      <form onSubmit={handleSubmit}>
-        {/* First Name */}
-        <input
-          type="text"
-          name="firstName"
-          value={userData.firstName}
-          onChange={handleChange}
-          placeholder="First Name"
-          className={errors.firstName ? "error-field" : ""}
-        />
-        {errors.firstName && (
-          <div className="error-message">{errors.firstName}</div>
+      <ProfilePage />
+      <div className="update-profile-container">
+        <h2>Edit Your Profile:</h2>
+        {statusMessage && (
+          <div className="status-message-box">
+            <p>{statusMessage}</p>
+          </div>
+        )}
+        {error && (
+          <div className="error-message-box">
+            <p>{error}</p>
+          </div>
         )}
 
-        {/* Middle Name */}
-        <input
-          type="text"
-          name="middleName"
-          value={userData.middleName}
-          onChange={handleChange}
-          placeholder="Middle Name"
-        />
+        <form onSubmit={handleSubmit}>
+          {/* First Name */}
+          <input
+            type="text"
+            name="firstName"
+            value={userData.firstName}
+            onChange={handleChange}
+            placeholder="First Name"
+            className={errors.firstName ? "error-field" : ""}
+          />
+          {errors.firstName && (
+            <div className="error-message">{errors.firstName}</div>
+          )}
 
-        {/* Last Name */}
-        <input
-          type="text"
-          name="lastName"
-          value={userData.lastName}
-          onChange={handleChange}
-          placeholder="Last Name"
-          className={errors.lastName ? "error-field" : ""}
-        />
-        {errors.lastName && (
-          <div className="error-message">{errors.lastName}</div>
-        )}
+          {/* Middle Name */}
+          <input
+            type="text"
+            name="middleName"
+            value={userData.middleName}
+            onChange={handleChange}
+            placeholder="Middle Name"
+          />
 
-        {/* Email */}
-        <input
-          type="email"
-          name="email"
-          value={userData.email}
-          onChange={handleChange}
-          placeholder="Email"
-          className={errors.email ? "error-field" : ""}
-        />
-        {errors.email && <div className="error-message">{errors.email}</div>}
+          {/* Last Name */}
+          <input
+            type="text"
+            name="lastName"
+            value={userData.lastName}
+            onChange={handleChange}
+            placeholder="Last Name"
+            className={errors.lastName ? "error-field" : ""}
+          />
+          {errors.lastName && (
+            <div className="error-message">{errors.lastName}</div>
+          )}
 
-        {/* Phone Number */}
-        <input
-          type="tel"
-          name="phoneNumber"
-          value={userData.phoneNumber}
-          onChange={handleChange}
-          placeholder="Phone Number (e.g. 123-456-7890)"
-          className={errors.phoneNumber ? "error-field" : ""}
-        />
-        {errors.phoneNumber && (
-          <div className="error-message">{errors.phoneNumber}</div>
-        )}
+          {/* Email */}
+          <input
+            type="email"
+            name="email"
+            value={userData.email}
+            onChange={handleChange}
+            placeholder="Email"
+            className={errors.email ? "error-field" : ""}
+          />
+          {errors.email && <div className="error-message">{errors.email}</div>}
 
-        {/* Birth Date */}
-        <input
-          type="date"
-          name="birthDate"
-          value={userData.birthDate}
-          onChange={handleChange}
-          className={errors.birthDate ? "error-field" : ""}
-        />
-        {errors.birthDate && (
-          <div className="error-message">{errors.birthDate}</div>
-        )}
+          {/* Phone Number */}
+          <input
+            type="tel"
+            name="phoneNumber"
+            value={userData.phoneNumber}
+            onChange={handleChange}
+            placeholder="Phone Number (e.g. 123-456-7890)"
+            className={errors.phoneNumber ? "error-field" : ""}
+          />
+          {errors.phoneNumber && (
+            <div className="error-message">{errors.phoneNumber}</div>
+          )}
 
-        {/* Address */}
-        <input
-          type="text"
-          name="address"
-          value={userData.address}
-          onChange={handleChange}
-          placeholder="Address"
-        />
+          {/* Birth Date */}
+          <input
+            type="date"
+            name="birthDate"
+            value={userData.birthDate}
+            onChange={handleChange}
+            className={errors.birthDate ? "error-field" : ""}
+          />
+          {errors.birthDate && (
+            <div className="error-message">{errors.birthDate}</div>
+          )}
 
-        {/* Submit Button */}
-        <button
-          type="submit"
-          disabled={isSubmitting}
-          className="submit-button"
-        >
-          {isSubmitting ? "Saving..." : "Save Changes"}
-        </button>
-      </form>
-    </div>
+          {/* Address */}
+          <input
+            type="text"
+            name="address"
+            value={userData.address}
+            onChange={handleChange}
+            placeholder="Address"
+          />
+
+          {/* Submit Button */}
+          <button
+            type="submit"
+            disabled={isSubmitting}
+            className="submit-button"
+          >
+            {isSubmitting ? "Saving..." : "Save Changes"}
+          </button>
+        </form>
+      </div>
     </div>
   );
 };
