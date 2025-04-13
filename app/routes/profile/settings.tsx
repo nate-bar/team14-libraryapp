@@ -118,7 +118,7 @@ const UpdateProfile: React.FC = () => {
       setIsSubmitting(true);
 
       const result = await updateProfile(userData);
-      
+
       if (result.success) {
         setStatusMessage("✅ Profile updated successfully!");
         setTimeout(() => {
@@ -127,12 +127,10 @@ const UpdateProfile: React.FC = () => {
       } else {
         setStatusMessage(`❌ Error: ${result.error}`);
       }
-      
     } catch (error) {
       console.error("Error updating profile:", error);
       setStatusMessage("❌ An error occurred while updating your profile.");
-    }
-     finally {
+    } finally {
       setIsSubmitting(false);
     }
   };

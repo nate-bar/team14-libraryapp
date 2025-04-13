@@ -64,25 +64,23 @@ export default function DeviceDetail() {
 
       const data = await response.json();
 
-        if (!response.ok) {
-          if (response.status === 409) {
-            throw new Error(
-              data.error || "You already have a hold request for this media"
-            );
-          }
-          throw new Error(data.error || `HTTP error! Status: ${response.status}`);
+      if (!response.ok) {
+        if (response.status === 409) {
+          throw new Error(
+            data.error || "You already have a hold request for this media"
+          );
         }
-  
-        setPopupMessage("Hold request submitted successfully");
-      } catch (error) {
-        console.error("Error submitting hold request:", error);
-        setPopupMessage(
-          error instanceof Error
-            ? error.message
-            : "Error submitting hold request"
-        );
+        throw new Error(data.error || `HTTP error! Status: ${response.status}`);
       }
-    };
+
+      setPopupMessage("Hold request submitted successfully");
+    } catch (error) {
+      console.error("Error submitting hold request:", error);
+      setPopupMessage(
+        error instanceof Error ? error.message : "Error submitting hold request"
+      );
+    }
+  };
 
   if (loading) {
     return (
@@ -140,33 +138,32 @@ export default function DeviceDetail() {
       </div>
 
       <div className="item-actions">
-  {/* if device is available, show add to cart button */}
-  {device.Status === "Available" && <AddToCartButton item={device} />}
+        {/* if device is available, show add to cart button */}
+        {device.Status === "Available" && <AddToCartButton item={device} />}
 
-  {/* if device is checked out, show hold request button */}
-  {device.Status === "Checked Out" && (
-    <button
-      className="btn btn-secondary hold-button"
-      onClick={handleHoldRequest}
-    >
-      Place Hold Request
-    </button>
-  )}
+        {/* if device is checked out, show hold request button */}
+        {device.Status === "Checked Out" && (
+          <button
+            className="btn btn-secondary hold-button"
+            onClick={handleHoldRequest}
+          >
+            Place Hold Request
+          </button>
+        )}
 
-  {showLoginWarning && (
-    <WarningPopup
-      message="You must be logged in to place a hold request."
-      onClose={() => setShowLoginWarning(false)}
-    />
-  )}
-          {popupMessage && (
+        {showLoginWarning && (
+          <WarningPopup
+            message="You must be logged in to place a hold request."
+            onClose={() => setShowLoginWarning(false)}
+          />
+        )}
+        {popupMessage && (
           <SuccessPopup
             message={popupMessage}
             onClose={() => setPopupMessage(null)}
           />
         )}
-</div>
-
+      </div>
     </div>
   );
 }

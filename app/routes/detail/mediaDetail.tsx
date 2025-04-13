@@ -75,9 +75,7 @@ export default function MediaDetail() {
     } catch (error) {
       console.error("Error submitting hold request:", error);
       setPopupMessage(
-        error instanceof Error
-          ? error.message
-          : "Error submitting hold request"
+        error instanceof Error ? error.message : "Error submitting hold request"
       );
     }
   };
@@ -122,17 +120,33 @@ export default function MediaDetail() {
           ) : (
             <p className="text-gray-500">No Photo Available</p>
           )}
-          <p><strong>Director:</strong> {media.Director}</p>
-          <p><strong>Leads:</strong> {media.Leads}</p>
-          <p><strong>Release Year:</strong> {media.ReleaseYear}</p>
-          <p><strong>Format:</strong> {media.Format}</p>
-          <p><strong>Rating:</strong> {media.Rating}/10</p>
-          <p><strong>Genre:</strong> {media.GenreName}</p>
-          <p><strong>Language:</strong> {media.Language}</p>
+          <p>
+            <strong>Director:</strong> {media.Director}
+          </p>
+          <p>
+            <strong>Leads:</strong> {media.Leads}
+          </p>
+          <p>
+            <strong>Release Year:</strong> {media.ReleaseYear}
+          </p>
+          <p>
+            <strong>Format:</strong> {media.Format}
+          </p>
+          <p>
+            <strong>Rating:</strong> {media.Rating}/10
+          </p>
+          <p>
+            <strong>Genre:</strong> {media.GenreName}
+          </p>
+          <p>
+            <strong>Language:</strong> {media.Language}
+          </p>
         </div>
 
         <div className="info-section">
-          <p><strong>Status:</strong> {media.Status}</p>
+          <p>
+            <strong>Status:</strong> {media.Status}
+          </p>
         </div>
       </div>
 

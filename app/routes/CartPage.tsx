@@ -115,7 +115,10 @@ export default function CartPage() {
       </div>
 
       {popupMessage && (
-        <AlertPopup message={popupMessage} onClose={() => setPopupMessage(null)} />
+        <AlertPopup
+          message={popupMessage}
+          onClose={() => setPopupMessage(null)}
+        />
       )}
     </div>
   );

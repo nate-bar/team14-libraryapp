@@ -28,7 +28,10 @@ const SignupForm: React.FC = () => {
     lastName: "",
   });
 
-  const [message, setMessage] = useState<{ text: string; type: "success" | "error" | null }>({
+  const [message, setMessage] = useState<{
+    text: string;
+    type: "success" | "error" | null;
+  }>({
     text: "",
     type: null,
   });
@@ -80,11 +83,17 @@ const SignupForm: React.FC = () => {
       const result = await createAccount(accountData);
 
       if (!result.success) {
-        setMessage({ text: result.error || "Registration failed", type: "error" });
+        setMessage({
+          text: result.error || "Registration failed",
+          type: "error",
+        });
         return;
       }
 
-      setMessage({ text: "Registration successful! Redirecting to login page...", type: "success" });
+      setMessage({
+        text: "Registration successful! Redirecting to login page...",
+        type: "success",
+      });
 
       // Clear form
       setAccountData({
@@ -113,7 +122,11 @@ const SignupForm: React.FC = () => {
         <h1 className="text-2xl font-bold mb-6 text-center">Signup Form</h1>
 
         {message.text && (
-          <div className={`message-container ${message.type ? message.type + "-message" : ""}`}>
+          <div
+            className={`message-container ${
+              message.type ? message.type + "-message" : ""
+            }`}
+          >
             {message.text}
           </div>
         )}
@@ -318,6 +331,7 @@ const SignupForm: React.FC = () => {
             >
               <option value="Student">Student</option>
               <option value="Faculty">Faculty</option>
+              <option value="Test">Test</option>
             </select>
           </div>
 

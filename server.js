@@ -11,7 +11,7 @@ import path from "path";
 import multer from "multer";
 // Load environment variables
 import dotenv from "dotenv";
-import cron from 'node-cron';
+import cron from "node-cron";
 
 dotenv.config();
 
@@ -51,7 +51,56 @@ const pool = mysql.createPool({
   connectionLimit: 10, // try like 10
 });
 
-// RETURNS ALL MEMBERS
+/*
+//---------------------CODE FOR API'S HERE--------------------
+*/
+
+app.get("/api/borrowing-history/:memberid", (req, res) => {
+  const memberId = req.params.memberid;
+
+  pool.getConnection((err, connection) => {
+    if (err) {
+      console.error("Database connection error:", err);
+      return res.status(500).json({ error: "Database connection error" });
+    }
+    connection.query(
+      `SELECT 
+    rr.ReturnID, 
+    rr.MemberID, 
+    rr.ItemID, 
+    rr.BorrowDate, 
+    rr.DueDate, 
+    rr.ReturnDate, 
+    rr.FineAccrued, 
+    i.Title, 
+    it.TypeName 
+FROM 
+    returnrecord rr 
+INNER JOIN 
+    Items i ON rr.ItemID = i.ItemID 
+INNER JOIN 
+    ItemTypes it ON i.ItemID = it.ItemID
+WHERE 
+    rr.MemberID = ?`,
+      [memberId],
+      (err, results) => {
+        connection.release();
+
+        if (err) {
+          return res.status(500).json({ error: "Database query error" });
+        }
+
+        if (results.length === 0) {
+          return res.status(404).json({ error: "Borrowing history not found" });
+        }
+
+        res.json(results);
+      }
+    );
+  });
+});
+
+// returns * from Members table
 app.get("/api/members", (req, res) => {
   pool.query("SELECT * FROM Members", (err, results) => {
     if (err) {
@@ -63,12 +112,7 @@ app.get("/api/members", (req, res) => {
   });
 });
 
-/*
-//---------------------CODE FOR API'S HERE--------------------
-*/
-// Serve API routes before frontend routes
 // Fetch notifications for a specific member
-
 app.get("/api/notifications/:memberid", (req, res) => {
   const memberId = req.params.memberid;
   pool.getConnection((err, connection) => {
@@ -81,7 +125,7 @@ app.get("/api/notifications/:memberid", (req, res) => {
       [memberId],
       (err, results) => {
         connection.release();
-    
+
         if (err) {
           return res.status(500).json({ error: "Database query error" });
         }
@@ -92,18 +136,13 @@ app.get("/api/notifications/:memberid", (req, res) => {
         console.log("Fetched notifications for memberID:", memberId);
         console.table(results); // Nicely formats the output in the console
 
-        res.json(results);  // Send the response with multiple notifications
+        res.json(results); // Send the response with multiple notifications
       }
     );
-    
-    
   });
 });
 
-
-
-// -----------------------------------------FROM JOHNS BRANCH 3.0-----------------------------------------
-// Define the /api/admin/add-media route
+// gets user borrowed items view
 app.get("/api/user-borrowed-items-report", (req, res) => {
   pool.getConnection((err, connection) => {
     if (err) {
@@ -673,6 +712,7 @@ app.post("/api/insert/:typename", upload.single("photo"), (req, res) => {
     res.status(400).json({ error: "Invalid type name" });
   }
 });
+
 app.post("/api/holdrequest", (req, res) => {
   const { itemid, memberid } = req.body;
 
@@ -750,7 +790,7 @@ app.post("/api/holdrequest", (req, res) => {
   });
 });
 
-
+// gets row information for specific member
 app.get("/api/profile/:memberid", (req, res) => {
   const memberId = req.params.memberid;
 
@@ -790,7 +830,8 @@ app.get("/api/profile/:memberid", (req, res) => {
   });
 });
 
-app.put("/profile/api/edit", async (req, res) => {
+// edit profile information
+app.put("/api/profile/edit", async (req, res) => {
   const profile = req.body;
   console.log(profile);
 
@@ -898,6 +939,7 @@ app.put("/profile/api/edit", async (req, res) => {
   }
 });
 
+// edit item information
 app.post("/api/edit/:typename", upload.single("Photo"), (req, res) => {
   const typename = req.params.typename;
   const item = req.body;
@@ -1262,6 +1304,8 @@ app.post("/api/edit/:typename", upload.single("Photo"), (req, res) => {
     res.status(400).json({ error: "Invalid type name" });
   }
 });
+
+// returns most borrowed items view
 app.get("/api/most-borrowed-items", (req, res) => {
   pool.getConnection((err, connection) => {
     if (err) {
@@ -1273,12 +1317,16 @@ app.get("/api/most-borrowed-items", (req, res) => {
       connection.release(); // Release the connection back to the pool
       if (err) {
         console.error("Error executing query:", err);
-        return res.status(500).json({ error: "Error fetching most borrowed items." });
+        return res
+          .status(500)
+          .json({ error: "Error fetching most borrowed items." });
       }
       res.json(results);
     });
   });
 });
+
+// gets book details view, dont know if this is being used
 app.get("/api/book-details", (req, res) => {
   pool.getConnection((err, connection) => {
     if (err) {
@@ -1299,7 +1347,6 @@ app.get("/api/book-details", (req, res) => {
     });
   });
 });
-
 
 // displays all users in the system
 app.get("/api/users", (req, res) => {
@@ -1329,7 +1376,6 @@ app.get("/api/users", (req, res) => {
     });
   });
 });
-
 
 // deletes a user from the system
 app.delete("/api/usersdelete/:userId", (req, res) => {
@@ -1394,6 +1440,7 @@ app.get("/api/search", (req, res) => {
   });
 });
 
+// returns languages
 app.get("/api/languages", (req, res) => {
   pool.query(`SELECT LanguageID, Language FROM languages`, (err, results) => {
     if (err) {
@@ -1405,6 +1452,7 @@ app.get("/api/languages", (req, res) => {
   });
 });
 
+// returns media genres
 app.get("/api/mediagenres", (req, res) => {
   pool.query(
     `SELECT GenreID, GenreName FROM genres WHERE GenreID BETWEEN 200 AND 299`,
@@ -1419,6 +1467,7 @@ app.get("/api/mediagenres", (req, res) => {
   );
 });
 
+// returns book genres
 app.get("/api/bookgenres", (req, res) => {
   pool.query(
     `SELECT GenreID, GenreName FROM genres WHERE GenreID BETWEEN 100 AND 199`,
@@ -1569,7 +1618,7 @@ const checkLimits = (memberID, itemIDs, connection) => {
   });
 };
 
-app.post("/profile/api/return", (req, res) => {
+app.post("/api/profile/return", (req, res) => {
   try {
     const { items } = req.body;
     console.log(items);
@@ -1609,7 +1658,9 @@ app.post("/profile/api/return", (req, res) => {
               connection.release();
               if (err) {
                 console.error("Commit error:", err);
-                return res.status(500).json({ error: "Failed to commit transaction" });
+                return res
+                  .status(500)
+                  .json({ error: "Failed to commit transaction" });
               }
 
               res.status(200).json({
@@ -1628,7 +1679,10 @@ app.post("/profile/api/return", (req, res) => {
             [itemid],
             (err, rows) => {
               if (err || rows.length === 0) {
-                console.error(`Error finding borrow record for Item ${itemid}:`, err);
+                console.error(
+                  `Error finding borrow record for Item ${itemid}:`,
+                  err
+                );
                 hasErrors = true;
                 return returnItem(index + 1);
               }
@@ -1650,7 +1704,10 @@ app.post("/profile/api/return", (req, res) => {
                 ],
                 (err) => {
                   if (err) {
-                    console.error(`Error inserting return record for Item ${itemid}:`, err);
+                    console.error(
+                      `Error inserting return record for Item ${itemid}:`,
+                      err
+                    );
                     hasErrors = true;
                     return returnItem(index + 1);
                   }
@@ -1661,7 +1718,10 @@ app.post("/profile/api/return", (req, res) => {
                     [itemid],
                     (err) => {
                       if (err) {
-                        console.error(`Error deleting borrow record for Item ${itemid}:`, err);
+                        console.error(
+                          `Error deleting borrow record for Item ${itemid}:`,
+                          err
+                        );
                         hasErrors = true;
                         return returnItem(index + 1);
                       }
@@ -1672,7 +1732,10 @@ app.post("/profile/api/return", (req, res) => {
                         [itemid],
                         (err) => {
                           if (err) {
-                            console.error(`Error updating Item ${itemid}:`, err);
+                            console.error(
+                              `Error updating Item ${itemid}:`,
+                              err
+                            );
                             hasErrors = true;
                           } else {
                             returnedItems.push(itemid);
@@ -1684,23 +1747,37 @@ app.post("/profile/api/return", (req, res) => {
                             [itemid],
                             (err, holdRows) => {
                               if (err) {
-                                console.error(`Error checking hold requests for Item ${itemid}:`, err);
+                                console.error(
+                                  `Error checking hold requests for Item ${itemid}:`,
+                                  err
+                                );
                               } else if (holdRows.length > 0) {
-                                console.log(`Active hold found for ItemID ${itemid}, updating NextInLine...`);
-                                
+                                console.log(
+                                  `Active hold found for ItemID ${itemid}, updating NextInLine...`
+                                );
+
                                 // Call updateNextInLine function after the return logic
                                 setImmediate(() => {
-                                  console.log('Calling updateNextInLine for ItemID:', itemid);
-                                  updateNextInLine(itemid).catch(err => {
-                                    console.error(`Error updating NextInLine for Item ${itemid}:`, err);
+                                  console.log(
+                                    "Calling updateNextInLine for ItemID:",
+                                    itemid
+                                  );
+                                  updateNextInLine(itemid).catch((err) => {
+                                    console.error(
+                                      `Error updating NextInLine for Item ${itemid}:`,
+                                      err
+                                    );
                                   });
                                 });
                               }
-                              
-                              console.log('Moving to the next item:', index + 1);
+
+                              console.log(
+                                "Moving to the next item:",
+                                index + 1
+                              );
                               returnItem(index + 1); // Continue to next item
                             }
-                          );                           
+                          );
                         }
                       );
                     }
@@ -1718,7 +1795,6 @@ app.post("/profile/api/return", (req, res) => {
     res.status(500).json({ error: "Server error processing return" });
   }
 });
-
 
 app.post("/api/checkout", (req, res) => {
   try {
@@ -1876,7 +1952,7 @@ app.get("/api/items", (req, res) => {
   });
 });
 
-app.post("/profile/api/cancelhold", (req, res) => {
+app.post("/api/profile/cancelhold", (req, res) => {
   const { memberID, itemID } = req.body;
 
   // quick validation
@@ -1921,8 +1997,9 @@ app.post("/profile/api/cancelhold", (req, res) => {
     );
   });
 });
+
 // Function to fetch hold items for a member
-app.get("/profile/api/holditems/:memberID", async (req, res) => {
+app.get("/api/profile/holditems/:memberID", async (req, res) => {
   const { memberID } = req.params;
   console.log("Fetching hold items for memberID:", memberID);
 
@@ -1950,13 +2027,18 @@ app.get("/profile/api/holditems/:memberID", async (req, res) => {
 
     if (results.length === 0) {
       console.log("No hold requests found for memberID:", memberID);
-      return res.status(404).json({ error: "No hold requests found for this member" });
+      return res
+        .status(404)
+        .json({ error: "No hold requests found for this member" });
     }
 
     // Enrich holds with NextInLine status
     const enrichedHolds = await Promise.all(
       results.map(async (hold) => {
-        const isNextInLine = await isMemberNextInLineForItem(hold.ItemID, memberID);
+        const isNextInLine = await isMemberNextInLineForItem(
+          hold.ItemID,
+          memberID
+        );
         return { ...hold, NextInLine: isNextInLine };
       })
     );
@@ -2035,12 +2117,12 @@ async function updateNextInLine(itemID) {
   });
 
   // Log the type and structure of rows
-  console.log('Type of rows:', typeof rows);
-  console.log('Structure of rows:', rows);
+  console.log("Type of rows:", typeof rows);
+  console.log("Structure of rows:", rows);
 
   // Check if rows is not null or undefined (it should contain the row data)
   if (rows) {
-    const memberID = rows.MemberID;  // Directly access MemberID from the object
+    const memberID = rows.MemberID; // Directly access MemberID from the object
     console.log(`Found NextInLine MemberID: ${memberID} for ItemID: ${itemID}`);
 
     // Set NextInLine to 1 for the earliest active request (i.e., the returned row)
@@ -2060,9 +2142,13 @@ async function updateNextInLine(itemID) {
 
     // Log the updated result
     if (updateResult.affectedRows > 0) {
-      console.log(`NextInLine updated for ItemID: ${itemID}, MemberID: ${memberID}`);
+      console.log(
+        `NextInLine updated for ItemID: ${itemID}, MemberID: ${memberID}`
+      );
     } else {
-      console.log(`Failed to update NextInLine for ItemID: ${itemID}, MemberID: ${memberID}`);
+      console.log(
+        `Failed to update NextInLine for ItemID: ${itemID}, MemberID: ${memberID}`
+      );
     }
 
     // Re-check and log the row after the update to confirm the change
@@ -2087,13 +2173,14 @@ async function updateNextInLine(itemID) {
   }
 }
 
-
 // Endpoint to cancel hold and update the next in line
 app.post("/api/cancelhold", async (req, res) => {
   const { itemID, memberID } = req.body;
 
   try {
-    console.log(`Canceling hold for ItemID: ${itemID} and MemberID: ${memberID}`);
+    console.log(
+      `Canceling hold for ItemID: ${itemID} and MemberID: ${memberID}`
+    );
 
     // Update the hold status to cancelled
     await new Promise((resolve, reject) => {
@@ -2153,13 +2240,12 @@ app.post("/api/fulfillhold", async (req, res) => {
   }
 });
 
-
-cron.schedule('* * * * *', () => {
-  console.log('Running overdue charge check...');
+cron.schedule("* * * * *", () => {
+  console.log("Running overdue charge check...");
 
   pool.getConnection((err, connection) => {
     if (err) {
-      console.error('Connection error:', err);
+      console.error("Connection error:", err);
       return;
     }
 
@@ -2178,7 +2264,7 @@ cron.schedule('* * * * *', () => {
 
     connection.query(overdueQuery, (err, overdues) => {
       if (err) {
-        console.error('Query error:', err);
+        console.error("Query error:", err);
         connection.release();
         return;
       }
@@ -2189,15 +2275,15 @@ cron.schedule('* * * * *', () => {
         return;
       }
 
-      overdues.forEach(row => {
+      overdues.forEach((row) => {
         const { MemberID, ItemID, TypeName } = row;
 
         connection.query(
-          'SELECT FineAmount FROM fines WHERE FineID = ?',
+          "SELECT FineAmount FROM fines WHERE FineID = ?",
           [TypeName],
           (err, fineResults) => {
             if (err || !fineResults.length) {
-              console.error('Fine lookup error:', err);
+              console.error("Fine lookup error:", err);
               if (++processed === overdues.length) connection.release();
               return;
             }
@@ -2209,8 +2295,11 @@ cron.schedule('* * * * *', () => {
                VALUES (?, ?, ?, NOW())`,
               [MemberID, ItemID, fineAmount],
               (err) => {
-                if (err) console.error('Insert error:', err);
-                else console.log(`Charged $${fineAmount} to Member ${MemberID} for Item ${ItemID}`);
+                if (err) console.error("Insert error:", err);
+                else
+                  console.log(
+                    `Charged $${fineAmount} to Member ${MemberID} for Item ${ItemID}`
+                  );
                 if (++processed === overdues.length) connection.release();
               }
             );
@@ -2220,8 +2309,9 @@ cron.schedule('* * * * *', () => {
     });
   });
 });
+
 // Every day at midnight, the cron job checks for pending notifications
-cron.schedule('0 0 * * *', () => {
+cron.schedule("0 0 * * *", () => {
   pool.getConnection((err, connection) => {
     if (err) {
       console.error("Error getting connection:", err);
@@ -2247,9 +2337,8 @@ cron.schedule('0 0 * * *', () => {
   });
 });
 
-
 // API endpoint: Get borrowed items for a member
-app.get("/profile/api/borroweditems/:memberID", (req, res) => {
+app.get("/api/profile/borroweditems/:memberID", (req, res) => {
   const { memberID } = req.params;
 
   pool.getConnection((err, connection) => {

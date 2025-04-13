@@ -1,6 +1,6 @@
 import { type AuthData } from "~/services/api";
 import { useOutletContext } from "react-router";
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { Navigate } from "react-router";
 import ProfilePage from "./profile";
 
@@ -29,10 +29,11 @@ export default function MyItems() {
   const fetchData = () => {
     setIsLoading(true);
     setError(null);
-    fetch(`/profile/api/borroweditems/${memberID}`)
+    fetch(`/api/profile/borroweditems/${memberID}`)
       .then((response) => {
         if (response.status === 404) return [];
-        if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
+        if (!response.ok)
+          throw new Error(`HTTP error! Status: ${response.status}`);
         return response.json();
       })
       .then((data) => {
@@ -52,7 +53,9 @@ export default function MyItems() {
 
   const handleSelectItem = (item: borrowedItems) => {
     setSelectedItems((prev) => {
-      const isSelected = prev.some((selectedItem) => selectedItem.ItemID === item.ItemID);
+      const isSelected = prev.some(
+        (selectedItem) => selectedItem.ItemID === item.ItemID
+      );
       return isSelected
         ? prev.filter((selectedItem) => selectedItem.ItemID !== item.ItemID)
         : [...prev, item];
@@ -74,17 +77,20 @@ export default function MyItems() {
 
     const itemIds = selectedItems.map((item) => item.ItemID);
 
-    fetch(`/profile/api/return`, {
+    fetch(`/api/profile/return`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ items: itemIds }),
     })
       .then((response) => {
-        if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
+        if (!response.ok)
+          throw new Error(`HTTP error! Status: ${response.status}`);
         return response.json();
       })
       .then(() => {
-        setReturnStatus(`✅ Successfully returned ${selectedItems.length} item(s)`);
+        setReturnStatus(
+          `✅ Successfully returned ${selectedItems.length} item(s)`
+        );
         setSelectedItems([]);
         fetchData();
         setIsReturning(false);
@@ -182,7 +188,9 @@ export default function MyItems() {
             )}
           </>
         ) : (
-          <p className="text-center text-gray-500">You have no borrowed items.</p>
+          <p className="text-center text-gray-500">
+            You have no borrowed items.
+          </p>
         )}
       </div>
     </div>

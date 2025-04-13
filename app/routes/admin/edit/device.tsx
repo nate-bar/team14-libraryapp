@@ -21,7 +21,10 @@ const DeviceForm: React.FC = () => {
   const [formError, setFormError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [originalPhoto, setOriginalPhoto] = useState<Blob | null>();
-  const [alert, setAlert] = useState<{ message: string; type: 'success' | 'error' | null }>({ message: '', type: null });
+  const [alert, setAlert] = useState<{
+    message: string;
+    type: "success" | "error" | null;
+  }>({ message: "", type: null });
   const [deviceData, setDeviceData] = useState<DeviceEdit>({
     ItemID: numericItemId,
     DeviceID: 0,
@@ -87,7 +90,10 @@ const DeviceForm: React.FC = () => {
       const maxSizeInBytes = 5 * 1024 * 1024; // 5MB
 
       if (file.size > maxSizeInBytes) {
-        setAlert({ message: "File size exceeds the maximum allowed size (5MB)", type: "error" });
+        setAlert({
+          message: "File size exceeds the maximum allowed size (5MB)",
+          type: "error",
+        });
         return;
       }
 
@@ -96,9 +102,12 @@ const DeviceForm: React.FC = () => {
         .then((compressedFile) => {
           setDeviceData((prev) => ({ ...prev, Photo: compressedFile }));
         })
- .catch((error) => {
+        .catch((error) => {
           console.error("Image compression failed:", error);
-          setAlert({ message: "Image compression failed. Please try another image.", type: "error" });
+          setAlert({
+            message: "Image compression failed. Please try another image.",
+            type: "error",
+          });
         });
     } else {
       setFileName("");
@@ -186,12 +195,16 @@ const DeviceForm: React.FC = () => {
       }
 
       // Success - redirect or show success message
-      setFileName('');
-      setAlert({ message: 'Device entered successfully!', type: 'success' });
-      navigate("/admin/edit"); 
+      setFileName("");
+      setAlert({ message: "Device entered successfully!", type: "success" });
+      navigate("/admin/edit");
     } catch (error) {
-      setAlert({ message: `Error submitting form: ${error}`, type: 'error' });
-      setFormError(`Error submitting form: ${error instanceof Error ? error.message : String(error)}`);
+      setAlert({ message: `Error submitting form: ${error}`, type: "error" });
+      setFormError(
+        `Error submitting form: ${
+          error instanceof Error ? error.message : String(error)
+        }`
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -207,7 +220,7 @@ const DeviceForm: React.FC = () => {
         <AlertPopup
           message={alert.message}
           type={alert.type!}
-          onClose={() => setAlert({ message: '', type: null })}
+          onClose={() => setAlert({ message: "", type: null })}
         />
       )}
       {formError && <div className="error-message form-error">{formError}</div>}

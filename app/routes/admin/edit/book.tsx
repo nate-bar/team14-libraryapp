@@ -24,7 +24,10 @@ const BookForm: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [originalISBN, setOriginalISBN] = useState<string>("");
   const [originalPhoto, setOriginalPhoto] = useState<Blob | null>();
-  const [alert, setAlert] = useState<{ message: string; type: 'success' | 'error' | null }>({ message: '', type: null });
+  const [alert, setAlert] = useState<{
+    message: string;
+    type: "success" | "error" | null;
+  }>({ message: "", type: null });
   const [bookData, setBookData] = useState<BookEdit>({
     ItemID: numericItemId,
     ISBN: "",
@@ -165,7 +168,10 @@ const BookForm: React.FC = () => {
       const maxSizeInBytes = 5 * 1024 * 1024; // 5MB
 
       if (file.size > maxSizeInBytes) {
-        setAlert({ message: "File size exceeds the maximum allowed size (5MB)", type: "error" });
+        setAlert({
+          message: "File size exceeds the maximum allowed size (5MB)",
+          type: "error",
+        });
         return;
       }
 
@@ -180,7 +186,10 @@ const BookForm: React.FC = () => {
         })
         .catch((error) => {
           console.error("Image compression failed:", error);
-          setAlert({ message: "Image compression failed. Please try another image.", type: "error" });
+          setAlert({
+            message: "Image compression failed. Please try another image.",
+            type: "error",
+          });
         });
     } else {
       setFileName("");
@@ -292,11 +301,11 @@ const BookForm: React.FC = () => {
       }
 
       // Success - redirect or show success message
-      setFileName('');
-      setAlert({ message: 'Book entered successfully!', type: 'success' });
+      setFileName("");
+      setAlert({ message: "Book entered successfully!", type: "success" });
       navigate("/admin/edit"); // Redirect to books list
     } catch (error) {
-      setAlert({ message: `Error submitting form: ${error}`, type: 'error' });
+      setAlert({ message: `Error submitting form: ${error}`, type: "error" });
       setFormError(
         `Error submitting form: ${
           error instanceof Error ? error.message : String(error)
@@ -313,11 +322,11 @@ const BookForm: React.FC = () => {
 
   return (
     <div className="admin-container">
-            {alert.message && (
+      {alert.message && (
         <AlertPopup
           message={alert.message}
           type={alert.type!}
-          onClose={() => setAlert({ message: '', type: null })}
+          onClose={() => setAlert({ message: "", type: null })}
         />
       )}
       {formError && <div className="error-message form-error">{formError}</div>}

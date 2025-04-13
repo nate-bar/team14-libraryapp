@@ -14,7 +14,10 @@ const MediaForm: React.FC = () => {
   const [languages, setLanguages] = useState<Languages[]>([]);
   const [fileName, setFileName] = useState<string>("");
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
-  const [alert, setAlert] = useState<{ message: string; type: 'success' | 'error' | null }>({ message: '', type: null });
+  const [alert, setAlert] = useState<{
+    message: string;
+    type: "success" | "error" | null;
+  }>({ message: "", type: null });
   const [mediaData, setMediaData] = useState<MediaInsert>({
     title: "",
     typename: "Media",
@@ -134,7 +137,10 @@ const MediaForm: React.FC = () => {
       const maxSizeInBytes = 5 * 1024 * 1024; // 5MB
 
       if (file.size > maxSizeInBytes) {
-        setAlert({ message: "File size exceeds the maximum allowed size (5MB)", type: "error" });
+        setAlert({
+          message: "File size exceeds the maximum allowed size (5MB)",
+          type: "error",
+        });
         return;
       }
 
@@ -149,7 +155,10 @@ const MediaForm: React.FC = () => {
         })
         .catch((error) => {
           console.error("Image compression failed:", error);
-          setAlert({ message: "Image compression failed. Please try another image.", type: "error" });
+          setAlert({
+            message: "Image compression failed. Please try another image.",
+            type: "error",
+          });
           // setIsLoading(false);
         });
     } else {
@@ -197,7 +206,10 @@ const MediaForm: React.FC = () => {
       const result = await addMedia(mediaData);
 
       if (!result.success) {
-        setAlert({ message: `Error: ${result.error || "Registration failed"}`, type: 'error' });
+        setAlert({
+          message: `Error: ${result.error || "Registration failed"}`,
+          type: "error",
+        });
         return;
       }
 
@@ -219,9 +231,9 @@ const MediaForm: React.FC = () => {
         quantity: 1,
       });
       setFileName("");
-      setAlert({ message: 'Media entered successfully!', type: 'success' });
+      setAlert({ message: "Media entered successfully!", type: "success" });
     } catch (error) {
-      setAlert({ message: `Error submitting form: ${error}`, type: 'error' });
+      setAlert({ message: `Error submitting form: ${error}`, type: "error" });
     } finally {
       // Reset submitting state regardless of success or failure
       setIsSubmitting(false);
@@ -230,11 +242,11 @@ const MediaForm: React.FC = () => {
 
   return (
     <div className="admin-container">
-       {alert.message && (
+      {alert.message && (
         <AlertPopup
           message={alert.message}
           type={alert.type!}
-          onClose={() => setAlert({ message: '', type: null })}
+          onClose={() => setAlert({ message: "", type: null })}
         />
       )}
       <form onSubmit={handleSubmit} className="admin-form">

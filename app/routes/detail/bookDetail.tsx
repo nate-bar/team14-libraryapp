@@ -17,7 +17,6 @@ export default function BookDetail() {
   const [showLoginWarning, setShowLoginWarning] = useState(false);
   const [popupMessage, setPopupMessage] = useState<string | null>(null);
 
-
   useEffect(() => {
     const fetchBookDetails = async () => {
       setLoading(true);
@@ -72,7 +71,7 @@ export default function BookDetail() {
 
   const handleHoldRequest = async () => {
     if (!authData.isLoggedIn) {
-         setShowLoginWarning(true);
+      setShowLoginWarning(true);
       return;
     }
 
@@ -90,7 +89,6 @@ export default function BookDetail() {
 
       const data = await response.json();
 
-
       if (!response.ok) {
         if (response.status === 409) {
           throw new Error(
@@ -104,9 +102,7 @@ export default function BookDetail() {
     } catch (error) {
       console.error("Error submitting hold request:", error);
       setPopupMessage(
-        error instanceof Error
-          ? error.message
-          : "Error submitting hold request"
+        error instanceof Error ? error.message : "Error submitting hold request"
       );
     }
   };
@@ -162,13 +158,13 @@ export default function BookDetail() {
             Place Hold Request
           </button>
         )}
-          {showLoginWarning && (
-    <WarningPopup
-      message="You must be logged in to place a hold request."
-      onClose={() => setShowLoginWarning(false)}
-    />
-  )}
-          {popupMessage && (
+        {showLoginWarning && (
+          <WarningPopup
+            message="You must be logged in to place a hold request."
+            onClose={() => setShowLoginWarning(false)}
+          />
+        )}
+        {popupMessage && (
           <SuccessPopup
             message={popupMessage}
             onClose={() => setPopupMessage(null)}

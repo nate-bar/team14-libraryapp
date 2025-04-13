@@ -1,5 +1,5 @@
 import React from "react";
-import "app/components/buttons/AlertPopup.css"
+import "app/components/buttons/AlertPopup.css";
 
 interface SuccessPopupProps {
   message: string;

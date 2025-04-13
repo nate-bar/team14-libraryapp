@@ -29,7 +29,7 @@ const AddToCartButton: React.FC<AddToCartButtonProps> = ({
 
       if (added) {
         if (onSuccess) onSuccess();
-     setPopupMessage("Item added to cart");
+        setPopupMessage("Item added to cart");
       } else {
         setPopupMessage("Item is already in your cart");
       }
@@ -43,20 +43,23 @@ const AddToCartButton: React.FC<AddToCartButtonProps> = ({
 
   return (
     <>
-    <button
-      className="btn btn-primary"
-      onClick={handleAddToCart}
-      disabled={isAdding || isItemInCart(item.ItemID)}
-    >
-      {isItemInCart(item.ItemID)
-        ? "In Cart"
-        : isAdding
-        ? "Adding..."
-        : "Add to Cart"}
-    </button>
-     {popupMessage && (
-      <AlertPopup message={popupMessage} onClose={() => setPopupMessage(null)} />
-    )}
+      <button
+        className="btn btn-primary"
+        onClick={handleAddToCart}
+        disabled={isAdding || isItemInCart(item.ItemID)}
+      >
+        {isItemInCart(item.ItemID)
+          ? "In Cart"
+          : isAdding
+          ? "Adding..."
+          : "Add to Cart"}
+      </button>
+      {popupMessage && (
+        <AlertPopup
+          message={popupMessage}
+          onClose={() => setPopupMessage(null)}
+        />
+      )}
     </>
   );
 };

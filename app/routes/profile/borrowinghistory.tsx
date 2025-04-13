@@ -66,14 +66,14 @@ export default function BorrowingHistory() {
     if (record.ReturnDate) {
       return "Returned";
     }
-    
+
     const today = new Date();
     const dueDate = new Date(record.DueDate);
-    
+
     if (dueDate < today) {
       return "Overdue";
     }
-    
+
     return "Current";
   };
 
@@ -85,28 +85,28 @@ export default function BorrowingHistory() {
       if (filter === "returned" && status !== "Returned") return false;
       if (filter === "overdue" && status !== "Overdue") return false;
     }
-    
+
     // Apply date range filter
     if (startDate) {
       const recordDate = new Date(record.BorrowDate);
       const filterStart = new Date(startDate);
-      
+
       // Set time to beginning of day for consistent comparison
       filterStart.setHours(0, 0, 0, 0);
-      
+
       if (recordDate < filterStart) return false;
     }
-    
+
     if (endDate) {
       const recordDate = new Date(record.BorrowDate);
       const filterEnd = new Date(endDate);
-      
+
       // Set time to end of day for consistent comparison
       filterEnd.setHours(23, 59, 59, 999);
-      
+
       if (recordDate > filterEnd) return false;
     }
-    
+
     return true;
   });
 
@@ -132,22 +132,24 @@ export default function BorrowingHistory() {
   // Calculate statistics
   const stats = {
     totalItems: borrowingRecords.length,
-    currentlyBorrowed: borrowingRecords.filter(record => !record.ReturnDate).length,
-    overdue: borrowingRecords.filter(record => {
+    currentlyBorrowed: borrowingRecords.filter((record) => !record.ReturnDate)
+      .length,
+    overdue: borrowingRecords.filter((record) => {
       if (record.ReturnDate) return false;
       const today = new Date();
       const dueDate = new Date(record.DueDate);
       return dueDate < today;
     }).length,
-    returnedOnTime: borrowingRecords.filter(record => {
+    returnedOnTime: borrowingRecords.filter((record) => {
       if (!record.ReturnDate) return false;
       const returnDate = new Date(record.ReturnDate);
       const dueDate = new Date(record.DueDate);
       return returnDate <= dueDate;
     }).length,
-    totalFines: borrowingRecords.reduce((sum, record) => 
-      sum + (record.FineAccrued || 0), 0
-    )
+    totalFines: borrowingRecords.reduce(
+      (sum, record) => sum + (record.FineAccrued || 0),
+      0
+    ),
   };
 
   return (
@@ -155,7 +157,7 @@ export default function BorrowingHistory() {
       <ProfilePage />
       <div className="borrowing-history-container">
         <h2 className="section-title">Borrowing History</h2>
-        
+
         {/* Stats Dashboard */}
         <div className="stats-dashboard">
           <div className="stat-card">
@@ -175,11 +177,13 @@ export default function BorrowingHistory() {
             <div className="stat-label">Returned On Time</div>
           </div>
           <div className="stat-card">
-            <div className="stat-number">{formatCurrency(stats.totalFines)}</div>
+            <div className="stat-number">
+              {formatCurrency(stats.totalFines)}
+            </div>
             <div className="stat-label">Total Fines</div>
           </div>
         </div>
-        
+
         <div className="filter-controls">
           <div className="date-filter">
             <div className="date-range-title">Filter by Borrow Date:</div>
@@ -206,11 +210,13 @@ export default function BorrowingHistory() {
               </div>
             </div>
           </div>
-          
+
           <div className="status-filter">
-            <label htmlFor="filter" className="filter-label">Status:</label>
-            <select 
-              id="filter" 
+            <label htmlFor="filter" className="filter-label">
+              Status:
+            </label>
+            <select
+              id="filter"
               className="filter-select"
               value={filter}
               onChange={(e) => setFilter(e.target.value)}
@@ -221,8 +227,8 @@ export default function BorrowingHistory() {
               <option value="overdue">Overdue Items</option>
             </select>
           </div>
-          
-          <button 
+
+          <button
             className="reset-button"
             onClick={() => {
               setStartDate("");
@@ -233,7 +239,7 @@ export default function BorrowingHistory() {
             Reset Filters
           </button>
         </div>
-        
+
         <div className="results-count">
           Showing {filteredRecords.length} of {borrowingRecords.length} records
         </div>
@@ -255,15 +261,26 @@ export default function BorrowingHistory() {
               <tbody>
                 {filteredRecords.map((record) => {
                   const status = getStatus(record);
-                  
+
                   return (
-                    <tr key={record.BorrowID} className={`status-${status.toLowerCase()}`}>
+                    <tr
+                      key={record.BorrowID}
+                      className={`status-${status.toLowerCase()}`}
+                    >
                       <td>{record.Title}</td>
                       <td>{record.TypeName}</td>
                       <td>{formatDate(record.BorrowDate)}</td>
                       <td>{formatDate(record.DueDate)}</td>
-                      <td>{record.ReturnDate ? formatDate(record.ReturnDate) : "Not returned"}</td>
-                      <td className={`status-cell status-${status.toLowerCase()}`}>{status}</td>
+                      <td>
+                        {record.ReturnDate
+                          ? formatDate(record.ReturnDate)
+                          : "Not returned"}
+                      </td>
+                      <td
+                        className={`status-cell status-${status.toLowerCase()}`}
+                      >
+                        {status}
+                      </td>
                       <td>{formatCurrency(record.FineAccrued)}</td>
                     </tr>
                   );

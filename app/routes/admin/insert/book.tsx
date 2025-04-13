@@ -15,7 +15,10 @@ const BookForm: React.FC = () => {
   const [fileName, setFileName] = useState<string>("");
 
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
-   const [alert, setAlert] = useState<{ message: string; type: 'success' | 'error' | null }>({ message: '', type: null });
+  const [alert, setAlert] = useState<{
+    message: string;
+    type: "success" | "error" | null;
+  }>({ message: "", type: null });
   const [bookData, setBookData] = useState<BookInsert>({
     isbn: "",
     title: "",
@@ -135,7 +138,10 @@ const BookForm: React.FC = () => {
       const maxSizeInBytes = 5 * 1024 * 1024; // 5MB
 
       if (file.size > maxSizeInBytes) {
-        setAlert({ message: "File size exceeds the maximum allowed size (5MB)", type: "error" });
+        setAlert({
+          message: "File size exceeds the maximum allowed size (5MB)",
+          type: "error",
+        });
         return;
       }
 
@@ -150,7 +156,10 @@ const BookForm: React.FC = () => {
         })
         .catch((error) => {
           console.error("Image compression failed:", error);
-          setAlert({ message: "Image compression failed. Please try another image.", type: "error" });
+          setAlert({
+            message: "Image compression failed. Please try another image.",
+            type: "error",
+          });
           // setIsLoading(false);
         });
     } else {
@@ -200,10 +209,13 @@ const BookForm: React.FC = () => {
       const result = await addBook(bookData);
 
       if (!result.success) {
-        setAlert({ message: `Error: ${result.error || "Registration failed"}`, type: 'error' });
+        setAlert({
+          message: `Error: ${result.error || "Registration failed"}`,
+          type: "error",
+        });
         return;
       }
-      
+
       console.log("Success:", result);
 
       // Clear form
@@ -222,9 +234,9 @@ const BookForm: React.FC = () => {
         summary: "",
       });
       setFileName("");
-      setAlert({ message: 'Book entered successfully!', type: 'success' });
+      setAlert({ message: "Book entered successfully!", type: "success" });
     } catch (error) {
-      setAlert({ message: `Error submitting form: ${error}`, type: 'error' });
+      setAlert({ message: `Error submitting form: ${error}`, type: "error" });
     } finally {
       // Reset submitting state regardless of success or failure
       setIsSubmitting(false);
@@ -233,11 +245,11 @@ const BookForm: React.FC = () => {
 
   return (
     <div className="admin-container">
-          {alert.message && (
+      {alert.message && (
         <AlertPopup
           message={alert.message}
           type={alert.type!}
-          onClose={() => setAlert({ message: '', type: null })}
+          onClose={() => setAlert({ message: "", type: null })}
         />
       )}
       <form onSubmit={handleSubmit} className="admin-form">
