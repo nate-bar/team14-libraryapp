@@ -118,7 +118,15 @@ const BookForm: React.FC = () => {
     const { isbn, title, authors, publisher, genreid, publicationyear } =
       bookData;
 
-    if (!isbn) newErrors.isbn = "Enter a value for ISBN";
+    if (!isbn) {
+      newErrors.isbn = "Enter a value for ISBN";
+    } else {
+      const isbnDigits = isbn.replace(/[-\s]/g, "");
+
+      if (!/^\d{13}$/.test(isbnDigits)) {
+        newErrors.isbn = "ISBN must contain exactly 13 digits";
+      }
+    }
     if (!title) newErrors.title = "Enter a title";
     if (!authors) newErrors.authors = "Enter a value for author";
     if (!publisher) newErrors.publisher = "Enter a value for publisher";

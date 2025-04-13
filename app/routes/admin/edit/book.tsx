@@ -230,6 +230,13 @@ const BookForm: React.FC = () => {
     if (!bookData.ISBN.trim()) {
       newErrors.ISBN = "ISBN is required";
       isValid = false;
+    } else {
+      const isbnDigits = bookData.ISBN.replace(/[-\s]/g, "");
+
+      if (!/^\d{13}$/.test(isbnDigits)) {
+        newErrors.ISBN = "ISBN must contain exactly 13 digits";
+        isValid = false;
+      }
     }
 
     if (!bookData.Title.trim()) {
