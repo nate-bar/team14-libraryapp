@@ -11,6 +11,8 @@ import path from "path";
 import multer from "multer";
 // Load environment variables
 import dotenv from "dotenv";
+import cron from 'node-cron';
+
 dotenv.config();
 
 const upload = multer({ storage: multer.memoryStorage() });
@@ -1712,81 +1714,12 @@ app.post("/profile/api/return", (req, res) => {
       });
     });
   } catch (err) {
-    console.error("Checkout error:", err);
-    res.status(500).json({ error: "Server error processing checkout" });
-    return;
+    console.error("Return error:", err);
+    res.status(500).json({ error: "Server error processing return" });
   }
 });
-app.get("/api/borrowing-history/:memberid", (req, res) => {
-  const memberId = req.params.memberid;
 
-  pool.getConnection((err, connection) => {
-    if (err) {
-      console.error("Database connection error:", err);
-      return res.status(500).json({ error: "Database connection error" });
-    }
 
-    // First, get current borrows from borrowrecord table
-    const currentBorrowsQuery = `
-      SELECT 
-        br.BorrowID,
-        br.ItemID,
-        i.Title,
-        it.TypeName,
-        br.BorrowDate,
-        br.DueDate,
-        NULL as ReturnDate,
-        br.FineAccrued
-      FROM borrowrecord br
-      JOIN Items i ON br.ItemID = i.ItemID
-      JOIN ItemTypes it ON i.ItemID = it.ItemID
-      WHERE br.MemberID = ?
-    `;
-
-    // Then, get past borrows from returnrecord table
-    const pastBorrowsQuery = `
-      SELECT 
-        rr.ReturnID as BorrowID,
-        rr.ItemID,
-        i.Title,
-        it.TypeName,
-        rr.BorrowDate,
-        rr.DueDate,
-        rr.ReturnDate,
-        rr.FineAccrued
-      FROM returnrecord rr
-      JOIN Items i ON rr.ItemID = i.ItemID
-      JOIN ItemTypes it ON i.ItemID = it.ItemID
-      WHERE rr.MemberID = ?
-    `;
-
-    // Run both queries and combine the results
-    connection.query(currentBorrowsQuery, [memberId], (err, currentBorrows) => {
-      if (err) {
-        connection.release();
-        console.error("Error fetching current borrows:", err);
-        return res.status(500).json({ error: "Database query error" });
-      }
-
-      connection.query(pastBorrowsQuery, [memberId], (err, pastBorrows) => {
-        connection.release();
-        
-        if (err) {
-          console.error("Error fetching past borrows:", err);
-          return res.status(500).json({ error: "Database query error" });
-        }
-
-        // Combine both result sets
-        const allBorrows = [...currentBorrows, ...pastBorrows];
-        
-        // Sort by borrow date (newest first)
-        allBorrows.sort((a, b) => new Date(b.BorrowDate) - new Date(a.BorrowDate));
-        
-        res.json(allBorrows);
-      });
-    });
-  });
-});
 app.post("/api/checkout", (req, res) => {
   try {
     const { items, memberID } = req.body;
@@ -2220,6 +2153,102 @@ app.post("/api/fulfillhold", async (req, res) => {
   }
 });
 
+
+cron.schedule('* * * * *', () => {
+  console.log('Running overdue charge check...');
+
+  pool.getConnection((err, connection) => {
+    if (err) {
+      console.error('Connection error:', err);
+      return;
+    }
+
+    const overdueQuery = `
+      SELECT br.MemberID, br.ItemID, it.TypeName
+      FROM BorrowRecord br
+      JOIN itemtypes it ON br.ItemID = it.ItemID
+      WHERE br.ReturnDate IS NULL
+        AND br.DueDate < CURDATE()
+        AND NOT EXISTS (
+          SELECT 1 FROM overduecharges oc 
+          WHERE oc.MemberID = br.MemberID 
+          AND oc.ItemID = br.ItemID
+        )
+    `;
+
+    connection.query(overdueQuery, (err, overdues) => {
+      if (err) {
+        console.error('Query error:', err);
+        connection.release();
+        return;
+      }
+
+      let processed = 0;
+      if (overdues.length === 0) {
+        connection.release();
+        return;
+      }
+
+      overdues.forEach(row => {
+        const { MemberID, ItemID, TypeName } = row;
+
+        connection.query(
+          'SELECT FineAmount FROM fines WHERE FineID = ?',
+          [TypeName],
+          (err, fineResults) => {
+            if (err || !fineResults.length) {
+              console.error('Fine lookup error:', err);
+              if (++processed === overdues.length) connection.release();
+              return;
+            }
+
+            const fineAmount = fineResults[0].FineAmount;
+
+            connection.query(
+              `INSERT INTO overduecharges (MemberID, ItemID, Amount, ChargedAt)
+               VALUES (?, ?, ?, NOW())`,
+              [MemberID, ItemID, fineAmount],
+              (err) => {
+                if (err) console.error('Insert error:', err);
+                else console.log(`Charged $${fineAmount} to Member ${MemberID} for Item ${ItemID}`);
+                if (++processed === overdues.length) connection.release();
+              }
+            );
+          }
+        );
+      });
+    });
+  });
+});
+// Every day at midnight, the cron job checks for pending notifications
+cron.schedule('0 0 * * *', () => {
+  pool.getConnection((err, connection) => {
+    if (err) {
+      console.error("Error getting connection:", err);
+      return;
+    }
+
+    const updateQuery = `
+      UPDATE PendingNotifications 
+      SET processed = 1
+      WHERE DATEDIFF(notify_at, CURDATE()) = 3 AND processed = 0
+    `;
+
+    connection.query(updateQuery, (err, results) => {
+      connection.release();
+
+      if (err) {
+        console.error("Error updating PendingNotifications:", err);
+        return;
+      }
+
+      console.log(`✅ Updated ${results.affectedRows} pending notifications.`);
+    });
+  });
+});
+
+
+// API endpoint: Get borrowed items for a member
 app.get("/profile/api/borroweditems/:memberID", (req, res) => {
   const { memberID } = req.params;
 
