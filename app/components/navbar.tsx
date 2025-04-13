@@ -84,7 +84,7 @@ export function NavBar({ isLoggedIn, groupID, memberID }: AuthData) {
               style={{ listStyleType: "none" }}
             >
               <li className="text-nav mx-4">
-                <Link to="/profile">Profile</Link>
+                <Link to="/dashboard">Profile</Link>
               </li>
             </ul>
 
