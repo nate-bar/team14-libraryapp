@@ -87,7 +87,9 @@ app.post("/api/pay", (req, res) => {
   pool.getConnection((err, connection) => {
     if (err) {
       console.error("Error getting DB connection:", err);
-      return res.status(500).json({ success: false, message: "Payment processing error" });
+      return res
+        .status(500)
+        .json({ success: false, message: "Payment processing error" });
     }
 
     // Start a transaction
@@ -139,6 +141,7 @@ app.post("/api/pay", (req, res) => {
           Promise.all(updates)
             .then(() => {
               connection.commit(err => {
+                connection.release();
                 if (err) {
                   return connection.rollback(() => {
                     connection.release();
