@@ -19,7 +19,9 @@ export default function CreateEventPage() {
 
     if (!response.ok) {
       const errorData = await response.json();
-      throw new Error(errorData.error || errorData.details || "Failed to create event");
+      throw new Error(
+        errorData.error || errorData.details || "Failed to create event"
+      );
     }
 
     return await response.json();
@@ -27,7 +29,6 @@ export default function CreateEventPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
 
     if (new Date(startDate) > new Date(endDate)) {
       setMessage("Start date must be before end date!");
@@ -98,7 +99,7 @@ export default function CreateEventPage() {
     <div className="create-event-container">
       <h1 className="create-event-title">Event Creation Form</h1>
       <form onSubmit={handleSubmit} className="create-event-form">
-      <label className="create-event-label">Event Name:</label>
+        <label className="create-event-label">Event Name:</label>
         <input
           type="text"
           value={eventName}
@@ -145,25 +146,25 @@ export default function CreateEventPage() {
             ref={fileInputRef}
             required
           />
-        Upload Photo
-      </label>
-      <span className="file-chosen-text">
-        {photo ? `Chosen file: ${photo.name}` : "No file chosen"}
-        {previewUrl && (
-          <img
-            src={previewUrl}
-            alt="Event preview"
-            className="create-event-image-preview"
-          />
-        )}
-      </span>
-      <button
-        type="submit"
-        className="create-event-button"
-        disabled={isSubmitting || !formIsValid}
-      >
-        {isSubmitting ? "Creating Event..." : "Create Event"}
-      </button>
+          Upload Photo
+        </label>
+        <span className="file-chosen-text">
+          {photo ? `Chosen file: ${photo.name}` : "No file chosen"}
+          {previewUrl && (
+            <img
+              src={previewUrl}
+              alt="Event preview"
+              className="create-event-image-preview"
+            />
+          )}
+        </span>
+        <button
+          type="submit"
+          className="create-event-button"
+          disabled={isSubmitting || !formIsValid}
+        >
+          {isSubmitting ? "Creating Event..." : "Create Event"}
+        </button>
       </form>
       {message && <p className="create-event-message">{message}</p>}
     </div>

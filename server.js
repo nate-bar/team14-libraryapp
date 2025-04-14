@@ -55,6 +55,61 @@ const pool = mysql.createPool({
 //---------------------CODE FOR API'S HERE--------------------
 */
 
+app.post("/api/deleteitem", (req, res) => {
+  const { itemid } = req.body;
+
+  pool.getConnection((err, connection) => {
+    if (err) {
+      console.error("Database connection error:", err);
+      return res.status(500).json({ error: "Database connection error" });
+    }
+
+    // First delete from itemtypes table
+    connection.query(
+      `DELETE FROM itemtypes WHERE ItemID = ? LIMIT 1`,
+      [itemid],
+      (err, results) => {
+        if (err) {
+          connection.release();
+          console.error("Error deleting from itemtypes:", err);
+          return res
+            .status(500)
+            .json({ error: "Error deleting from itemtypes" });
+        }
+
+        // Then delete from items table
+        connection.query(
+          `DELETE FROM items WHERE ItemID = ? LIMIT 1`,
+          [itemid],
+          (err, results) => {
+            connection.release(); // Release the connection
+
+            if (err) {
+              console.error("Error deleting from items:", err);
+              return res
+                .status(500)
+                .json({ error: "Error deleting from items" });
+            }
+
+            // Check if any rows were actually deleted
+            if (results.affectedRows === 0) {
+              return res
+                .status(404)
+                .json({ message: "Item not found or already deleted" });
+            }
+
+            // Return success response
+            return res.status(200).json({
+              message: "Item successfully deleted",
+              itemid: itemid,
+            });
+          }
+        );
+      }
+    );
+  });
+});
+
 app.get("/api/borrowing-history/:memberid", (req, res) => {
   const memberId = req.params.memberid;
 
@@ -263,33 +318,33 @@ function handleQuantityInserts(
 }
 
 // -----------------------------------------UPDATE EVENT-----------------------------------------
-app.put('/api/events/:eventId', upload.single('EventPhoto'), (req, res) => {
+app.put("/api/events/:eventId", upload.single("EventPhoto"), (req, res) => {
   const { eventId } = req.params;
   const { EventName, StartDate, EndDate } = req.body;
   const EventPhoto = req.file ? req.file.buffer : null;
-  
+
   let query = `UPDATE events SET EventName = ?, StartDate = ?, EndDate = ?`;
   const params = [EventName, StartDate, EndDate];
-  
+
   if (EventPhoto) {
     query += `, EventPhoto = ?`;
     params.push(EventPhoto);
   }
-  
+
   query += ` WHERE EventID = ?`;
   params.push(eventId);
-  
+
   pool.query(query, params, (err, result) => {
     if (err) {
       console.error("Error updating event:", err);
-      return res.status(500).json({ error: 'Failed to update event.' });
+      return res.status(500).json({ error: "Failed to update event." });
     }
-  
+
     if (result.affectedRows === 0) {
-      return res.status(404).json({ message: 'Event not found.' });
+      return res.status(404).json({ message: "Event not found." });
     }
-  
-    res.json({ message: 'Event updated successfully.' });
+
+    res.json({ message: "Event updated successfully." });
   });
 });
 
@@ -319,7 +374,9 @@ app.delete("/api/events/:EventID", (req, res) => {
             return connection.rollback(() => {
               connection.release();
               console.error("Error deleting from eventitems:", err);
-              res.status(500).json({ error: "Failed to delete associated items" });
+              res
+                .status(500)
+                .json({ error: "Failed to delete associated items" });
             });
           }
 
@@ -352,7 +409,9 @@ app.delete("/api/events/:EventID", (req, res) => {
                 }
 
                 connection.release();
-                res.json({ message: `Event ${EventID} and associated items deleted successfully` });
+                res.json({
+                  message: `Event ${EventID} and associated items deleted successfully`,
+                });
               });
             }
           );
@@ -362,13 +421,15 @@ app.delete("/api/events/:EventID", (req, res) => {
   });
 });
 
-// -----------------------------------------DELETE ITEMS FROM EVENT----------------------------------------- 
+// -----------------------------------------DELETE ITEMS FROM EVENT-----------------------------------------
 app.post("/api/events/:EventID/items/delete", (req, res) => {
   const { EventID } = req.params;
   const { ItemIDs } = req.body;
 
   if (!Array.isArray(ItemIDs) || ItemIDs.length === 0) {
-    return res.status(400).json({ error: "ItemIDs must be a non-empty array." });
+    return res
+      .status(400)
+      .json({ error: "ItemIDs must be a non-empty array." });
   }
 
   // Prepare query with placeholders for ItemIDs
@@ -388,15 +449,18 @@ app.post("/api/events/:EventID/items/delete", (req, res) => {
     }
 
     if (result.affectedRows === 0) {
-      return res.status(404).json({ message: "No matching items found in this event." });
+      return res
+        .status(404)
+        .json({ message: "No matching items found in this event." });
     }
 
-    res.json({ message: `${result.affectedRows} item(s) removed from event ${EventID}` });
+    res.json({
+      message: `${result.affectedRows} item(s) removed from event ${EventID}`,
+    });
   });
 });
 
-
-// -----------------------------------------GET ITEMS FROM EVENT----------------------------------------- 
+// -----------------------------------------GET ITEMS FROM EVENT-----------------------------------------
 app.get("/api/events/:EventID/items", (req, res) => {
   const { EventID } = req.params;
 
@@ -431,11 +495,13 @@ app.get("/api/events/:EventID/items", (req, res) => {
     }
 
     if (results.length === 0) {
-      return res.status(404).json({ message: "No items found for this event." });
+      return res
+        .status(404)
+        .json({ message: "No items found for this event." });
     }
 
     // Process results to handle potential null Genre and Photo values
-    const formattedResults = results.map(item => ({
+    const formattedResults = results.map((item) => ({
       ItemID: item.ItemID,
       Title: item.Title,
       TypeName: item.TypeName,
@@ -452,19 +518,25 @@ app.get("/api/events/:EventID/items", (req, res) => {
   });
 });
 
-// -----------------------------------------ADD ITEMS TO EVENT----------------------------------------- 
+// -----------------------------------------ADD ITEMS TO EVENT-----------------------------------------
 app.post("/api/events/:EventID/items", async (req, res) => {
   const { EventID } = req.params;
   const { ItemID } = req.body;
   const itemIds = Array.isArray(ItemID) ? ItemID : [ItemID];
-  const placeholders = itemIds.map(() => '?').join(', ');
+  const placeholders = itemIds.map(() => "?").join(", ");
 
-  if (!Array.isArray(ItemID) && typeof ItemID !== 'string' && typeof ItemID !== 'number') {
+  if (
+    !Array.isArray(ItemID) &&
+    typeof ItemID !== "string" &&
+    typeof ItemID !== "number"
+  ) {
     return res.status(400).json({ error: "Invalid ItemID(s) format." });
   }
 
   if (itemIds.length === 0) {
-    return res.status(400).json({ error: "No ItemID(s) provided in the request body." });
+    return res
+      .status(400)
+      .json({ error: "No ItemID(s) provided in the request body." });
   }
 
   pool.query(
@@ -488,7 +560,7 @@ app.post("/api/events/:EventID/items", async (req, res) => {
 
       const processNextItem = (index) => {
         if (index >= itemIds.length) {
-          const allSuccessful = responses.every(r => r.success === true);
+          const allSuccessful = responses.every((r) => r.success === true);
           const statusCode = allSuccessful ? 201 : 207;
           const message = allSuccessful
             ? "All items added successfully."
@@ -504,7 +576,7 @@ app.post("/api/events/:EventID/items", async (req, res) => {
           responses.push({
             itemId: currentItemID,
             success: false,
-            error: "Item not found"
+            error: "Item not found",
           });
           return processNextItem(index + 1);
         }
@@ -516,7 +588,7 @@ app.post("/api/events/:EventID/items", async (req, res) => {
               itemId: currentItemID,
               itemName: details?.Title || null,
               success: false,
-              error: "Connection error"
+              error: "Connection error",
             });
             return processNextItem(index + 1);
           }
@@ -529,13 +601,13 @@ app.post("/api/events/:EventID/items", async (req, res) => {
                 itemId: currentItemID,
                 itemName: details?.Title || null,
                 success: false,
-                error: "Transaction start error"
+                error: "Transaction start error",
               });
               return processNextItem(index + 1);
             }
 
             connection.query(
-              'SELECT EventID, EventName FROM events WHERE EventID = ?',
+              "SELECT EventID, EventName FROM events WHERE EventID = ?",
               [EventID],
               (err, eventRows) => {
                 if (err || eventRows.length === 0) {
@@ -549,7 +621,7 @@ app.post("/api/events/:EventID/items", async (req, res) => {
                       itemId: currentItemID,
                       itemName: details?.Title || null,
                       success: false,
-                      error: errorMsg
+                      error: errorMsg,
                     });
                     processNextItem(index + 1);
                   });
@@ -557,10 +629,11 @@ app.post("/api/events/:EventID/items", async (req, res) => {
 
                 const itemType = details.TypeName;
                 const isbnToInsert = itemType === "Book" ? details.ISBN : null;
-                const mediaIDToInsert = itemType === "Media" ? details.MediaID : null;
+                const mediaIDToInsert =
+                  itemType === "Media" ? details.MediaID : null;
 
                 connection.query(
-                  'SELECT eventID, ItemID FROM eventitems WHERE eventID = ? AND ItemID = ?',
+                  "SELECT eventID, ItemID FROM eventitems WHERE eventID = ? AND ItemID = ?",
                   [EventID, currentItemID],
                   (err, existingLink) => {
                     if (err || existingLink.length > 0) {
@@ -574,14 +647,14 @@ app.post("/api/events/:EventID/items", async (req, res) => {
                           itemId: currentItemID,
                           itemName: details?.Title || null,
                           success: false,
-                          error: errorMsg
+                          error: errorMsg,
                         });
                         processNextItem(index + 1);
                       });
                     }
 
                     connection.query(
-                      'INSERT INTO eventitems (eventID, ItemID, ISBN, mediaID) VALUES (?, ?, ?, ?)',
+                      "INSERT INTO eventitems (eventID, ItemID, ISBN, mediaID) VALUES (?, ?, ?, ?)",
                       [EventID, currentItemID, isbnToInsert, mediaIDToInsert],
                       (err) => {
                         if (err) {
@@ -592,7 +665,7 @@ app.post("/api/events/:EventID/items", async (req, res) => {
                               itemId: currentItemID,
                               itemName: details?.Title || null,
                               success: false,
-                              error: `Failed to add item: ${err.message}`
+                              error: `Failed to add item: ${err.message}`,
                             });
                             processNextItem(index + 1);
                           });
@@ -606,7 +679,7 @@ app.post("/api/events/:EventID/items", async (req, res) => {
                                 itemId: currentItemID,
                                 itemName: details?.Title || null,
                                 success: false,
-                                error: "Commit error"
+                                error: "Commit error",
                               });
                               processNextItem(index + 1);
                             });
@@ -617,7 +690,7 @@ app.post("/api/events/:EventID/items", async (req, res) => {
                             itemId: currentItemID,
                             itemName: details.Title,
                             eventName: eventRows[0].EventName,
-                            success: true
+                            success: true,
                           });
                           processNextItem(index + 1);
                         });
@@ -664,7 +737,9 @@ app.get("/api/events/:EventID", (req, res) => {
     // Format the EventPhoto as a data URL
     const formattedResult = {
       ...results[0],
-      EventPhoto: results[0].EventPhoto ? `data:image/jpeg;base64,${results[0].EventPhoto}` : null,
+      EventPhoto: results[0].EventPhoto
+        ? `data:image/jpeg;base64,${results[0].EventPhoto}`
+        : null,
     };
 
     res.json(formattedResult);
@@ -682,9 +757,9 @@ app.get("/api/events", (req, res) => {
         return;
       }
 
-      const formatted = results.map(row => ({
+      const formatted = results.map((row) => ({
         ...row,
-        EventPhoto: `data:image/jpeg;base64,${row.EventPhoto}`
+        EventPhoto: `data:image/jpeg;base64,${row.EventPhoto}`,
       }));
 
       res.json(formatted);
@@ -698,7 +773,9 @@ app.post("/api/createevent", upload.single("photo"), (req, res) => {
   const photo = req.file ? req.file.buffer : null;
 
   if (!EventName || !StartDate || !EndDate || !photo) {
-    return res.status(400).json({ error: "All fields and photo are required." });
+    return res
+      .status(400)
+      .json({ error: "All fields and photo are required." });
   }
 
   pool.getConnection((err, connection) => {
@@ -712,20 +789,26 @@ app.post("/api/createevent", upload.single("photo"), (req, res) => {
       VALUES (?, ?, ?, ?);
     `;
 
-    connection.query(query, [EventName, StartDate, EndDate, photo], (error, results) => {
-      connection.release();
+    connection.query(
+      query,
+      [EventName, StartDate, EndDate, photo],
+      (error, results) => {
+        connection.release();
 
-      if (error) {
-        console.error("Event Insert Error:", error);
-        return res.status(500).json({ error: "Failed to create event", details: error.message });
+        if (error) {
+          console.error("Event Insert Error:", error);
+          return res
+            .status(500)
+            .json({ error: "Failed to create event", details: error.message });
+        }
+
+        res.status(201).json({
+          success: true,
+          message: "Event created successfully",
+          eventId: results.insertId,
+        });
       }
-
-      res.status(201).json({
-        success: true,
-        message: "Event created successfully",
-        eventId: results.insertId,
-      });
-    });
+    );
   });
 });
 

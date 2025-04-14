@@ -25,7 +25,9 @@ export default function Admin() {
 
   // Function to check if a link is active
   const isLinkActive = (path: string): boolean => {
-    return location.pathname === (path) || location.pathname.startsWith(`${path}/`);;
+    return (
+      location.pathname === path || location.pathname.startsWith(`${path}/`)
+    );
   };
 
   const adminTabs = [

@@ -46,7 +46,9 @@ const AddItemToEvent = () => {
       })
       .then((data) => {
         if (Array.isArray(data)) {
-          const nonDeviceItems = data.filter((item) => item.TypeName !== "Device");
+          const nonDeviceItems = data.filter(
+            (item) => item.TypeName !== "Device"
+          );
           setItems(nonDeviceItems);
           setFilteredItems(nonDeviceItems);
         } else {
@@ -63,7 +65,9 @@ const AddItemToEvent = () => {
   useEffect(() => {
     const lowerQuery = searchQuery.toLowerCase();
     const filtered = items
-      .filter((item) => !selectedItems.some((sel) => sel.ItemID === item.ItemID))
+      .filter(
+        (item) => !selectedItems.some((sel) => sel.ItemID === item.ItemID)
+      )
       .filter((item) => item.Title.toLowerCase().includes(lowerQuery));
     setFilteredItems(filtered);
   }, [searchQuery, items, selectedItems]);
@@ -77,20 +81,33 @@ const AddItemToEvent = () => {
 
   const handleItemSelection = (item: Items) => {
     // Prevent adding duplicate items
-    if (!selectedItems.some((selectedItem) => selectedItem.ItemID === item.ItemID)) {
+    if (
+      !selectedItems.some((selectedItem) => selectedItem.ItemID === item.ItemID)
+    ) {
       setSelectedItems([...selectedItems, item]);
-      setFilteredItems(filteredItems.filter((filteredItem) => filteredItem.ItemID !== item.ItemID)); // Remove selected item from search list
+      setFilteredItems(
+        filteredItems.filter(
+          (filteredItem) => filteredItem.ItemID !== item.ItemID
+        )
+      ); // Remove selected item from search list
       setShowResults(false); // Close dropdown after selection
     }
   };
 
   const handleRemoveItem = (item: Items) => {
-    setSelectedItems(selectedItems.filter((selectedItem) => selectedItem.ItemID !== item.ItemID));
+    setSelectedItems(
+      selectedItems.filter(
+        (selectedItem) => selectedItem.ItemID !== item.ItemID
+      )
+    );
   };
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (searchContainerRef.current && !searchContainerRef.current.contains(event.target as Node)) {
+      if (
+        searchContainerRef.current &&
+        !searchContainerRef.current.contains(event.target as Node)
+      ) {
         setShowResults(false);
       }
     };
@@ -120,7 +137,9 @@ const AddItemToEvent = () => {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ ItemID: selectedItems.map((item) => item.ItemID) }),
+        body: JSON.stringify({
+          ItemID: selectedItems.map((item) => item.ItemID),
+        }),
       });
 
       const responseData = await response.json();
@@ -133,9 +152,13 @@ const AddItemToEvent = () => {
 
           results.forEach((res) => {
             if (res.success) {
-              successMessages.push(`${res.itemName} added to ${res.eventName} successfully!`);
+              successMessages.push(
+                `${res.itemName} added to ${res.eventName} successfully!`
+              );
             } else {
-              errorMessages.push(`Failed to add ${res.itemName || res.itemId}, ${res.error}`);
+              errorMessages.push(
+                `Failed to add ${res.itemName || res.itemId}, ${res.error}`
+              );
             }
           });
 
@@ -151,7 +174,9 @@ const AddItemToEvent = () => {
           setAddErrorMessages([]);
         }, 10000);
       } else {
-        setAddItemError(responseData?.error || `Failed to add item: ${response.status}`);
+        setAddItemError(
+          responseData?.error || `Failed to add item: ${response.status}`
+        );
         setAddItemStatus(null);
         setAddSuccessMessages([]);
         setAddErrorMessages([]);
@@ -165,15 +190,12 @@ const AddItemToEvent = () => {
     }
   };
 
-
   return (
     <div className="add-item-to-event-container">
       <h2 className="add-item-to-event-title">Event-Item Population Form</h2>
 
       {/* Event Selector */}
-      <div className="add-item-to-event-entry-titles">
-        Select Event:
-      </div>
+      <div className="add-item-to-event-entry-titles">Select Event:</div>
       <div className="form-search-dropdown-container">
         {loadingEvents ? (
           <p>Loading events...</p>
@@ -187,7 +209,8 @@ const AddItemToEvent = () => {
             <option value="">-- Select an Event --</option>
             {events.map((event) => (
               <option key={event.EventID} value={event.EventID}>
-                {event.EventName} ({new Date(event.StartDate).toLocaleDateString()} -{" "}
+                {event.EventName} (
+                {new Date(event.StartDate).toLocaleDateString()} -{" "}
                 {new Date(event.EndDate).toLocaleDateString()})
               </option>
             ))}
@@ -196,17 +219,17 @@ const AddItemToEvent = () => {
       </div>
 
       {selectedEvent && selectedEvent.EventPhoto && (
-      <div className="event-photo-display">
-      <div className="add-item-to-event-entry-titles">Event Photo:</div>
-      <img
-        src={selectedEvent.EventPhoto}
-        alt={selectedEvent.EventName}
-        style={{ maxWidth: '400px', maxHeight: '500px' }}
-      />
-      </div>
+        <div className="event-photo-display">
+          <div className="add-item-to-event-entry-titles">Event Photo:</div>
+          <img
+            src={selectedEvent.EventPhoto}
+            alt={selectedEvent.EventName}
+            style={{ maxWidth: "400px", maxHeight: "500px" }}
+          />
+        </div>
       )}
       {selectedEvent && !selectedEvent.EventPhoto && (
-      <p style={{ marginTop: '10px' }}>No photo available for this event.</p>
+        <p style={{ marginTop: "10px" }}>No photo available for this event.</p>
       )}
 
       {/* Item Search Input */}
@@ -233,7 +256,8 @@ const AddItemToEvent = () => {
                   className="form-search-dropdown-item"
                   onClick={() => handleItemSelection(item)}
                 >
-                  {item.Title} <span className="available-items">({item.TypeName})</span>
+                  {item.Title}{" "}
+                  <span className="available-items">({item.TypeName})</span>
                 </div>
               ))
             ) : (
@@ -281,23 +305,38 @@ const AddItemToEvent = () => {
       {addErrorMessages.length > 0 && (
         <div className="add-item-to-event-error">
           {addErrorMessages.map((msg, index) => (
-            <p key={`error-${index}`} dangerouslySetInnerHTML={{ __html: msg }} />
+            <p
+              key={`error-${index}`}
+              dangerouslySetInnerHTML={{ __html: msg }}
+            />
           ))}
         </div>
       )}
       {addSuccessMessages.length > 0 && (
         <div className="add-item-to-event-success">
           {addSuccessMessages.map((msg, index) => (
-            <p key={`success-${index}`} dangerouslySetInnerHTML={{ __html: msg }} />
+            <p
+              key={`success-${index}`}
+              dangerouslySetInnerHTML={{ __html: msg }}
+            />
           ))}
         </div>
       )}
       {addItemError && addSuccessMessages.length === 0 && (
-        <p className="add-item-to-event-error" dangerouslySetInnerHTML={{ __html: addItemError }} />
+        <p
+          className="add-item-to-event-error"
+          dangerouslySetInnerHTML={{ __html: addItemError }}
+        />
       )}
-      {addItemStatus && addSuccessMessages.length === 0 && addErrorMessages.length === 0 && addItemStatus !== "Adding item(s)..." && (
-        <p className="add-item-to-event-success" dangerouslySetInnerHTML={{ __html: addItemStatus }} />
-      )}
+      {addItemStatus &&
+        addSuccessMessages.length === 0 &&
+        addErrorMessages.length === 0 &&
+        addItemStatus !== "Adding item(s)..." && (
+          <p
+            className="add-item-to-event-success"
+            dangerouslySetInnerHTML={{ __html: addItemStatus }}
+          />
+        )}
     </div>
   );
 };

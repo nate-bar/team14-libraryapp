@@ -1,174 +1,171 @@
 /* Main container for the edit event form */
 .edit-event-container {
-    max-width: 28rem;
-    margin: 0 auto;
-    padding: 1rem;
-    background-color: #ffffff;
-    border-radius: 0.5rem;
-    
-  }
-  
-  /* Form title styling */
-  .edit-event-title {
-    font-size: 1.5rem;
-    font-weight: bold;
-    margin-bottom: 1rem;
-    color: #01497c;
-  }
-  
-  /* Labels for sections like "Event Name", "Start Date", etc. */
-  .event-select-title {
-    display: block;
-    margin-bottom: 0.5rem;
-    font-weight: bold;
-    color: #01497c;
-  }
+  max-width: 28rem;
+  margin: 0 auto;
+  padding: 1rem;
+  background-color: #ffffff;
+  border-radius: 0.5rem;
+}
 
-  .event-select-dropdown {
-    width: 100%;
-    position: relative;
-    padding: 20px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    color: #333;
-    font-size: 1rem;
-  }
+/* Form title styling */
+.edit-event-title {
+  font-size: 1.5rem;
+  font-weight: bold;
+  margin-bottom: 1rem;
+  color: #01497c;
+}
 
-  .event-select-dropdown select {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-  }
-  
-  .event-edit-titles {
-    display: block;
-    font-weight: bold;
-    color: #01497c;
-  }
+/* Labels for sections like "Event Name", "Start Date", etc. */
+.event-select-title {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: bold;
+  color: #01497c;
+}
 
-  .event-edit-input {
-    width: 100%;
-    padding: 8px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    color: #333;
-    font-size: 1rem;
-    margin-bottom: 1rem;
-  }
+.event-select-dropdown {
+  width: 100%;
+  position: relative;
+  padding: 20px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  color: #333;
+  font-size: 1rem;
+}
 
-  .event-edit-photo-field-hidden {
-    display: none;
-  }
+.event-select-dropdown select {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
 
-  .custom-file-upload {
-    display:flex;
-    padding: 10px 15px;
-    background-color: #007bff;
-    color: white;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    font-size: 1rem;
-  }
-  
-  .custom-file-upload:hover {
-    background-color: #0056b3;
-  }
+.event-edit-titles {
+  display: block;
+  font-weight: bold;
+  color: #01497c;
+}
 
-  .item-list {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.5rem;
-    padding: 0.5rem;
-    background-color: #f9fafb;
-    border: 1px solid #ccc;
-    border-radius: 0.375rem;
-    margin-bottom: .5rem;
-  }
+.event-edit-input {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  color: #333;
+  font-size: 1rem;
+  margin-bottom: 1rem;
+}
 
-  .item-list-items {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    background-color: #fff;
-    border: 1px solid #ccc;
-    border-radius: 0.375rem;
-    padding: 0.5rem;
-    min-width: 100%;
-  }
-  
-  .undo-item-button {
-    margin-left: 1rem;
-    padding: 4px;
-    color: #005eff;
-    cursor: pointer;
-  }
+.event-edit-photo-field-hidden {
+  display: none;
+}
 
-  .undo-item-button:hover {
-    background-color: #005eff;
-    color: white;
-    border-radius: 5px;
-    padding: 4px;
-    transition: background-color 0.2s ease-in-out;
-  }
+.custom-file-upload {
+  display: flex;
+  padding: 10px 15px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 1rem;
+}
 
+.custom-file-upload:hover {
+  background-color: #0056b3;
+}
 
-  .remove-item-button {
-    margin-left: 1rem;
-    padding: 4px;
-    color: #dc2626;
-    cursor: pointer;
-  }
-  
-  .remove-item-button:hover {
-    background-color: #dc2626;
-    color: white;
-    border-radius: 5px;
-    padding: 4px;
-    transition: background-color 0.2s ease-in-out;
-  }
-  
-  .save-changes-button {
-    background-color: #04197c;
-    color: white;
-    padding: 0.5rem 1rem;
-    border: none;
-    border-radius: 0.375rem;
-    cursor: pointer;
-    font-weight: bold;
-    transition: background-color 0.2s ease-in-out;
-    margin-right: 0.5rem;
-  }
-  
-  .save-changes-button:hover {
-    box-shadow: #04197c 0px 0px 5px 1px;
-  }
-  
-  .delete-event-button {
-    margin-left: 9rem;
-    padding: 4px;
-    color: #ffffff;
-    background-color: #a50000;
-    border-radius: 4px;
-    font-weight: bolder;
-    cursor: pointer;
-  }
-  
-  .delete-event-button:hover {
-    background-color: #a50000;
-    box-shadow: #dc2626 0px 0px 5px 1px;
-  }
-  
-  /* Status messages */
-  .edit-event-success {
-    color: green;
-    margin-top: 0.5rem;
-  }
-  
-  .edit-event-error {
-    color: red;
-    margin-top: 0.5rem;
-  }
-  
+.item-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  padding: 0.5rem;
+  background-color: #f9fafb;
+  border: 1px solid #ccc;
+  border-radius: 0.375rem;
+  margin-bottom: 0.5rem;
+}
+
+.item-list-items {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: #fff;
+  border: 1px solid #ccc;
+  border-radius: 0.375rem;
+  padding: 0.5rem;
+  min-width: 100%;
+}
+
+.undo-item-button {
+  margin-left: 1rem;
+  padding: 4px;
+  color: #005eff;
+  cursor: pointer;
+}
+
+.undo-item-button:hover {
+  background-color: #005eff;
+  color: white;
+  border-radius: 5px;
+  padding: 4px;
+  transition: background-color 0.2s ease-in-out;
+}
+
+.remove-item-button {
+  margin-left: 1rem;
+  padding: 4px;
+  color: #dc2626;
+  cursor: pointer;
+}
+
+.remove-item-button:hover {
+  background-color: #dc2626;
+  color: white;
+  border-radius: 5px;
+  padding: 4px;
+  transition: background-color 0.2s ease-in-out;
+}
+
+.save-changes-button {
+  background-color: #04197c;
+  color: white;
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 0.375rem;
+  cursor: pointer;
+  font-weight: bold;
+  transition: background-color 0.2s ease-in-out;
+  margin-right: 0.5rem;
+}
+
+.save-changes-button:hover {
+  box-shadow: #04197c 0px 0px 5px 1px;
+}
+
+.delete-event-button {
+  margin-left: 9rem;
+  padding: 4px;
+  color: #ffffff;
+  background-color: #a50000;
+  border-radius: 4px;
+  font-weight: bolder;
+  cursor: pointer;
+}
+
+.delete-event-button:hover {
+  background-color: #a50000;
+  box-shadow: #dc2626 0px 0px 5px 1px;
+}
+
+/* Status messages */
+.edit-event-success {
+  color: green;
+  margin-top: 0.5rem;
+}
+
+.edit-event-error {
+  color: red;
+  margin-top: 0.5rem;
+}
