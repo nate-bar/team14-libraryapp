@@ -1,16 +1,19 @@
-import React, { useEffect, useState , useRef} from "react";
-import {type Event , type Items } from "~/services/api";
+import React, { useEffect, useState, useRef } from "react";
+import { type Event, type Items } from "~/services/api";
 import "./addeventitems.css";
 
 const AddItemToEvent = () => {
   const [events, setEvents] = useState<Event[]>([]);
   const [selectedEventId, setSelectedEventId] = useState<number | null>(null);
+  const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
   const [items, setItems] = useState<Items[]>([]);
   const [filteredItems, setFilteredItems] = useState<Items[]>([]);
   const [selectedItems, setSelectedItems] = useState<Items[]>([]);
   const [loadingEvents, setLoadingEvents] = useState(true);
   const [addItemStatus, setAddItemStatus] = useState<string | null>(null);
   const [addItemError, setAddItemError] = useState<string | null>(null);
+  const [addSuccessMessages, setAddSuccessMessages] = useState<string[]>([]);
+  const [addErrorMessages, setAddErrorMessages] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [showResults, setShowResults] = useState(false);
   const searchContainerRef = useRef<HTMLDivElement>(null);
@@ -60,7 +63,7 @@ const AddItemToEvent = () => {
   useEffect(() => {
     const lowerQuery = searchQuery.toLowerCase();
     const filtered = items
-      .filter((item) => !selectedItems.some(sel => sel.ItemID === item.ItemID))
+      .filter((item) => !selectedItems.some((sel) => sel.ItemID === item.ItemID))
       .filter((item) => item.Title.toLowerCase().includes(lowerQuery));
     setFilteredItems(filtered);
   }, [searchQuery, items, selectedItems]);
@@ -68,6 +71,8 @@ const AddItemToEvent = () => {
   const handleEventChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
     const eventId = parseInt(event.target.value, 10);
     setSelectedEventId(isNaN(eventId) ? null : eventId);
+    const selected = events.find((e) => e.EventID === eventId) || null;
+    setSelectedEvent(selected);
   };
 
   const handleItemSelection = (item: Items) => {
@@ -82,29 +87,32 @@ const AddItemToEvent = () => {
   const handleRemoveItem = (item: Items) => {
     setSelectedItems(selectedItems.filter((selectedItem) => selectedItem.ItemID !== item.ItemID));
   };
-  
+
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (searchContainerRef.current && !searchContainerRef.current.contains(event.target as Node)) {
         setShowResults(false);
       }
     };
-  
+
     document.addEventListener("mousedown", handleClickOutside);
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, []);
 
-
   const handleAddItemToEvent = async () => {
     if (!selectedEventId || selectedItems.length === 0) {
       setAddItemError("Please select both an event and at least one item.");
       setAddItemStatus(null);
+      setAddSuccessMessages([]);
+      setAddErrorMessages([]);
       return;
     }
-    
+
     setAddItemStatus("Adding item(s)...");
+    setAddSuccessMessages([]);
+    setAddErrorMessages([]);
 
     try {
       const response = await fetch(`/api/events/${selectedEventId}/items`, {
@@ -112,7 +120,7 @@ const AddItemToEvent = () => {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ ItemID: selectedItems.map(item => item.ItemID) }),
+        body: JSON.stringify({ ItemID: selectedItems.map((item) => item.ItemID) }),
       });
 
       const responseData = await response.json();
@@ -120,36 +128,51 @@ const AddItemToEvent = () => {
       if (response.ok) {
         const results = responseData.results;
         if (Array.isArray(results)) {
-          const message = results
-            .map((res) =>
-              res.success
-                ? `${res.itemName} added to ${res.eventName} successfully!`
-                : `Failed to add item ${res.itemName || res.itemId}: ${res.error}`
-            )
-            .join("\n");
-          setAddItemStatus(message.replace(/\n/g, "<br />"));
+          const successMessages = [];
+          const errorMessages = [];
+
+          results.forEach((res) => {
+            if (res.success) {
+              successMessages.push(`${res.itemName} added to ${res.eventName} successfully!`);
+            } else {
+              errorMessages.push(`Failed to add ${res.itemName || res.itemId}, ${res.error}`);
+            }
+          });
+
+          setAddSuccessMessages(successMessages);
+          setAddErrorMessages(errorMessages);
         }
+
         setSelectedEventId(null);
         setSelectedItems([]);
-        setTimeout(() => setAddItemStatus(null), 10000);
+        setTimeout(() => {
+          setAddItemStatus(null);
+          setAddSuccessMessages([]);
+          setAddErrorMessages([]);
+        }, 10000);
       } else {
         setAddItemError(responseData?.error || `Failed to add item: ${response.status}`);
         setAddItemStatus(null);
+        setAddSuccessMessages([]);
+        setAddErrorMessages([]);
       }
     } catch (error: any) {
       console.error("Error adding item(s) to event:", error);
       setAddItemError(error.message || "An unexpected error occurred.");
       setAddItemStatus(null);
+      setAddSuccessMessages([]);
+      setAddErrorMessages([]);
     }
   };
+
 
   return (
     <div className="add-item-to-event-container">
       <h2 className="add-item-to-event-title">Event-Item Population Form</h2>
-  
+
       {/* Event Selector */}
       <div className="add-item-to-event-entry-titles">
-        <label htmlFor="eventSelect">Select Event:</label>
+        Select Event:
       </div>
       <div className="form-search-dropdown-container">
         {loadingEvents ? (
@@ -171,7 +194,21 @@ const AddItemToEvent = () => {
           </select>
         )}
       </div>
-  
+
+      {selectedEvent && selectedEvent.EventPhoto && (
+      <div className="event-photo-display">
+      <div className="add-item-to-event-entry-titles">Event Photo:</div>
+      <img
+        src={selectedEvent.EventPhoto}
+        alt={selectedEvent.EventName}
+        style={{ maxWidth: '400px', maxHeight: '500px' }}
+      />
+      </div>
+      )}
+      {selectedEvent && !selectedEvent.EventPhoto && (
+      <p style={{ marginTop: '10px' }}>No photo available for this event.</p>
+      )}
+
       {/* Item Search Input */}
       <div ref={searchContainerRef}>
         <div className="add-item-to-event-entry-titles">
@@ -186,7 +223,7 @@ const AddItemToEvent = () => {
           className="form-search-bar"
           onClick={() => setShowResults(true)}
         />
-  
+
         {showResults && (
           <div className="form-search-dropdown">
             {filteredItems.length > 0 ? (
@@ -205,7 +242,7 @@ const AddItemToEvent = () => {
           </div>
         )}
       </div>
-  
+
       {/* Selected Items Display */}
       <div className="add-item-to-event-entry-titles">
         <label>Selected Items</label>
@@ -226,7 +263,7 @@ const AddItemToEvent = () => {
           </div>
         ))}
       </div>
-  
+
       {/* Submit Button */}
       <button
         onClick={handleAddItemToEvent}
@@ -239,17 +276,30 @@ const AddItemToEvent = () => {
       >
         Add Item to Event
       </button>
-  
+
       {/* Status Messages */}
-      {addItemError && <p className="add-item-to-event-error">{addItemError}</p>}
-      {addItemStatus && addItemStatus !== "Adding item(s)..." && (
-        <p
-          className="add-item-to-event-success"
-          dangerouslySetInnerHTML={{ __html: addItemStatus }}
-        />
+      {addErrorMessages.length > 0 && (
+        <div className="add-item-to-event-error">
+          {addErrorMessages.map((msg, index) => (
+            <p key={`error-${index}`} dangerouslySetInnerHTML={{ __html: msg }} />
+          ))}
+        </div>
+      )}
+      {addSuccessMessages.length > 0 && (
+        <div className="add-item-to-event-success">
+          {addSuccessMessages.map((msg, index) => (
+            <p key={`success-${index}`} dangerouslySetInnerHTML={{ __html: msg }} />
+          ))}
+        </div>
+      )}
+      {addItemError && addSuccessMessages.length === 0 && (
+        <p className="add-item-to-event-error" dangerouslySetInnerHTML={{ __html: addItemError }} />
+      )}
+      {addItemStatus && addSuccessMessages.length === 0 && addErrorMessages.length === 0 && addItemStatus !== "Adding item(s)..." && (
+        <p className="add-item-to-event-success" dangerouslySetInnerHTML={{ __html: addItemStatus }} />
       )}
     </div>
   );
-}
+};
 
 export default AddItemToEvent;

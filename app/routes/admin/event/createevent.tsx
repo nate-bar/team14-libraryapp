@@ -125,7 +125,7 @@ export default function CreateEventPage() {
         <label className="custom-file-upload">
           <input
             type="file"
-            accept="image/*"
+            accept=".jpg, image/jpeg/*"
             onChange={handlePhotoChange}
             className="create-event-file-input"
             ref={fileInputRef}

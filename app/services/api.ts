@@ -275,7 +275,7 @@ export interface Event {
   EventName: string;
   StartDate: string;
   EndDate: string;
-  EventPhoto?: string;
+  EventPhoto?: string | null;
 }
 
 export async function createEvent(formData: FormData) {

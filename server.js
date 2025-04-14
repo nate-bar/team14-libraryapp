@@ -136,14 +136,23 @@ app.post("/api/createevent", upload.single("photo"), (req, res) => {
 
 // -----------------------------------------GET EVENTS-----------------------------------------
 app.get("/api/events", (req, res) => {
-  pool.query("SELECT EventID, EventName, StartDate, EndDate, EventPhoto AS eventPhoto FROM events", (err, results) => {
-    if (err) {
-      console.error("Error executing query: " + err.stack);
-      res.status(500).send("Error fetching events");
-      return;
+  pool.query(
+    "SELECT EventID, EventName, StartDate, EndDate, TO_BASE64(EventPhoto) AS EventPhoto FROM events",
+    (err, results) => {
+      if (err) {
+        console.error("Error executing query: " + err.stack);
+        res.status(500).send("Error fetching events");
+        return;
+      }
+
+      const formatted = results.map(row => ({
+        ...row,
+        EventPhoto: `data:image/jpeg;base64,${row.EventPhoto}`
+      }));
+
+      res.json(formatted);
     }
-    res.json(results);
-  });
+  );
 });
 
 // -----------------------------------------ADD ITEMS TO EVENT----------------------------------------- 
@@ -153,7 +162,11 @@ app.post("/api/events/:EventID/items", async (req, res) => {
   const itemIds = Array.isArray(ItemID) ? ItemID : [ItemID];
   const placeholders = itemIds.map(() => '?').join(', ');
 
-  if (!itemIds.length) {
+  if (!Array.isArray(ItemID) && typeof ItemID !== 'string' && typeof ItemID !== 'number') {
+    return res.status(400).json({ error: "Invalid ItemID(s) format." });
+  }
+
+  if (itemIds.length === 0) {
     return res.status(400).json({ error: "No ItemID(s) provided in the request body." });
   }
 
@@ -168,122 +181,321 @@ app.post("/api/events/:EventID/items", async (req, res) => {
         console.error("Error fetching item details:", err);
         return res.status(500).send("Error fetching item details");
       }
-  
+
       const itemDetailsMap = {};
       for (const row of itemDetailsRows) {
         itemDetailsMap[row.ItemID] = row;
       }
-  
-    let responses = [];
-  
-  const processNextItem = (index) => {
-    if (index >= itemIds.length) {
-      return res.status(201).json({ message: "All items processed.", results: responses });
-    }
-  
-    const currentItemID = itemIds[index];
-    const details = itemDetailsMap[currentItemID];
 
-    if (!details) {
-      responses.push({ itemId: currentItemID, error: "Item not found" });
-      return processNextItem(index + 1, itemDetailsMap);
-    }
+      let responses = [];
 
-    pool.getConnection((err, connection) => {
-      if (err) {
-        console.error("Error getting connection: ", err);
-        responses.push({ itemId: currentItemID, error: "Connection error" });
-        return processNextItem(index + 1);
-      }
-  
-      connection.beginTransaction((err) => {
-        if (err) {
-          connection.release();
-          console.error("Error starting transaction:", err);
-          responses.push({ itemId: currentItemID, error: "Transaction start error" });
+      const processNextItem = (index) => {
+        if (index >= itemIds.length) {
+          const allSuccessful = responses.every(r => r.success === true);
+          const statusCode = allSuccessful ? 201 : 207;
+          const message = allSuccessful
+            ? "All items added successfully."
+            : "Some items failed to be added.";
+
+          return res.status(statusCode).json({ message, results: responses });
+        }
+
+        const currentItemID = itemIds[index];
+        const details = itemDetailsMap[currentItemID];
+
+        if (!details) {
+          responses.push({
+            itemId: currentItemID,
+            success: false,
+            error: "Item not found"
+          });
           return processNextItem(index + 1);
         }
 
-          connection.query(
-            'SELECT EventID, EventName FROM events WHERE EventID = ?',
-            [EventID],
-            (err, eventRows) => {
-              if (err || eventRows.length === 0) {
-                return connection.rollback(() => {
-                  connection.release();
-                  const errorMsg = err
-                    ? "Error checking event"
-                    : `Event with ID ${EventID} not found.`;
-                  console.error(errorMsg);
-                  responses.push({ itemId: currentItemID, error: errorMsg });
-                  processNextItem(index + 1);
-                });
-              }
+        pool.getConnection((err, connection) => {
+          if (err) {
+            console.error("Error getting connection: ", err);
+            responses.push({
+              itemId: currentItemID,
+              itemName: details?.Title || null,
+              success: false,
+              error: "Connection error"
+            });
+            return processNextItem(index + 1);
+          }
 
-              const itemType = details.TypeName;
-              const isbnToInsert = itemType === "Book" ? details.ISBN : null;
-              const mediaIDToInsert = itemType === "Media" ? details.MediaID : null;
+          connection.beginTransaction((err) => {
+            if (err) {
+              connection.release();
+              console.error("Error starting transaction:", err);
+              responses.push({
+                itemId: currentItemID,
+                itemName: details?.Title || null,
+                success: false,
+                error: "Transaction start error"
+              });
+              return processNextItem(index + 1);
+            }
 
-
-              connection.query(
-                'SELECT eventID, ItemID FROM eventitems WHERE eventID = ? AND ItemID = ?',
-                [EventID, currentItemID],
-                (err, existingLink) => {
-                  if (err || existingLink.length > 0) {
-                    return connection.rollback(() => {
-                      connection.release();
-                      const errorMsg = err
-                        ? "Error checking existing link"
-                        : `Item ${currentItemID} already linked to event.`;
-                      console.error(errorMsg);
-                      responses.push({ itemId: currentItemID, error: errorMsg });
-                      processNextItem(index + 1);
+            connection.query(
+              'SELECT EventID, EventName FROM events WHERE EventID = ?',
+              [EventID],
+              (err, eventRows) => {
+                if (err || eventRows.length === 0) {
+                  return connection.rollback(() => {
+                    connection.release();
+                    const errorMsg = err
+                      ? "Error checking event"
+                      : `Event with ID ${EventID} not found.`;
+                    console.error(errorMsg);
+                    responses.push({
+                      itemId: currentItemID,
+                      itemName: details?.Title || null,
+                      success: false,
+                      error: errorMsg
                     });
-                  }
+                    processNextItem(index + 1);
+                  });
+                }
 
-                  connection.query(
-                    'INSERT INTO eventitems (eventID, ItemID, ISBN, mediaID) VALUES (?, ?, ?, ?)',
-                    [EventID, currentItemID, isbnToInsert, mediaIDToInsert],
-                    (err, result) => {
-                      if (err) {
-                        return connection.rollback(() => {
-                          connection.release();
-                          console.error("Error adding item to event:", err);
-                          responses.push({ itemId: currentItemID, error: `Failed to add item: ${err.message}` });
-                          processNextItem(index + 1);
-                        });
-                      }
+                const itemType = details.TypeName;
+                const isbnToInsert = itemType === "Book" ? details.ISBN : null;
+                const mediaIDToInsert = itemType === "Media" ? details.MediaID : null;
 
-                      connection.commit((err) => {
-                        if (err) {
-                          return connection.rollback(() => {
-                            connection.release();
-                            responses.push({ itemId: currentItemID, error: "Commit error" });
-                            processNextItem(index + 1);
-                          });
-                        }
+                connection.query(
+                  'SELECT eventID, ItemID FROM eventitems WHERE eventID = ? AND ItemID = ?',
+                  [EventID, currentItemID],
+                  (err, existingLink) => {
+                    if (err || existingLink.length > 0) {
+                      return connection.rollback(() => {
                         connection.release();
+                        const errorMsg = err
+                          ? "Error checking existing link"
+                          : `Item ${currentItemID} is already linked to this event.`;
+                        console.error(errorMsg);
                         responses.push({
                           itemId: currentItemID,
-                          itemName: details.Title,
-                          eventName: eventRows[0].EventName,
-                          success: true
+                          itemName: details?.Title || null,
+                          success: false,
+                          error: errorMsg
                         });
                         processNextItem(index + 1);
                       });
                     }
-                  );
+
+                    connection.query(
+                      'INSERT INTO eventitems (eventID, ItemID, ISBN, mediaID) VALUES (?, ?, ?, ?)',
+                      [EventID, currentItemID, isbnToInsert, mediaIDToInsert],
+                      (err) => {
+                        if (err) {
+                          return connection.rollback(() => {
+                            connection.release();
+                            console.error("Error adding item to event:", err);
+                            responses.push({
+                              itemId: currentItemID,
+                              itemName: details?.Title || null,
+                              success: false,
+                              error: `Failed to add item: ${err.message}`
+                            });
+                            processNextItem(index + 1);
+                          });
+                        }
+
+                        connection.commit((err) => {
+                          if (err) {
+                            return connection.rollback(() => {
+                              connection.release();
+                              responses.push({
+                                itemId: currentItemID,
+                                itemName: details?.Title || null,
+                                success: false,
+                                error: "Commit error"
+                              });
+                              processNextItem(index + 1);
+                            });
+                          }
+
+                          connection.release();
+                          responses.push({
+                            itemId: currentItemID,
+                            itemName: details.Title,
+                            eventName: eventRows[0].EventName,
+                            success: true
+                          });
+                          processNextItem(index + 1);
+                        });
+                      }
+                    );
+                  }
+                );
+              }
+            );
+          });
+        });
+      };
+
+      processNextItem(0);
+    }
+  );
+});
+
+// -----------------------------------------GET ITEMS FROM EVENT----------------------------------------- 
+app.get("/api/events/:EventID/items", (req, res) => {
+  const { EventID } = req.params;
+
+  const query = `
+    SELECT i.ItemID, i.Title, it.TypeName, it.ISBN, it.MediaID
+    FROM eventitems ei
+    INNER JOIN Items i ON ei.ItemID = i.ItemID
+    INNER JOIN ItemTypes it ON i.ItemID = it.ItemID
+    WHERE ei.EventID = ?
+  `;
+
+  pool.query(query, [EventID], (err, results) => {
+    if (err) {
+      console.error("Error fetching event items:", err);
+      return res.status(500).send("Error fetching event items");
+    }
+
+    if (results.length === 0) {
+      return res.status(404).json({ message: "No items found for this event." });
+    }
+
+    res.json(results);
+  });
+});
+
+// -----------------------------------------DELETE ITEMS FROM EVENT----------------------------------------- 
+app.post("/api/events/:EventID/items/delete", (req, res) => {
+  const { EventID } = req.params;
+  const { ItemIDs } = req.body;
+
+  if (!Array.isArray(ItemIDs) || ItemIDs.length === 0) {
+    return res.status(400).json({ error: "ItemIDs must be a non-empty array." });
+  }
+
+  // Prepare query with placeholders for ItemIDs
+  const placeholders = ItemIDs.map(() => "?").join(", ");
+  const params = [EventID, ...ItemIDs];
+
+  const query = `
+    DELETE FROM eventitems
+    WHERE EventID = ? AND ItemID IN (${placeholders})
+  `;
+
+  // Execute query
+  pool.query(query, params, (err, result) => {
+    if (err) {
+      console.error("Error deleting multiple items from event:", err);
+      return res.status(500).json({ error: "Error deleting items from event" });
+    }
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ message: "No matching items found in this event." });
+    }
+
+    res.json({ message: `${result.affectedRows} item(s) removed from event ${EventID}` });
+  });
+});
+
+// -----------------------------------------DELETE EVENT-----------------------------------------
+app.delete("/api/events/:EventID", (req, res) => {
+  const { EventID } = req.params;
+
+  pool.getConnection((err, connection) => {
+    if (err) {
+      console.error("Connection error:", err);
+      return res.status(500).json({ error: "Database connection error" });
+    }
+
+    connection.beginTransaction((err) => {
+      if (err) {
+        connection.release();
+        console.error("Transaction error:", err);
+        return res.status(500).json({ error: "Error starting transaction" });
+      }
+
+      // Step 1: Delete from eventitems
+      connection.query(
+        "DELETE FROM eventitems WHERE EventID = ?",
+        [EventID],
+        (err) => {
+          if (err) {
+            return connection.rollback(() => {
+              connection.release();
+              console.error("Error deleting from eventitems:", err);
+              res.status(500).json({ error: "Failed to delete associated items" });
+            });
+          }
+
+          // Step 2: Delete from events
+          connection.query(
+            "DELETE FROM events WHERE EventID = ?",
+            [EventID],
+            (err, result) => {
+              if (err) {
+                return connection.rollback(() => {
+                  connection.release();
+                  console.error("Error deleting event:", err);
+                  res.status(500).json({ error: "Failed to delete event" });
+                });
+              }
+
+              if (result.affectedRows === 0) {
+                return connection.rollback(() => {
+                  connection.release();
+                  res.status(404).json({ error: "Event not found" });
+                });
+              }
+
+              connection.commit((err) => {
+                if (err) {
+                  return connection.rollback(() => {
+                    connection.release();
+                    res.status(500).json({ error: "Commit error" });
+                  });
                 }
-              );
+
+                connection.release();
+                res.json({ message: `Event ${EventID} and associated items deleted successfully` });
+              });
             }
           );
-        });
-      });
-    };
+        }
+      );
+    });
+  });
+});
 
-    processNextItem(0);
+// -----------------------------------------UPDATE EVENT-----------------------------------------
+app.put('/api/events/:eventId', upload.single('EventPhoto'), (req, res) => {
+  const { eventId } = req.params;
+  const { EventName, StartDate, EndDate } = req.body;
+  const EventPhoto = req.file ? req.file.buffer : null;
+  
+  let query = `UPDATE events SET EventName = ?, StartDate = ?, EndDate = ?`;
+  const params = [EventName, StartDate, EndDate];
+  
+  if (EventPhoto) {
+    query += `, EventPhoto = ?`;
+    params.push(EventPhoto);
   }
-);
+  
+  query += ` WHERE EventID = ?`;
+  params.push(eventId);
+  
+  pool.query(query, params, (err, result) => {
+    if (err) {
+      console.error("Error updating event:", err);
+      return res.status(500).json({ error: 'Failed to update event.' });
+    }
+  
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ message: 'Event not found.' });
+    }
+  
+    res.json({ message: 'Event updated successfully.' });
+  });
 });
 
 // -----------------------------------------FROM JOHNS BRANCH 3.0-----------------------------------------

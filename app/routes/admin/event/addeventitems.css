@@ -77,13 +77,14 @@
   font-size: 0.9rem;
 }
 
-/* Optional: Used to make "No Results Found" match style */
+/* "No Results Found" style */
 .form-search-dropdown p.available-items {
   padding: 10px 12px;
   margin: 0;
   color: #777;
 }
 
+/* "No Results Found" Hover */
 .form-search-dropdown p:hover {
   background-color: #ff8b8b;
   transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out;
