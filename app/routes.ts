@@ -8,7 +8,7 @@ import {
 export default [
   layout("routes/layout.tsx", [
     index("routes/home.tsx"),
-    
+
     route("eventpage/:eventId", "routes/eventpage.tsx"),
     route("quickcatalog/books", "routes/quickcatalog/books.tsx"),
     route("quickcatalog/media", "routes/quickcatalog/media.tsx"),
@@ -29,6 +29,7 @@ export default [
     route("dashboard", "routes/profile/dashboard.tsx"),
     route("myitems", "routes/profile/myitems.tsx"),
     route("holds", "routes/profile/holds.tsx"),
+    route("payoverdue", "routes/profile/payoverdue.tsx"),
     route("mailbox", "routes/profile/mailbox.tsx"),
     route("settings", "routes/profile/settings.tsx"),
     route("borrowinghistory", "routes/profile/borrowinghistory.tsx"),

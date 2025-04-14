@@ -35,7 +35,7 @@ export default function ProfilePage() {
               <Link to="/holds">Holds</Link>
             </li>
             <li className="text-nav3">
-              <Link to="/borrowinghistory">Borrowing History</Link>
+              <Link to="/borrowinghistory">Return History</Link>
             </li>
             <li className="mailbox-nav3">
               <Link to="/mailbox">✉️</Link>

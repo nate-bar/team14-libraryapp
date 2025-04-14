@@ -55,6 +55,93 @@ const pool = mysql.createPool({
 //---------------------CODE FOR API'S HERE--------------------
 */
 
+//payoverdue.tsx
+// Get overdue amount for a member
+app.get("/api/fines/:memberid", (req, res) => {
+  const memberID = req.params.memberid;
+  pool.query(
+    "SELECT Balance AS TotalDue FROM Members WHERE MemberID = ?",
+    [memberID],
+    (err, results) => {
+      if (err) {
+        console.error("Error executing query: " + err.stack);
+        res.status(500).send("Error fetching overdue amount");
+        return;
+      }
+      const totalDue = results[0].TotalDue || 0;
+      res.json({ FineAmount: totalDue });
+    }
+  );
+});
+
+// Handle payments for overdue items
+app.post("/api/pay", (req, res) => {
+  const { memberID, amount } = req.body;
+  const paymentAmount = parseFloat(amount);
+
+  if (isNaN(paymentAmount) || paymentAmount <= 0) {
+    return res
+      .status(400)
+      .json({ success: false, message: "Invalid payment amount" });
+  }
+
+  // Get a connection from the pool
+  pool.getConnection((err, connection) => {
+    if (err) {
+      console.error("Error getting DB connection:", err);
+      return res
+        .status(500)
+        .json({ success: false, message: "Payment processing error" });
+    }
+
+    // Update the member's balance
+    connection.query(
+      "UPDATE members SET balance = balance - ? WHERE memberID = ?",
+      [paymentAmount, memberID],
+      (err, result) => {
+        connection.release(); // Always release the connection
+
+        if (err) {
+          console.error("Error updating balance:", err);
+          return res
+            .status(500)
+            .json({ success: false, message: "Payment processing error" });
+        }
+
+        if (result.affectedRows === 0) {
+          return res
+            .status(404)
+            .json({ success: false, message: "Member not found" });
+        }
+
+        // Get the updated balance
+        pool.query(
+          "SELECT balance FROM members WHERE memberID = ?",
+          [memberID],
+          (err, results) => {
+            if (err) {
+              console.error("Error retrieving updated balance:", err);
+              return res.status(200).json({
+                success: true,
+                message: "Payment processed successfully",
+                // We can't return the balance due to error, but payment was successful
+              });
+            }
+
+            const updatedBalance = results[0]?.balance || 0;
+
+            res.json({
+              success: true,
+              message: "Payment processed successfully",
+              currentBalance: updatedBalance,
+            });
+          }
+        );
+      }
+    );
+  });
+});
+
 app.post("/api/deleteitem", (req, res) => {
   const { itemid } = req.body;
 
@@ -136,7 +223,9 @@ INNER JOIN
 INNER JOIN 
     ItemTypes it ON i.ItemID = it.ItemID
 WHERE 
-    rr.MemberID = ?`,
+    rr.MemberID = ?
+ORDER BY 
+    rr.BorrowDate DESC`,
       [memberId],
       (err, results) => {
         connection.release();
