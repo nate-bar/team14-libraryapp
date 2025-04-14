@@ -419,7 +419,7 @@ const Report = () => {
           <option value="mostBorrowedItemsReport">
             Most Borrowed Items Report
           </option>
-          <option value="bookDetailsReport">Book Details Report</option>
+          {/*<option value="bookDetailsReport">Book Details Report</option>*/}
         </select>
       </div>
 

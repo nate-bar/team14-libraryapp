@@ -212,7 +212,7 @@ const MostBorrowedItems = () => {
             >
               <option value="all">All Statuses</option>
               <option value="Available">Available</option>
-              <option value="Borrowed">Borrowed</option>
+              <option value="Checked Out">Checked Out</option>
             </select>
           </div>
 
