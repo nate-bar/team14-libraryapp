@@ -1,0 +1,169 @@
+/* Main container for form */
+.add-item-to-event-container {
+  max-width: 28rem;
+  margin: 0 auto;
+  padding: 1rem;
+  background-color: #ffffff;
+  border-radius: 0.5rem;
+}
+
+/* Form title styling */
+.add-item-to-event-title {
+  font-size: 1.5rem;
+  font-weight: bold;
+  margin-bottom: 1rem;
+  color: #01497c;
+}
+
+/* Section labels like "Select Event" or "Search" */
+.add-item-to-event-entry-titles {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: bold;
+  color: #01497c;
+}
+
+/* Dropdown styling used by both event and item selectors */
+.form-search-bar {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  color: #333;
+  font-size: 1rem;
+}
+
+/* Text Color for initial state */
+.form-search-bar::placeholder {
+  color: #333;
+}
+
+/* Container for dropdown results (like search or select options) */
+.form-search-dropdown {
+  position: relative;
+  top: 100%;
+  left: 0;
+  width: 100%;
+  background-color: white;
+  border: 1px solid #ccc;
+  border-top: none;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  max-height: 200px;
+  overflow-y: auto;
+  z-index: 10;
+}
+
+/* Each clickable search result option */
+.form-search-dropdown-item {
+  padding: 1px 12px;
+  color: #333;
+  transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+}
+
+.form-search-dropdown-item:hover {
+  background-color: #2064d4;
+  color: white;
+  cursor: pointer;
+}
+
+/* Used for text like "(Book)" or "(Media)" in search results */
+.available-items {
+  margin-bottom: 1rem;
+  color: #000000;
+  font-size: 0.9rem;
+}
+
+/* "No Results Found" style */
+.form-search-dropdown p.available-items {
+  padding: 10px 12px;
+  margin: 0;
+  color: #777;
+}
+
+/* "No Results Found" Hover */
+.form-search-dropdown p:hover {
+  background-color: #ff8b8b;
+  transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out;
+  color: #000000;
+}
+
+/* Wrap for selected items section */
+.form-selected-items-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  padding: 0.5rem;
+  background-color: #f9fafb;
+  border: 1px solid #ccc;
+  border-radius: 0.375rem;
+  margin-bottom: .5rem;
+}
+
+/* Individual selected item containers*/
+.form-selected-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: #fff;
+  border: 1px solid #ccc;
+  border-radius: 0.375rem;
+  padding: 0.5rem;
+  min-width: 100%;
+}
+
+/* Text for selected item 
+.form-selected-item-text {
+  flex-grow: 1;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}*/
+
+/* Button for removing selected item */
+.remove-selected-item-button {
+  margin-left: 1rem;
+  padding: 4px;
+  color: #dc2626;
+  cursor: pointer;
+}
+
+.remove-selected-item-button:hover {
+  background-color: #dc2626;
+  color: white;
+  border-radius: 5px;
+  padding: 4px;
+  transition: background-color 0.2s ease-in-out;
+}
+
+/* Button to submit form */
+.add-item-to-event-button {
+  background-color: #04197c;
+  color: white;
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 0.375rem;
+  cursor: pointer;
+  font-weight: bold;
+  transition: background-color 0.2s ease-in-out;
+}
+
+.add-item-to-event-button:hover {
+  box-shadow: #04197c 0px 0px 5px 1px;
+}
+
+.add-item-to-event-button:disabled {
+  background-color: #a8a8a8;
+  cursor: not-allowed;
+}
+
+.add-item-to-event-success {
+  color: green;
+}
+
+.add-item-to-event-error {
+  color: red;
+}

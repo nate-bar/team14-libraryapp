@@ -266,3 +266,38 @@ export interface ItemFull {
   DeviceType?: string;
   Manufacturer?: string;
 }
+
+// creating event
+export interface CreateEventRequest {
+  EventName: string;
+  StartDate: string;
+  EndDate: string;
+  photo: File | null;
+}
+
+export interface Event {
+  EventID: number;
+  EventName: string;
+  StartDate: string;
+  EndDate: string;
+  EventPhoto?: string | null;
+}
+
+export interface EventItem {
+  ItemID: number;
+  Title: string;
+  TypeName: string;
+  Status: string;
+  LastUpdated: string;
+  CreatedAt: string;
+  TimesBorrowed: number;
+  GenreID?: number;
+  GenreName?: string;
+  Photo?: string | null;
+}
+
+export interface GalleryImage {
+  src: string;
+  caption: string;
+  link: string;
+}
