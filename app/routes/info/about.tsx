@@ -36,7 +36,7 @@ export default function AboutPage() {
             <strong>Ling Wang</strong> – Developer
           </li>
           <li>
-            <strong>Nathan</strong> – Developer
+            <strong>Nathan Barchie</strong> – Developer
           </li>
           <li>
             <strong>John </strong> – Developer

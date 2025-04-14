@@ -5,6 +5,8 @@ import { type Media } from "~/services/api";
 import AddToCartButton from "~/components/buttons/addtocartbutton";
 import { useOutletContext } from "react-router";
 import { type AuthData } from "~/services/api";
+import WarningPopup from "./WarningPopup";
+import SuccessPopup from "./SucessPopup";
 
 export default function MediaDetail() {
   const { itemId } = useParams<{ itemId: string }>();
@@ -12,6 +14,8 @@ export default function MediaDetail() {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const authData = useOutletContext<AuthData>();
+  const [showLoginWarning, setShowLoginWarning] = useState(false);
+  const [popupMessage, setPopupMessage] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchMediaDetails = async () => {
@@ -20,11 +24,9 @@ export default function MediaDetail() {
 
       try {
         const response = await fetch(`/api/itemdetail/${itemId}`);
-
         if (!response.ok) {
           throw new Error(`HTTP error! Status: ${response.status}`);
         }
-
         const data = await response.json();
         setMedia(data);
       } catch (error) {
@@ -42,7 +44,7 @@ export default function MediaDetail() {
 
   const handleHoldRequest = async () => {
     if (!authData.isLoggedIn) {
-      alert("Please login first");
+      setShowLoginWarning(true);
       return;
     }
 
@@ -61,7 +63,6 @@ export default function MediaDetail() {
       const data = await response.json();
 
       if (!response.ok) {
-        // api returns 409 if media is already on hold for user
         if (response.status === 409) {
           throw new Error(
             data.error || "You already have a hold request for this media"
@@ -70,10 +71,10 @@ export default function MediaDetail() {
         throw new Error(data.error || `HTTP error! Status: ${response.status}`);
       }
 
-      alert("Hold request submitted successfully");
+      setPopupMessage("Hold request submitted successfully");
     } catch (error) {
       console.error("Error submitting hold request:", error);
-      alert(
+      setPopupMessage(
         error instanceof Error ? error.message : "Error submitting hold request"
       );
     }
@@ -150,9 +151,7 @@ export default function MediaDetail() {
       </div>
 
       <div className="item-actions">
-        {/* if media is available, show add to cart button */}
         {media.Status === "Available" && <AddToCartButton item={media} />}
-        {/* if media is not available, show hold request button */}
         {media.Status === "Checked Out" && (
           <button
             className="btn btn-secondary hold-button"
@@ -160,6 +159,20 @@ export default function MediaDetail() {
           >
             Place Hold Request
           </button>
+        )}
+
+        {showLoginWarning && (
+          <WarningPopup
+            message="You must be logged in to place a hold request."
+            onClose={() => setShowLoginWarning(false)}
+          />
+        )}
+
+        {popupMessage && (
+          <SuccessPopup
+            message={popupMessage}
+            onClose={() => setPopupMessage(null)}
+          />
         )}
       </div>
     </div>

@@ -7,6 +7,7 @@ import { useOutletContext } from "react-router";
 import { useNavigate } from "react-router";
 import { useParams } from "react-router";
 import LoadingSpinner from "~/components/loadingspinner";
+import AlertPopup from "~/components/buttons/AlertPopup";
 import "../edit.css";
 import "../admin.css";
 
@@ -20,6 +21,10 @@ const DeviceForm: React.FC = () => {
   const [formError, setFormError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [originalPhoto, setOriginalPhoto] = useState<Blob | null>();
+  const [alert, setAlert] = useState<{
+    message: string;
+    type: "success" | "error" | null;
+  }>({ message: "", type: null });
   const [deviceData, setDeviceData] = useState<DeviceEdit>({
     ItemID: numericItemId,
     DeviceID: 0,
@@ -85,10 +90,10 @@ const DeviceForm: React.FC = () => {
       const maxSizeInBytes = 5 * 1024 * 1024; // 5MB
 
       if (file.size > maxSizeInBytes) {
-        setErrors((prev) => ({
-          ...prev,
-          Photo: "File size exceeds the maximum allowed size (5MB)",
-        }));
+        setAlert({
+          message: "File size exceeds the maximum allowed size (5MB)",
+          type: "error",
+        });
         return;
       }
 
@@ -99,10 +104,10 @@ const DeviceForm: React.FC = () => {
         })
         .catch((error) => {
           console.error("Image compression failed:", error);
-          setErrors((prev) => ({
-            ...prev,
-            Photo: "Image compression failed. Please try another image.",
-          }));
+          setAlert({
+            message: "Image compression failed. Please try another image.",
+            type: "error",
+          });
         });
     } else {
       setFileName("");
@@ -191,10 +196,10 @@ const DeviceForm: React.FC = () => {
 
       // Success - redirect or show success message
       setFileName("");
-      alert("Device updated successfully!");
-      navigate("/admin/edit"); // redirect back to edit list
+      setAlert({ message: "Device entered successfully!", type: "success" });
+      navigate("/admin/edit");
     } catch (error) {
-      console.error("Error submitting form:", error);
+      setAlert({ message: `Error submitting form: ${error}`, type: "error" });
       setFormError(
         `Error submitting form: ${
           error instanceof Error ? error.message : String(error)
@@ -211,7 +216,15 @@ const DeviceForm: React.FC = () => {
 
   return (
     <div className="admin-container">
+      {alert.message && (
+        <AlertPopup
+          message={alert.message}
+          type={alert.type!}
+          onClose={() => setAlert({ message: "", type: null })}
+        />
+      )}
       {formError && <div className="error-message form-error">{formError}</div>}
+
       <form onSubmit={handleSubmit} className="admin-form">
         {/* Image Preview */}
         <div className="image-preview">

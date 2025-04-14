@@ -13,44 +13,44 @@
 }
 
 .bg-nav3 {
-    background-size: 150% auto;
-    background-position: center 45%;
-    background-repeat: no-repeat;
-    display: flex;
-    align-items: center;
-    padding: 10px 20px;
-    margin: 10px auto;
-    max-width: 90%;
-    width: auto;
-    height: 50px;
-    margin-top: 20px;
-    background: #01497c;
-    box-shadow: 10px 10px 4px rgba(0, 0, 0, 0.25);
-    border-radius: 20px;
-  }
-  
-  .text-nav3 {
-    font-size: 20px;
-    font-weight: bold;
-    font-family: "Mitr", sans-serif;
-    color: #d9d9d9;
-    letter-spacing: 1px;
-  }
-  
-  .navbar-left {
-    display: flex;
-    justify-content: space-between;  /* Space between the elements */
-    width: 100%;  /* Ensures the space fills the full width */
-  }
-  .mailbox-nav3, .settings-nav3 {
-    font-size: 18px;  /* Increase icon size */
-    margin-left: 20px;  /* Space between the mailbox and settings */
-  }
-  .mailbox-nav3 {
-    margin-left: 10px;  /* Add some left margin to space it from the next item */
-  }
-  
-  .settings-nav3 {
-    margin-left: 20px;  /* Add margin-left to ensure the settings icon is spaced apart */
-  }
-  
+  background-size: 150% auto;
+  background-position: center 45%;
+  background-repeat: no-repeat;
+  display: flex;
+  align-items: center;
+  padding: 10px 20px;
+  margin: 10px auto;
+  max-width: 90%;
+  width: auto;
+  height: 50px;
+  margin-top: 20px;
+  background: #01497c;
+  box-shadow: 10px 10px 4px rgba(0, 0, 0, 0.25);
+  border-radius: 20px;
+}
+
+.text-nav3 {
+  font-size: 20px;
+  font-weight: bold;
+  font-family: "Mitr", sans-serif;
+  color: #d9d9d9;
+  letter-spacing: 1px;
+}
+
+.navbar-left {
+  display: flex;
+  justify-content: space-between; /* Space between the elements */
+  width: 100%; /* Ensures the space fills the full width */
+}
+.mailbox-nav3,
+.settings-nav3 {
+  font-size: 18px; /* Increase icon size */
+  margin-left: 20px; /* Space between the mailbox and settings */
+}
+.mailbox-nav3 {
+  margin-left: 10px; /* Add some left margin to space it from the next item */
+}
+
+.settings-nav3 {
+  margin-left: 20px; /* Add margin-left to ensure the settings icon is spaced apart */
+}

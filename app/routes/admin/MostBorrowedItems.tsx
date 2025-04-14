@@ -108,7 +108,9 @@ const MostBorrowedItems = () => {
 
     // Apply minimum borrow count filter
     if (minBorrowCount > 0) {
-      filtered = filtered.filter((item) => item.TimesBorrowed >= minBorrowCount);
+      filtered = filtered.filter(
+        (item) => item.TimesBorrowed >= minBorrowCount
+      );
     }
 
     // Apply limit

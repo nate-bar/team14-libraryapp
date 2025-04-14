@@ -6,13 +6,19 @@ import { type Languages } from "~/services/api";
 import { type AuthData } from "~/services/api";
 import { useOutletContext } from "react-router";
 import Compressor from "compressorjs";
+import AlertPopup from "~/components/buttons/AlertPopup";
 
 const BookForm: React.FC = () => {
   const { email } = useOutletContext<AuthData>();
   const [genres, setGenres] = useState<Genres[]>([]);
   const [languages, setLanguages] = useState<Languages[]>([]);
   const [fileName, setFileName] = useState<string>("");
+
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  const [alert, setAlert] = useState<{
+    message: string;
+    type: "success" | "error" | null;
+  }>({ message: "", type: null });
   const [bookData, setBookData] = useState<BookInsert>({
     isbn: "",
     title: "",
@@ -112,7 +118,15 @@ const BookForm: React.FC = () => {
     const { isbn, title, authors, publisher, genreid, publicationyear } =
       bookData;
 
-    if (!isbn) newErrors.isbn = "Enter a value for ISBN";
+    if (!isbn) {
+      newErrors.isbn = "Enter a value for ISBN";
+    } else {
+      const isbnDigits = isbn.replace(/[-\s]/g, "");
+
+      if (!/^\d{13}$/.test(isbnDigits)) {
+        newErrors.isbn = "ISBN must contain exactly 13 digits";
+      }
+    }
     if (!title) newErrors.title = "Enter a title";
     if (!authors) newErrors.authors = "Enter a value for author";
     if (!publisher) newErrors.publisher = "Enter a value for publisher";
@@ -132,7 +146,10 @@ const BookForm: React.FC = () => {
       const maxSizeInBytes = 5 * 1024 * 1024; // 5MB
 
       if (file.size > maxSizeInBytes) {
-        alert("File size exceeds the maximum allowed size (5MB)");
+        setAlert({
+          message: "File size exceeds the maximum allowed size (5MB)",
+          type: "error",
+        });
         return;
       }
 
@@ -147,7 +164,10 @@ const BookForm: React.FC = () => {
         })
         .catch((error) => {
           console.error("Image compression failed:", error);
-          alert("Image compression failed. Please try another image.");
+          setAlert({
+            message: "Image compression failed. Please try another image.",
+            type: "error",
+          });
           // setIsLoading(false);
         });
     } else {
@@ -197,7 +217,10 @@ const BookForm: React.FC = () => {
       const result = await addBook(bookData);
 
       if (!result.success) {
-        alert(`Error: ${result.error || "Registration failed"}`);
+        setAlert({
+          message: `Error: ${result.error || "Registration failed"}`,
+          type: "error",
+        });
         return;
       }
 
@@ -219,10 +242,9 @@ const BookForm: React.FC = () => {
         summary: "",
       });
       setFileName("");
-      alert("Book entered successfully!");
+      setAlert({ message: "Book entered successfully!", type: "success" });
     } catch (error) {
-      console.error("Error submitting form:", error);
-      alert(`Error submitting form: ${error}`);
+      setAlert({ message: `Error submitting form: ${error}`, type: "error" });
     } finally {
       // Reset submitting state regardless of success or failure
       setIsSubmitting(false);
@@ -231,6 +253,13 @@ const BookForm: React.FC = () => {
 
   return (
     <div className="admin-container">
+      {alert.message && (
+        <AlertPopup
+          message={alert.message}
+          type={alert.type!}
+          onClose={() => setAlert({ message: "", type: null })}
+        />
+      )}
       <form onSubmit={handleSubmit} className="admin-form">
         <input
           className={`admin-input ${errors.isbn ? "error-field" : ""}`}

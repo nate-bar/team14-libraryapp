@@ -26,7 +26,9 @@ const Report = () => {
   const [data, setData] = useState<BorrowedItemRecord[]>([]);
   const [filteredData, setFilteredData] = useState<BorrowedItemRecord[]>([]);
   const [error, setError] = useState("");
-  const [selectedReport, setSelectedReport] = useState("userBorrowedItemsReport");
+  const [selectedReport, setSelectedReport] = useState(
+    "userBorrowedItemsReport"
+  );
   const [summaryStats, setSummaryStats] = useState({
     overdueItems: 0,
     totalFines: 0,
@@ -130,13 +132,18 @@ const Report = () => {
       today.setHours(0, 0, 0, 0);
 
       if (statusFilter === "borrowed") {
-        filtered = filtered.filter((record) => record.BorrowStatus === "Borrowed");
+        filtered = filtered.filter(
+          (record) => record.BorrowStatus === "Borrowed"
+        );
       } else if (statusFilter === "returned") {
-        filtered = filtered.filter((record) => record.BorrowStatus === "Returned");
+        filtered = filtered.filter(
+          (record) => record.BorrowStatus === "Returned"
+        );
       } else if (statusFilter === "overdue") {
         filtered = filtered.filter(
           (record) =>
-            record.BorrowStatus === "Borrowed" && new Date(record.DueDate) < today
+            record.BorrowStatus === "Borrowed" &&
+            new Date(record.DueDate) < today
         );
       }
     }
@@ -149,8 +156,7 @@ const Report = () => {
         );
       } else if (itemTypeFilter === "media") {
         filtered = filtered.filter(
-          (record) =>
-            record.Director !== null && record.Director !== undefined
+          (record) => record.Director !== null && record.Director !== undefined
         );
       } else if (itemTypeFilter === "device") {
         filtered = filtered.filter(
@@ -330,8 +336,7 @@ const Report = () => {
                   dueDate.setHours(0, 0, 0, 0);
 
                   const isOverdue =
-                    record.BorrowStatus === "Borrowed" &&
-                    dueDate < today;
+                    record.BorrowStatus === "Borrowed" && dueDate < today;
                   const isDueToday =
                     record.BorrowStatus === "Borrowed" &&
                     dueDate.getTime() === today.getTime();
@@ -341,13 +346,9 @@ const Report = () => {
                   if (record.ISBN) {
                     details = record.Authors || "";
                   } else if (record.Director) {
-                    details = record.Director
-                      ? `Dir: ${record.Director}`
-                      : "";
+                    details = record.Director ? `Dir: ${record.Director}` : "";
                     if (record.Format)
-                      details += details
-                        ? `, ${record.Format}`
-                        : record.Format;
+                      details += details ? `, ${record.Format}` : record.Format;
                   } else if (record.DeviceType) {
                     details = record.Manufacturer || "";
                   }

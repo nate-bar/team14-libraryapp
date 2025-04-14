@@ -1,23 +1,26 @@
 // server.js
 // disable typescript checks
 // @ts-nocheck
-import path from "path"
-import multer from "multer";
 import compression from "compression";
 import express from "express";
 import morgan from "morgan";
 import mysql from "mysql"; // mysql package, should be self explanitory
 import crypto from "crypto"; // for salting and hashing passwords
 import session from "express-session"; // for session storage
+import path from "path";
+import multer from "multer";
 // Load environment variables
-import dotenv from 'dotenv';
-const upload = multer({ storage: multer.memoryStorage() });
+import dotenv from "dotenv";
+import cron from "node-cron";
+
 dotenv.config();
+
+const upload = multer({ storage: multer.memoryStorage() });
 
 // Short-circuit the type-checking of the built output.
 const BUILD_PATH = "./build/server/index.js";
 const DEVELOPMENT = process.env.NODE_ENV === "development";
-const PORT = Number.parseInt(process.env.PORT || "5004");
+const PORT = Number.parseInt(process.env.PORT || "3000");
 
 const app = express();
 app.use(express.json()); // built-in middleware json parser
@@ -48,7 +51,56 @@ const pool = mysql.createPool({
   connectionLimit: 10, // try like 10
 });
 
-// RETURNS ALL MEMBERS
+/*
+//---------------------CODE FOR API'S HERE--------------------
+*/
+
+app.get("/api/borrowing-history/:memberid", (req, res) => {
+  const memberId = req.params.memberid;
+
+  pool.getConnection((err, connection) => {
+    if (err) {
+      console.error("Database connection error:", err);
+      return res.status(500).json({ error: "Database connection error" });
+    }
+    connection.query(
+      `SELECT 
+    rr.ReturnID, 
+    rr.MemberID, 
+    rr.ItemID, 
+    rr.BorrowDate, 
+    rr.DueDate, 
+    rr.ReturnDate, 
+    rr.FineAccrued, 
+    i.Title, 
+    it.TypeName 
+FROM 
+    returnrecord rr 
+INNER JOIN 
+    Items i ON rr.ItemID = i.ItemID 
+INNER JOIN 
+    ItemTypes it ON i.ItemID = it.ItemID
+WHERE 
+    rr.MemberID = ?`,
+      [memberId],
+      (err, results) => {
+        connection.release();
+
+        if (err) {
+          return res.status(500).json({ error: "Database query error" });
+        }
+
+        if (results.length === 0) {
+          return res.status(404).json({ error: "Borrowing history not found" });
+        }
+
+        res.json(results);
+      }
+    );
+  });
+});
+
+// returns * from Members table
 app.get("/api/members", (req, res) => {
   pool.query("SELECT * FROM Members", (err, results) => {
     if (err) {
@@ -60,12 +112,7 @@ app.get("/api/members", (req, res) => {
   });
 });
 
-/*
-//---------------------CODE FOR API'S HERE--------------------
-*/
-// Serve API routes before frontend routes
 // Fetch notifications for a specific member
-
 app.get("/api/notifications/:memberid", (req, res) => {
   const memberId = req.params.memberid;
   pool.getConnection((err, connection) => {
@@ -78,7 +125,7 @@ app.get("/api/notifications/:memberid", (req, res) => {
       [memberId],
       (err, results) => {
         connection.release();
-    
+
         if (err) {
           return res.status(500).json({ error: "Database query error" });
         }
@@ -89,104 +136,319 @@ app.get("/api/notifications/:memberid", (req, res) => {
         console.log("Fetched notifications for memberID:", memberId);
         console.table(results); // Nicely formats the output in the console
 
-        res.json(results);  // Send the response with multiple notifications
+        res.json(results); // Send the response with multiple notifications
       }
     );
-    
-    
   });
 });
 
-// -----------------------------------------CREATE EVENT-----------------------------------------
-app.post("/api/createevent", upload.single("photo"), (req, res) => {
-  const { EventName, StartDate, EndDate } = req.body;
-  const photo = req.file ? req.file.buffer : null;
-
-  if (!EventName || !StartDate || !EndDate || !photo) {
-    return res.status(400).json({ error: "All fields and photo are required." });
-  }
-
+// gets user borrowed items view
+app.get("/api/user-borrowed-items-report", (req, res) => {
   pool.getConnection((err, connection) => {
     if (err) {
-      console.error("DB Connection Error:", err);
-      return res.status(500).json({ error: "Database connection failed" });
+      console.error("Error getting connection:", err);
+      return res.status(500).json({ error: "Database connection error." });
     }
 
-    const query = `
-      INSERT INTO events (EventName, StartDate, EndDate, EventPhoto)
-      VALUES (?, ?, ?, ?);
-    `;
+    const query = "SELECT * FROM user_borrowed_items_report";
 
-    connection.query(query, [EventName, StartDate, EndDate, photo], (error, results) => {
-      connection.release();
-
-      if (error) {
-        console.error("Event Insert Error:", error);
-        return res.status(500).json({ error: "Failed to create event", details: error.message });
+    connection.query(query, (err, results) => {
+      connection.release(); // Release the connection back to the pool
+      if (err) {
+        console.error("Error executing query:", err);
+        return res.status(500).json({ error: "Error fetching book details." });
       }
 
-      res.status(201).json({
-        success: true,
-        message: "Event created successfully",
-        eventId: results.insertId,
-      });
+      res.json(results);
     });
   });
 });
 
-// -----------------------------------------GET ALL EVENTS-----------------------------------------
-app.get("/api/events", (req, res) => {
-  pool.query(
-    "SELECT EventID, EventName, StartDate, EndDate, TO_BASE64(EventPhoto) AS EventPhoto FROM events",
-    (err, results) => {
+function handleQuantityInserts(
+  title,
+  photo,
+  createdBy,
+  typename,
+  typeID,
+  callback
+) {
+  pool.getConnection((err, connection) => {
+    if (err) {
+      console.error("DB Connection Error:", err);
+      return callback({ error: "DB connection error", details: err.message });
+    }
+
+    // Begin transaction to ensure data consistency
+    connection.beginTransaction((err) => {
       if (err) {
-        console.error("Error executing query: " + err.stack);
-        res.status(500).send("Error fetching events");
-        return;
+        connection.release();
+        console.error("Transaction Error:", err);
+        return callback({ error: "Transaction error", details: err.message });
       }
 
-      const formatted = results.map(row => ({
-        ...row,
-        EventPhoto: `data:image/jpeg;base64,${row.EventPhoto}`
-      }));
+      connection.query(
+        `INSERT INTO Items (Title, Photo, CreatedBy) VALUES (?, ?, ?)`,
+        [title, photo, createdBy],
+        (err, results) => {
+          if (err) {
+            connection.rollback(() => {
+              connection.release();
+            });
+            console.error("Items Insert Error:", err);
+            return callback({
+              error: "Failed to insert item",
+              details: err.message,
+            });
+          }
 
-      res.json(formatted);
+          // Get the inserted item ID
+          const returnedItemID = results.insertId;
+          let query;
+
+          if (typename === "Book") {
+            query = `INSERT INTO ItemTypes (ItemID, TypeName, ISBN) VALUES (?, ?, ?)`;
+          } else if (typename === "Media") {
+            query = `INSERT INTO ItemTypes (ItemID, TypeName, MediaID) VALUES (?, ?, ?)`;
+          } else {
+            connection.rollback(() => {
+              connection.release();
+            });
+            return callback({ error: "Invalid type name" });
+          }
+
+          connection.query(
+            query,
+            [returnedItemID, typename, typeID],
+            (err, results) => {
+              if (err) {
+                connection.rollback(() => {
+                  connection.release();
+                });
+                console.error("ItemTypes Insert Error:", err);
+                return callback({
+                  error: "Failed to insert item type",
+                  details: err.message,
+                });
+              }
+
+              // Commit the transaction
+              connection.commit((err) => {
+                if (err) {
+                  connection.rollback(() => {
+                    connection.release();
+                  });
+                  console.error("Commit Error:", err);
+                  return callback({
+                    error: "Failed to commit transaction",
+                    details: err.message,
+                  });
+                }
+
+                // Release the connection back to the pool
+                connection.release();
+
+                // Success
+                return callback(null, {
+                  success: true,
+                  itemID: returnedItemID,
+                  message: "Item inserted successfully",
+                });
+              });
+            }
+          );
+        }
+      );
+    });
+  });
+}
+
+// -----------------------------------------UPDATE EVENT-----------------------------------------
+app.put('/api/events/:eventId', upload.single('EventPhoto'), (req, res) => {
+  const { eventId } = req.params;
+  const { EventName, StartDate, EndDate } = req.body;
+  const EventPhoto = req.file ? req.file.buffer : null;
+  
+  let query = `UPDATE events SET EventName = ?, StartDate = ?, EndDate = ?`;
+  const params = [EventName, StartDate, EndDate];
+  
+  if (EventPhoto) {
+    query += `, EventPhoto = ?`;
+    params.push(EventPhoto);
+  }
+  
+  query += ` WHERE EventID = ?`;
+  params.push(eventId);
+  
+  pool.query(query, params, (err, result) => {
+    if (err) {
+      console.error("Error updating event:", err);
+      return res.status(500).json({ error: 'Failed to update event.' });
     }
-  );
+  
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ message: 'Event not found.' });
+    }
+  
+    res.json({ message: 'Event updated successfully.' });
+  });
 });
 
-// -----------------------------------------GET SINGLE EVENT INFO-----------------------------------------
-app.get("/api/events/:EventID", (req, res) => {
+// -----------------------------------------DELETE EVENT-----------------------------------------
+app.delete("/api/events/:EventID", (req, res) => {
+  const { EventID } = req.params;
+
+  pool.getConnection((err, connection) => {
+    if (err) {
+      console.error("Connection error:", err);
+      return res.status(500).json({ error: "Database connection error" });
+    }
+
+    connection.beginTransaction((err) => {
+      if (err) {
+        connection.release();
+        console.error("Transaction error:", err);
+        return res.status(500).json({ error: "Error starting transaction" });
+      }
+
+      // Step 1: Delete from eventitems
+      connection.query(
+        "DELETE FROM eventitems WHERE EventID = ?",
+        [EventID],
+        (err) => {
+          if (err) {
+            return connection.rollback(() => {
+              connection.release();
+              console.error("Error deleting from eventitems:", err);
+              res.status(500).json({ error: "Failed to delete associated items" });
+            });
+          }
+
+          // Step 2: Delete from events
+          connection.query(
+            "DELETE FROM events WHERE EventID = ?",
+            [EventID],
+            (err, result) => {
+              if (err) {
+                return connection.rollback(() => {
+                  connection.release();
+                  console.error("Error deleting event:", err);
+                  res.status(500).json({ error: "Failed to delete event" });
+                });
+              }
+
+              if (result.affectedRows === 0) {
+                return connection.rollback(() => {
+                  connection.release();
+                  res.status(404).json({ error: "Event not found" });
+                });
+              }
+
+              connection.commit((err) => {
+                if (err) {
+                  return connection.rollback(() => {
+                    connection.release();
+                    res.status(500).json({ error: "Commit error" });
+                  });
+                }
+
+                connection.release();
+                res.json({ message: `Event ${EventID} and associated items deleted successfully` });
+              });
+            }
+          );
+        }
+      );
+    });
+  });
+});
+
+// -----------------------------------------DELETE ITEMS FROM EVENT----------------------------------------- 
+app.post("/api/events/:EventID/items/delete", (req, res) => {
+  const { EventID } = req.params;
+  const { ItemIDs } = req.body;
+
+  if (!Array.isArray(ItemIDs) || ItemIDs.length === 0) {
+    return res.status(400).json({ error: "ItemIDs must be a non-empty array." });
+  }
+
+  // Prepare query with placeholders for ItemIDs
+  const placeholders = ItemIDs.map(() => "?").join(", ");
+  const params = [EventID, ...ItemIDs];
+
+  const query = `
+    DELETE FROM eventitems
+    WHERE EventID = ? AND ItemID IN (${placeholders})
+  `;
+
+  // Execute query
+  pool.query(query, params, (err, result) => {
+    if (err) {
+      console.error("Error deleting multiple items from event:", err);
+      return res.status(500).json({ error: "Error deleting items from event" });
+    }
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ message: "No matching items found in this event." });
+    }
+
+    res.json({ message: `${result.affectedRows} item(s) removed from event ${EventID}` });
+  });
+});
+
+
+// -----------------------------------------GET ITEMS FROM EVENT----------------------------------------- 
+app.get("/api/events/:EventID/items", (req, res) => {
   const { EventID } = req.params;
 
   const query = `
     SELECT
-      EventID,
-      EventName,
-      StartDate,
-      EndDate,
-      TO_BASE64(EventPhoto) AS EventPhoto
-    FROM events
-    WHERE EventID = ?
+      ei.ItemID,
+      i.Title,
+      it.TypeName,
+      i.Status,
+      i.LastUpdated,
+      i.CreatedAt,
+      i.TimesBorrowed,
+      g.GenreID,
+      g.GenreName,
+      TO_BASE64(i.Photo) AS PhotoBase64
+    FROM eventitems ei
+    INNER JOIN Items i ON ei.ItemID = i.ItemID
+    INNER JOIN ItemTypes it ON i.ItemID = it.ItemID
+    LEFT JOIN Books b ON ei.ISBN = b.ISBN AND it.TypeName = 'Book'
+    LEFT JOIN Media m ON ei.MediaID = m.MediaID AND it.TypeName = 'Media'
+    LEFT JOIN Genres g ON (
+      (it.TypeName = 'Book' AND b.GenreID = g.GenreID) OR
+      (it.TypeName = 'Media' AND m.GenreID = g.GenreID)
+    )
+    WHERE ei.EventID = ?
   `;
 
   pool.query(query, [EventID], (err, results) => {
     if (err) {
-      console.error("Error fetching event:", err);
-      return res.status(500).send("Error fetching event");
+      console.error("Error fetching event items:", err);
+      return res.status(500).send("Error fetching event items");
     }
 
     if (results.length === 0) {
-      return res.status(404).json({ message: "Event not found" });
+      return res.status(404).json({ message: "No items found for this event." });
     }
 
-    // Format the EventPhoto as a data URL
-    const formattedResult = {
-      ...results[0],
-      EventPhoto: results[0].EventPhoto ? `data:image/jpeg;base64,${results[0].EventPhoto}` : null,
-    };
+    // Process results to handle potential null Genre and Photo values
+    const formattedResults = results.map(item => ({
+      ItemID: item.ItemID,
+      Title: item.Title,
+      TypeName: item.TypeName,
+      Status: item.Status,
+      LastUpdated: item.LastUpdated,
+      CreatedAt: item.CreatedAt,
+      TimesBorrowed: item.TimesBorrowed,
+      GenreID: item.GenreID || null,
+      GenreName: item.GenreName || null,
+      Photo: item.PhotoBase64 || null,
+    }));
 
-    res.json(formattedResult);
+    res.json(formattedResults);
   });
 });
 
@@ -374,315 +636,98 @@ app.post("/api/events/:EventID/items", async (req, res) => {
   );
 });
 
-// -----------------------------------------GET ITEMS FROM EVENT----------------------------------------- 
-app.get("/api/events/:EventID/items", (req, res) => {
+// -----------------------------------------GET SINGLE EVENT INFO-----------------------------------------
+app.get("/api/events/:EventID", (req, res) => {
   const { EventID } = req.params;
 
   const query = `
     SELECT
-      ei.ItemID,
-      i.Title,
-      it.TypeName,
-      i.Status,
-      i.LastUpdated,
-      i.CreatedAt,
-      i.TimesBorrowed,
-      g.GenreID,
-      g.GenreName,
-      TO_BASE64(i.Photo) AS PhotoBase64
-    FROM eventitems ei
-    INNER JOIN Items i ON ei.ItemID = i.ItemID
-    INNER JOIN ItemTypes it ON i.ItemID = it.ItemID
-    LEFT JOIN Books b ON ei.ISBN = b.ISBN AND it.TypeName = 'Book'
-    LEFT JOIN Media m ON ei.MediaID = m.MediaID AND it.TypeName = 'Media'
-    LEFT JOIN Genres g ON (
-      (it.TypeName = 'Book' AND b.GenreID = g.GenreID) OR
-      (it.TypeName = 'Media' AND m.GenreID = g.GenreID)
-    )
-    WHERE ei.EventID = ?
+      EventID,
+      EventName,
+      StartDate,
+      EndDate,
+      TO_BASE64(EventPhoto) AS EventPhoto
+    FROM events
+    WHERE EventID = ?
   `;
 
   pool.query(query, [EventID], (err, results) => {
     if (err) {
-      console.error("Error fetching event items:", err);
-      return res.status(500).send("Error fetching event items");
+      console.error("Error fetching event:", err);
+      return res.status(500).send("Error fetching event");
     }
 
     if (results.length === 0) {
-      return res.status(404).json({ message: "No items found for this event." });
+      return res.status(404).json({ message: "Event not found" });
     }
 
-    // Process results to handle potential null Genre and Photo values
-    const formattedResults = results.map(item => ({
-      ItemID: item.ItemID,
-      Title: item.Title,
-      TypeName: item.TypeName,
-      Status: item.Status,
-      LastUpdated: item.LastUpdated,
-      CreatedAt: item.CreatedAt,
-      TimesBorrowed: item.TimesBorrowed,
-      GenreID: item.GenreID || null,
-      GenreName: item.GenreName || null,
-      Photo: item.PhotoBase64 || null,
-    }));
+    // Format the EventPhoto as a data URL
+    const formattedResult = {
+      ...results[0],
+      EventPhoto: results[0].EventPhoto ? `data:image/jpeg;base64,${results[0].EventPhoto}` : null,
+    };
 
-    res.json(formattedResults);
+    res.json(formattedResult);
   });
 });
 
-// -----------------------------------------DELETE ITEMS FROM EVENT----------------------------------------- 
-app.post("/api/events/:EventID/items/delete", (req, res) => {
-  const { EventID } = req.params;
-  const { ItemIDs } = req.body;
-
-  if (!Array.isArray(ItemIDs) || ItemIDs.length === 0) {
-    return res.status(400).json({ error: "ItemIDs must be a non-empty array." });
-  }
-
-  // Prepare query with placeholders for ItemIDs
-  const placeholders = ItemIDs.map(() => "?").join(", ");
-  const params = [EventID, ...ItemIDs];
-
-  const query = `
-    DELETE FROM eventitems
-    WHERE EventID = ? AND ItemID IN (${placeholders})
-  `;
-
-  // Execute query
-  pool.query(query, params, (err, result) => {
-    if (err) {
-      console.error("Error deleting multiple items from event:", err);
-      return res.status(500).json({ error: "Error deleting items from event" });
-    }
-
-    if (result.affectedRows === 0) {
-      return res.status(404).json({ message: "No matching items found in this event." });
-    }
-
-    res.json({ message: `${result.affectedRows} item(s) removed from event ${EventID}` });
-  });
-});
-
-// -----------------------------------------DELETE EVENT-----------------------------------------
-app.delete("/api/events/:EventID", (req, res) => {
-  const { EventID } = req.params;
-
-  pool.getConnection((err, connection) => {
-    if (err) {
-      console.error("Connection error:", err);
-      return res.status(500).json({ error: "Database connection error" });
-    }
-
-    connection.beginTransaction((err) => {
+// -----------------------------------------GET ALL EVENTS-----------------------------------------
+app.get("/api/events", (req, res) => {
+  pool.query(
+    "SELECT EventID, EventName, StartDate, EndDate, TO_BASE64(EventPhoto) AS EventPhoto FROM events",
+    (err, results) => {
       if (err) {
-        connection.release();
-        console.error("Transaction error:", err);
-        return res.status(500).json({ error: "Error starting transaction" });
+        console.error("Error executing query: " + err.stack);
+        res.status(500).send("Error fetching events");
+        return;
       }
 
-      // Step 1: Delete from eventitems
-      connection.query(
-        "DELETE FROM eventitems WHERE EventID = ?",
-        [EventID],
-        (err) => {
-          if (err) {
-            return connection.rollback(() => {
-              connection.release();
-              console.error("Error deleting from eventitems:", err);
-              res.status(500).json({ error: "Failed to delete associated items" });
-            });
-          }
+      const formatted = results.map(row => ({
+        ...row,
+        EventPhoto: `data:image/jpeg;base64,${row.EventPhoto}`
+      }));
 
-          // Step 2: Delete from events
-          connection.query(
-            "DELETE FROM events WHERE EventID = ?",
-            [EventID],
-            (err, result) => {
-              if (err) {
-                return connection.rollback(() => {
-                  connection.release();
-                  console.error("Error deleting event:", err);
-                  res.status(500).json({ error: "Failed to delete event" });
-                });
-              }
-
-              if (result.affectedRows === 0) {
-                return connection.rollback(() => {
-                  connection.release();
-                  res.status(404).json({ error: "Event not found" });
-                });
-              }
-
-              connection.commit((err) => {
-                if (err) {
-                  return connection.rollback(() => {
-                    connection.release();
-                    res.status(500).json({ error: "Commit error" });
-                  });
-                }
-
-                connection.release();
-                res.json({ message: `Event ${EventID} and associated items deleted successfully` });
-              });
-            }
-          );
-        }
-      );
-    });
-  });
+      res.json(formatted);
+    }
+  );
 });
 
-// -----------------------------------------UPDATE EVENT-----------------------------------------
-app.put('/api/events/:eventId', upload.single('EventPhoto'), (req, res) => {
-  const { eventId } = req.params;
+// -----------------------------------------CREATE EVENT-----------------------------------------
+app.post("/api/createevent", upload.single("photo"), (req, res) => {
   const { EventName, StartDate, EndDate } = req.body;
-  const EventPhoto = req.file ? req.file.buffer : null;
-  
-  let query = `UPDATE events SET EventName = ?, StartDate = ?, EndDate = ?`;
-  const params = [EventName, StartDate, EndDate];
-  
-  if (EventPhoto) {
-    query += `, EventPhoto = ?`;
-    params.push(EventPhoto);
+  const photo = req.file ? req.file.buffer : null;
+
+  if (!EventName || !StartDate || !EndDate || !photo) {
+    return res.status(400).json({ error: "All fields and photo are required." });
   }
-  
-  query += ` WHERE EventID = ?`;
-  params.push(eventId);
-  
-  pool.query(query, params, (err, result) => {
-    if (err) {
-      console.error("Error updating event:", err);
-      return res.status(500).json({ error: 'Failed to update event.' });
-    }
-  
-    if (result.affectedRows === 0) {
-      return res.status(404).json({ message: 'Event not found.' });
-    }
-  
-    res.json({ message: 'Event updated successfully.' });
-  });
-});
 
-// -----------------------------------------FROM JOHNS BRANCH 3.0-----------------------------------------
-// Define the /api/admin/add-media route
-app.get("/api/user-borrowed-items-report", (req, res) => {
-  pool.getConnection((err, connection) => {
-    if (err) {
-      console.error("Error getting connection:", err);
-      return res.status(500).json({ error: "Database connection error." });
-    }
-
-    const query = "SELECT * FROM user_borrowed_items_report";
-
-    connection.query(query, (err, results) => {
-      connection.release(); // Release the connection back to the pool
-      if (err) {
-        console.error("Error executing query:", err);
-        return res.status(500).json({ error: "Error fetching book details." });
-      }
-
-      res.json(results);
-    });
-  });
-});
-
-function handleQuantityInserts(
-  title,
-  photo,
-  createdBy,
-  typename,
-  typeID,
-  callback
-) {
   pool.getConnection((err, connection) => {
     if (err) {
       console.error("DB Connection Error:", err);
-      return callback({ error: "DB connection error", details: err.message });
+      return res.status(500).json({ error: "Database connection failed" });
     }
 
-    // Begin transaction to ensure data consistency
-    connection.beginTransaction((err) => {
-      if (err) {
-        connection.release();
-        console.error("Transaction Error:", err);
-        return callback({ error: "Transaction error", details: err.message });
+    const query = `
+      INSERT INTO events (EventName, StartDate, EndDate, EventPhoto)
+      VALUES (?, ?, ?, ?);
+    `;
+
+    connection.query(query, [EventName, StartDate, EndDate, photo], (error, results) => {
+      connection.release();
+
+      if (error) {
+        console.error("Event Insert Error:", error);
+        return res.status(500).json({ error: "Failed to create event", details: error.message });
       }
 
-      connection.query(
-        `INSERT INTO Items (Title, Photo, CreatedBy) VALUES (?, ?, ?)`,
-        [title, photo, createdBy],
-        (err, results) => {
-          if (err) {
-            connection.rollback(() => {
-              connection.release();
-            });
-            console.error("Items Insert Error:", err);
-            return callback({
-              error: "Failed to insert item",
-              details: err.message,
-            });
-          }
-
-          // Get the inserted item ID
-          const returnedItemID = results.insertId;
-          let query;
-
-          if (typename === "Book") {
-            query = `INSERT INTO ItemTypes (ItemID, TypeName, ISBN) VALUES (?, ?, ?)`;
-          } else if (typename === "Media") {
-            query = `INSERT INTO ItemTypes (ItemID, TypeName, MediaID) VALUES (?, ?, ?)`;
-          } else {
-            connection.rollback(() => {
-              connection.release();
-            });
-            return callback({ error: "Invalid type name" });
-          }
-
-          connection.query(
-            query,
-            [returnedItemID, typename, typeID],
-            (err, results) => {
-              if (err) {
-                connection.rollback(() => {
-                  connection.release();
-                });
-                console.error("ItemTypes Insert Error:", err);
-                return callback({
-                  error: "Failed to insert item type",
-                  details: err.message,
-                });
-              }
-
-              // Commit the transaction
-              connection.commit((err) => {
-                if (err) {
-                  connection.rollback(() => {
-                    connection.release();
-                  });
-                  console.error("Commit Error:", err);
-                  return callback({
-                    error: "Failed to commit transaction",
-                    details: err.message,
-                  });
-                }
-
-                // Release the connection back to the pool
-                connection.release();
-
-                // Success
-                return callback(null, {
-                  success: true,
-                  itemID: returnedItemID,
-                  message: "Item inserted successfully",
-                });
-              });
-            }
-          );
-        }
-      );
+      res.status(201).json({
+        success: true,
+        message: "Event created successfully",
+        eventId: results.insertId,
+      });
     });
   });
-}
+});
 
 app.post("/api/insert/:typename", upload.single("photo"), (req, res) => {
   const typename = req.params.typename;
@@ -813,30 +858,48 @@ app.post("/api/insert/:typename", upload.single("photo"), (req, res) => {
                         });
                       }
 
+                      const insertPromises = [];
+
                       for (let i = 0; i < item.quantity - 1; i++) {
-                        handleQuantityInserts(
-                          item.title,
-                          photo,
-                          item.createdby,
-                          typename,
-                          item.isbn,
-                          (err, result) => {
-                            if (err) {
-                              console.error("Error:", err);
-                              res.status(500).json(err);
-                            } else {
-                              res.status(200).json(result);
-                            }
-                          }
+                        insertPromises.push(
+                          new Promise((resolve, reject) => {
+                            handleQuantityInserts(
+                              item.title,
+                              photo,
+                              item.createdby,
+                              typename,
+                              item.isbn,
+                              (err, result) => {
+                                if (err) reject(err);
+                                else resolve(result);
+                              }
+                            );
+                          })
                         );
                       }
 
-                      connection.release();
-                      return res.status(201).json({
-                        success: true,
-                        message: "Book added successfully!",
-                        itemId: returnedItemID,
-                      });
+                      Promise.all(insertPromises)
+                        .then((results) => {
+                          connection.release();
+                          res.status(201).json({
+                            success: true,
+                            message: `${item.quantity} copies of book added successfully!`,
+                            itemId: returnedItemID,
+                            additionalCopies: results,
+                          });
+                        })
+                        .catch((error) => {
+                          connection.release();
+                          console.error(
+                            "Error inserting additional copies:",
+                            error
+                          );
+                          res.status(500).json({
+                            error:
+                              "Some additional copies could not be inserted",
+                            details: error.message,
+                          });
+                        });
                     });
                   }
                 );
@@ -972,30 +1035,48 @@ app.post("/api/insert/:typename", upload.single("photo"), (req, res) => {
                         });
                       }
 
+                      const insertPromises = [];
+
                       for (let i = 0; i < item.quantity - 1; i++) {
-                        handleQuantityInserts(
-                          item.title,
-                          photo,
-                          item.createdby,
-                          typename,
-                          item.returnedMediaID,
-                          (err, result) => {
-                            if (err) {
-                              console.error("Error:", err);
-                              res.status(500).json(err);
-                            } else {
-                              res.status(200).json(result);
-                            }
-                          }
+                        insertPromises.push(
+                          new Promise((resolve, reject) => {
+                            handleQuantityInserts(
+                              item.title,
+                              photo,
+                              item.createdby,
+                              typename,
+                              item.isbn,
+                              (err, result) => {
+                                if (err) reject(err);
+                                else resolve(result);
+                              }
+                            );
+                          })
                         );
                       }
 
-                      connection.release();
-                      return res.status(201).json({
-                        success: true,
-                        message: "Media added successfully!",
-                        itemId: returnedItemID,
-                      });
+                      Promise.all(insertPromises)
+                        .then((results) => {
+                          connection.release();
+                          res.status(201).json({
+                            success: true,
+                            message: `${item.quantity} copies of book added successfully!`,
+                            itemId: returnedItemID,
+                            additionalCopies: results,
+                          });
+                        })
+                        .catch((error) => {
+                          connection.release();
+                          console.error(
+                            "Error inserting additional copies:",
+                            error
+                          );
+                          res.status(500).json({
+                            error:
+                              "Some additional copies could not be inserted",
+                            details: error.message,
+                          });
+                        });
                     });
                   }
                 );
@@ -1134,6 +1215,7 @@ app.post("/api/insert/:typename", upload.single("photo"), (req, res) => {
     res.status(400).json({ error: "Invalid type name" });
   }
 });
+
 app.post("/api/holdrequest", (req, res) => {
   const { itemid, memberid } = req.body;
 
@@ -1211,7 +1293,7 @@ app.post("/api/holdrequest", (req, res) => {
   });
 });
 
-
+// gets row information for specific member
 app.get("/api/profile/:memberid", (req, res) => {
   const memberId = req.params.memberid;
 
@@ -1222,7 +1304,7 @@ app.get("/api/profile/:memberid", (req, res) => {
     }
 
     connection.query(
-      "SELECT FirstName, LastName, MiddleName, Email, PhoneNumber, BirthDate, Address, Balance FROM Members WHERE MemberID = ?",
+      "SELECT m.FirstName, m.LastName, m.MiddleName, m.Email, m.PhoneNumber, m.BirthDate, m.Address, m.Balance, m.GroupID, mg.LendingPeriod, mg.ItemLimit, mg.MediaItemLimit, mg.DeviceLimit FROM Members m INNER JOIN membergroups mg ON mg.GroupID = m.GroupID WHERE MemberID = ?",
       [memberId],
       (err, results) => {
         connection.release();
@@ -1245,13 +1327,19 @@ app.get("/api/profile/:memberid", (req, res) => {
           birthDate: member.BirthDate,
           address: member.Address,
           balance: member.Balance,
+          memberGroup: member.GroupID,
+          lendingPeriod: member.LendingPeriod,
+          itemLimit: member.ItemLimit,
+          mediaItemLimit: member.MediaItemLimit,
+          deviceLimit: member.DeviceLimit,
         });
       }
     );
   });
 });
 
-app.put("/profile/api/edit", async (req, res) => {
+// edit profile information
+app.put("/api/profile/edit", async (req, res) => {
   const profile = req.body;
   console.log(profile);
 
@@ -1359,6 +1447,7 @@ app.put("/profile/api/edit", async (req, res) => {
   }
 });
 
+// edit item information
 app.post("/api/edit/:typename", upload.single("Photo"), (req, res) => {
   const typename = req.params.typename;
   const item = req.body;
@@ -1406,108 +1495,124 @@ app.post("/api/edit/:typename", upload.single("Photo"), (req, res) => {
           });
         }
 
-        connection.query(
-          `UPDATE Items SET Title = ?, Photo = ?, UpdatedBy = ? WHERE ItemID = ?`,
-          [item.Title, Photo, item.UpdatedBy, item.ItemID],
-          (itemErr, itemsResult) => {
-            if (itemErr) {
-              console.error("Items update Error:", {
-                message: itemErr.message,
-                sqlMessage: itemErr.sqlMessage,
-                code: itemErr.code,
-                sql: itemErr.sql,
+        // temporarily disable foreign key checks
+        connection.query(`SET FOREIGN_KEY_CHECKS=0;`, (fkErr) => {
+          if (fkErr) {
+            connection.rollback(() => {
+              connection.release();
+              res.status(500).json({
+                error: "Failed to disable foreign key checks",
+                details: fkErr.message,
               });
+            });
+            return;
+          }
 
-              return connection.rollback(() => {
-                connection.release();
-                res.status(500).json({
-                  error: "Item update failed",
-                  details: itemErr.message,
-                  sqlMessage: itemErr.sqlMessage,
+          // update items
+          connection.query(
+            `UPDATE Items SET Title = ?, Photo = ?, UpdatedBy = ? WHERE ItemID = ?`,
+            [item.Title, Photo, item.UpdatedBy, item.ItemID],
+            (itemErr, itemsResult) => {
+              if (itemErr) {
+                // error handling
+                connection.query(`SET FOREIGN_KEY_CHECKS=1;`); // if errors out, re-enable foreign key checks
+                return connection.rollback(() => {
+                  connection.release();
+                  res.status(500).json({
+                    error: "Item update failed",
+                    details: itemErr.message,
+                    sqlMessage: itemErr.sqlMessage,
+                  });
                 });
-              });
-            }
+              }
 
-            connection.query(
-              `UPDATE Books SET ISBN = ?, Authors = ?, GenreID = ?, Publisher = ?, PublicationYear = ?, LanguageID = ?, Summary = ? WHERE Books.ISBN = ?`,
-              [
-                item.newISBN,
-                item.Authors,
-                item.GenreID,
-                item.Publisher,
-                item.PublicationYear,
-                item.LanguageID,
-                item.Summary,
-                item.ISBN,
-              ],
-              (bookErr, booksResult) => {
-                if (bookErr) {
-                  console.error("Books update Error:", {
-                    message: bookErr.message,
-                    sqlMessage: bookErr.sqlMessage,
-                    code: bookErr.code,
-                    sql: bookErr.sql,
-                  });
-
-                  return connection.rollback(() => {
-                    connection.release();
-                    res.status(500).json({
-                      error: "Book update failed",
-                      details: bookErr.message,
-                      sqlMessage: bookErr.sqlMessage,
+              // update books table
+              connection.query(
+                `UPDATE Books SET ISBN = ?, Authors = ?, GenreID = ?, Publisher = ?, PublicationYear = ?, LanguageID = ?, Summary = ? WHERE Books.ISBN = ?`,
+                [
+                  item.newISBN,
+                  item.Authors,
+                  item.GenreID,
+                  item.Publisher,
+                  item.PublicationYear,
+                  item.LanguageID,
+                  item.Summary,
+                  item.ISBN,
+                ],
+                (bookErr, booksResult) => {
+                  if (bookErr) {
+                    connection.query(`SET FOREIGN_KEY_CHECKS=1;`);
+                    return connection.rollback(() => {
+                      connection.release();
+                      res.status(500).json({
+                        error: "Book update failed",
+                        details: bookErr.message,
+                        sqlMessage: bookErr.sqlMessage,
+                      });
                     });
-                  });
-                }
+                  }
 
-                console.log("Books Insert Result:", booksResult);
-
-                connection.query(
-                  `UPDATE ItemTypes SET ISBN = ? WHERE ItemTypes.ISBN = ?`,
-                  [item.newISBN, item.ISBN],
-                  (itemTypeErr, itResult) => {
-                    if (itemTypeErr) {
-                      console.error("ItemTypes Update Error:", {
-                        message: itemTypeErr.message,
-                        sqlMessage: itemTypeErr.sqlMessage,
-                        code: itemTypeErr.code,
-                        sql: itemTypeErr.sql,
-                      });
-
-                      return connection.rollback(() => {
-                        connection.release();
-                        res.status(500).json({
-                          error: "Item Types Update failed",
-                          details: itemTypeErr.message,
-                          sqlMessage: itemTypeErr.sqlMessage,
-                        });
-                      });
-                    }
-
-                    connection.commit((commitErr) => {
-                      if (commitErr) {
-                        console.error("Commit Error:", commitErr);
+                  // update itemtypes table
+                  connection.query(
+                    `UPDATE ItemTypes SET ISBN = ? WHERE ItemTypes.ISBN = ?`,
+                    [item.newISBN, item.ISBN],
+                    (itemTypeErr, itResult) => {
+                      if (itemTypeErr) {
+                        // Error handling...
+                        connection.query(`SET FOREIGN_KEY_CHECKS=1;`);
                         return connection.rollback(() => {
                           connection.release();
                           res.status(500).json({
-                            error: "Commit error",
-                            details: commitErr.message,
+                            error: "Item Types Update failed",
+                            details: itemTypeErr.message,
+                            sqlMessage: itemTypeErr.sqlMessage,
                           });
                         });
                       }
 
-                      connection.release();
-                      return res.status(201).json({
-                        success: true,
-                        message: "Book updated successfully!",
-                        itemId: item.ItemID,
-                      });
-                    });
-                  }
-                );
-              }
-            );
-          }
-        );
+                      // if no errors, re-enable foreign key checks
+                      connection.query(
+                        `SET FOREIGN_KEY_CHECKS=1;`,
+                        (enableErr) => {
+                          if (enableErr) {
+                            return connection.rollback(() => {
+                              connection.release();
+                              res.status(500).json({
+                                error: "Failed to re-enable foreign key checks",
+                                details: enableErr.message,
+                              });
+                            });
+                          }
+
+                          // commit transaction
+                          connection.commit((commitErr) => {
+                            if (commitErr) {
+                              console.error("Commit Error:", commitErr);
+                              return connection.rollback(() => {
+                                connection.release();
+                                res.status(500).json({
+                                  error: "Commit error",
+                                  details: commitErr.message,
+                                });
+                              });
+                            }
+
+                            connection.release();
+                            return res.status(201).json({
+                              success: true,
+                              message: "Book updated successfully!",
+                              itemId: item.ItemID,
+                            });
+                          });
+                        }
+                      );
+                    }
+                  );
+                }
+              );
+            }
+          );
+        });
       });
     });
   } else if (typename === "Media") {
@@ -1723,6 +1828,8 @@ app.post("/api/edit/:typename", upload.single("Photo"), (req, res) => {
     res.status(400).json({ error: "Invalid type name" });
   }
 });
+
+// returns most borrowed items view
 app.get("/api/most-borrowed-items", (req, res) => {
   pool.getConnection((err, connection) => {
     if (err) {
@@ -1734,12 +1841,16 @@ app.get("/api/most-borrowed-items", (req, res) => {
       connection.release(); // Release the connection back to the pool
       if (err) {
         console.error("Error executing query:", err);
-        return res.status(500).json({ error: "Error fetching most borrowed items." });
+        return res
+          .status(500)
+          .json({ error: "Error fetching most borrowed items." });
       }
       res.json(results);
     });
   });
 });
+
+// gets book details view, dont know if this is being used
 app.get("/api/book-details", (req, res) => {
   pool.getConnection((err, connection) => {
     if (err) {
@@ -1760,7 +1871,6 @@ app.get("/api/book-details", (req, res) => {
     });
   });
 });
-
 
 // displays all users in the system
 app.get("/api/users", (req, res) => {
@@ -1790,7 +1900,6 @@ app.get("/api/users", (req, res) => {
     });
   });
 });
-
 
 // deletes a user from the system
 app.delete("/api/usersdelete/:userId", (req, res) => {
@@ -1831,59 +1940,31 @@ app.get("/api/search", (req, res) => {
       .json({ success: false, message: "Missing search query" });
   }
 
-  // Search in the Items table and include necessary fields
+  // Example: search in the Items table using a LIKE query on the ItemTitle column
   pool.getConnection((err, connection) => {
     if (err) {
       console.error("Error getting connection:", err);
-      return res.status(500).json({ success: false, message: "Database connection error" });
+      return;
     }
 
-    const searchQuery = `
-      SELECT 
-        b.ISBN AS ItemID, 
-        b.Title, 
-        'Book' AS TypeName, 
-        'Available' AS Status, 
-        TO_BASE64(b.Photo) AS PhotoBase64
-      FROM books b
-      WHERE b.Title LIKE ?
-
-      UNION ALL
-
-      SELECT 
-        m.MediaID AS ItemID, 
-        i.Title, 
-        'Media' AS TypeName, 
-        i.Status, 
-        TO_BASE64(m.Photo) AS PhotoBase64
-      FROM media m
-      JOIN items i ON m.MediaID = i.ItemID
-      WHERE i.Title LIKE ?
-
-      UNION ALL
-
-      SELECT 
-        d.DeviceID AS ItemID, 
-        d.DeviceName AS Title, 
-        'Device' AS TypeName, 
-        'Available' AS Status, 
-        TO_BASE64(d.Photo) AS PhotoBase64
-      FROM itemdevice d
-      WHERE d.DeviceName LIKE ?;
-    `;
-
-    connection.query(searchQuery, [`%${query}%`, `%${query}%`, `%${query}%`], (err, results) => {
-      connection.release(); // Release the connection back to the pool
-      if (err) {
-        console.error("Error executing search query:", err.stack);
-        return res.status(500).json({ success: false, message: "Error searching items" });
+    connection.query(
+      `SELECT * FROM Items WHERE Title LIKE ?`,
+      [`%${query}%`],
+      (err, results) => {
+        connection.release();
+        if (err) {
+          console.error("Error executing search query:", err.stack);
+          return res
+            .status(500)
+            .json({ success: false, message: "Error searching items" });
+        }
+        res.json(results);
       }
-
-      res.json(results);
-    });
+    );
   });
 });
 
+// returns languages
 app.get("/api/languages", (req, res) => {
   pool.query(`SELECT LanguageID, Language FROM languages`, (err, results) => {
     if (err) {
@@ -1895,6 +1976,7 @@ app.get("/api/languages", (req, res) => {
   });
 });
 
+// returns media genres
 app.get("/api/mediagenres", (req, res) => {
   pool.query(
     `SELECT GenreID, GenreName FROM genres WHERE GenreID BETWEEN 200 AND 299`,
@@ -1909,6 +1991,7 @@ app.get("/api/mediagenres", (req, res) => {
   );
 });
 
+// returns book genres
 app.get("/api/bookgenres", (req, res) => {
   pool.query(
     `SELECT GenreID, GenreName FROM genres WHERE GenreID BETWEEN 100 AND 199`,
@@ -2019,7 +2102,7 @@ const checkLimits = (memberID, itemIDs, connection) => {
 
                     // Ensure limits exist
                     const bookLimit = limits.ItemLimit;
-                    const mediaLimit = limits.MediaLimit;
+                    const mediaLimit = limits.MediaItemLimit;
                     const deviceLimit = limits.DeviceLimit;
 
                     if (booksBorrowed + newBooks > bookLimit) {
@@ -2059,7 +2142,7 @@ const checkLimits = (memberID, itemIDs, connection) => {
   });
 };
 
-app.post("/profile/api/return", (req, res) => {
+app.post("/api/profile/return", (req, res) => {
   try {
     const { items } = req.body;
     console.log(items);
@@ -2099,7 +2182,9 @@ app.post("/profile/api/return", (req, res) => {
               connection.release();
               if (err) {
                 console.error("Commit error:", err);
-                return res.status(500).json({ error: "Failed to commit transaction" });
+                return res
+                  .status(500)
+                  .json({ error: "Failed to commit transaction" });
               }
 
               res.status(200).json({
@@ -2118,7 +2203,10 @@ app.post("/profile/api/return", (req, res) => {
             [itemid],
             (err, rows) => {
               if (err || rows.length === 0) {
-                console.error(`Error finding borrow record for Item ${itemid}:`, err);
+                console.error(
+                  `Error finding borrow record for Item ${itemid}:`,
+                  err
+                );
                 hasErrors = true;
                 return returnItem(index + 1);
               }
@@ -2140,7 +2228,10 @@ app.post("/profile/api/return", (req, res) => {
                 ],
                 (err) => {
                   if (err) {
-                    console.error(`Error inserting return record for Item ${itemid}:`, err);
+                    console.error(
+                      `Error inserting return record for Item ${itemid}:`,
+                      err
+                    );
                     hasErrors = true;
                     return returnItem(index + 1);
                   }
@@ -2151,7 +2242,10 @@ app.post("/profile/api/return", (req, res) => {
                     [itemid],
                     (err) => {
                       if (err) {
-                        console.error(`Error deleting borrow record for Item ${itemid}:`, err);
+                        console.error(
+                          `Error deleting borrow record for Item ${itemid}:`,
+                          err
+                        );
                         hasErrors = true;
                         return returnItem(index + 1);
                       }
@@ -2162,7 +2256,10 @@ app.post("/profile/api/return", (req, res) => {
                         [itemid],
                         (err) => {
                           if (err) {
-                            console.error(`Error updating Item ${itemid}:`, err);
+                            console.error(
+                              `Error updating Item ${itemid}:`,
+                              err
+                            );
                             hasErrors = true;
                           } else {
                             returnedItems.push(itemid);
@@ -2174,22 +2271,37 @@ app.post("/profile/api/return", (req, res) => {
                             [itemid],
                             (err, holdRows) => {
                               if (err) {
-                                console.error(`Error checking hold requests for Item ${itemid}:`, err);
+                                console.error(
+                                  `Error checking hold requests for Item ${itemid}:`,
+                                  err
+                                );
                               } else if (holdRows.length > 0) {
-                                console.log(`Active hold found for ItemID ${itemid}, updating NextInLine...`);
-                                
+                                console.log(
+                                  `Active hold found for ItemID ${itemid}, updating NextInLine...`
+                                );
+
+                                // Call updateNextInLine function after the return logic
                                 setImmediate(() => {
-                                  console.log('Calling updateNextInLine for ItemID:', itemid);
-                                  updateNextInLine(itemid).catch(err => {
-                                    console.error(`Error updating NextInLine for Item ${itemid}:`, err);
+                                  console.log(
+                                    "Calling updateNextInLine for ItemID:",
+                                    itemid
+                                  );
+                                  updateNextInLine(itemid).catch((err) => {
+                                    console.error(
+                                      `Error updating NextInLine for Item ${itemid}:`,
+                                      err
+                                    );
                                   });
                                 });
                               }
-                          
-                              console.log('Moving to the next item:', index + 1);
+
+                              console.log(
+                                "Moving to the next item:",
+                                index + 1
+                              );
                               returnItem(index + 1); // Continue to next item
                             }
-                          );                          
+                          );
                         }
                       );
                     }
@@ -2203,80 +2315,9 @@ app.post("/profile/api/return", (req, res) => {
       });
     });
   } catch (err) {
-    console.error("Checkout error:", err);
-    res.status(500).json({ error: "Server error processing checkout" });
-    return;
+    console.error("Return error:", err);
+    res.status(500).json({ error: "Server error processing return" });
   }
-});
-app.get("/api/borrowing-history/:memberid", (req, res) => {
-  const memberId = req.params.memberid;
-
-  pool.getConnection((err, connection) => {
-    if (err) {
-      console.error("Database connection error:", err);
-      return res.status(500).json({ error: "Database connection error" });
-    }
-
-    // First, get current borrows from borrowrecord table
-    const currentBorrowsQuery = `
-      SELECT 
-        br.BorrowID,
-        br.ItemID,
-        i.Title,
-        it.TypeName,
-        br.BorrowDate,
-        br.DueDate,
-        NULL as ReturnDate,
-        br.FineAccrued
-      FROM borrowrecord br
-      JOIN Items i ON br.ItemID = i.ItemID
-      JOIN ItemTypes it ON i.ItemID = it.ItemID
-      WHERE br.MemberID = ?
-    `;
-
-    // Then, get past borrows from returnrecord table
-    const pastBorrowsQuery = `
-      SELECT 
-        rr.ReturnID as BorrowID,
-        rr.ItemID,
-        i.Title,
-        it.TypeName,
-        rr.BorrowDate,
-        rr.DueDate,
-        rr.ReturnDate,
-        rr.FineAccrued
-      FROM returnrecord rr
-      JOIN Items i ON rr.ItemID = i.ItemID
-      JOIN ItemTypes it ON i.ItemID = it.ItemID
-      WHERE rr.MemberID = ?
-    `;
-
-    // Run both queries and combine the results
-    connection.query(currentBorrowsQuery, [memberId], (err, currentBorrows) => {
-      if (err) {
-        connection.release();
-        console.error("Error fetching current borrows:", err);
-        return res.status(500).json({ error: "Database query error" });
-      }
-
-      connection.query(pastBorrowsQuery, [memberId], (err, pastBorrows) => {
-        connection.release();
-        
-        if (err) {
-          console.error("Error fetching past borrows:", err);
-          return res.status(500).json({ error: "Database query error" });
-        }
-
-        // Combine both result sets
-        const allBorrows = [...currentBorrows, ...pastBorrows];
-        
-        // Sort by borrow date (newest first)
-        allBorrows.sort((a, b) => new Date(b.BorrowDate) - new Date(a.BorrowDate));
-        
-        res.json(allBorrows);
-      });
-    });
-  });
 });
 
 app.post("/api/checkout", (req, res) => {
@@ -2435,7 +2476,8 @@ app.get("/api/items", (req, res) => {
   });
 });
 
-app.post("/profile/api/cancelhold", (req, res) => {
+/*
+app.post("/api/profile/cancelhold", (req, res) => {
   const { memberID, itemID } = req.body;
 
   // quick validation
@@ -2480,8 +2522,10 @@ app.post("/profile/api/cancelhold", (req, res) => {
     );
   });
 });
+*/
+
 // Function to fetch hold items for a member
-app.get("/profile/api/holditems/:memberID", async (req, res) => {
+app.get("/api/profile/holditems/:memberID", async (req, res) => {
   const { memberID } = req.params;
   console.log("Fetching hold items for memberID:", memberID);
 
@@ -2509,13 +2553,18 @@ app.get("/profile/api/holditems/:memberID", async (req, res) => {
 
     if (results.length === 0) {
       console.log("No hold requests found for memberID:", memberID);
-      return res.status(404).json({ error: "No hold requests found for this member" });
+      return res
+        .status(404)
+        .json({ error: "No hold requests found for this member" });
     }
 
     // Enrich holds with NextInLine status
     const enrichedHolds = await Promise.all(
       results.map(async (hold) => {
-        const isNextInLine = await isMemberNextInLineForItem(hold.ItemID, memberID);
+        const isNextInLine = await isMemberNextInLineForItem(
+          hold.ItemID,
+          memberID
+        );
         return { ...hold, NextInLine: isNextInLine };
       })
     );
@@ -2594,12 +2643,12 @@ async function updateNextInLine(itemID) {
   });
 
   // Log the type and structure of rows
-  console.log('Type of rows:', typeof rows);
-  console.log('Structure of rows:', rows);
+  console.log("Type of rows:", typeof rows);
+  console.log("Structure of rows:", rows);
 
   // Check if rows is not null or undefined (it should contain the row data)
   if (rows) {
-    const memberID = rows.MemberID;  // Directly access MemberID from the object
+    const memberID = rows.MemberID; // Directly access MemberID from the object
     console.log(`Found NextInLine MemberID: ${memberID} for ItemID: ${itemID}`);
 
     // Set NextInLine to 1 for the earliest active request (i.e., the returned row)
@@ -2619,9 +2668,13 @@ async function updateNextInLine(itemID) {
 
     // Log the updated result
     if (updateResult.affectedRows > 0) {
-      console.log(`NextInLine updated for ItemID: ${itemID}, MemberID: ${memberID}`);
+      console.log(
+        `NextInLine updated for ItemID: ${itemID}, MemberID: ${memberID}`
+      );
     } else {
-      console.log(`Failed to update NextInLine for ItemID: ${itemID}, MemberID: ${memberID}`);
+      console.log(
+        `Failed to update NextInLine for ItemID: ${itemID}, MemberID: ${memberID}`
+      );
     }
 
     // Re-check and log the row after the update to confirm the change
@@ -2646,13 +2699,14 @@ async function updateNextInLine(itemID) {
   }
 }
 
-
 // Endpoint to cancel hold and update the next in line
 app.post("/api/cancelhold", async (req, res) => {
   const { itemID, memberID } = req.body;
 
   try {
-    console.log(`Canceling hold for ItemID: ${itemID} and MemberID: ${memberID}`);
+    console.log(
+      `Canceling hold for ItemID: ${itemID} and MemberID: ${memberID}`
+    );
 
     // Update the hold status to cancelled
     await new Promise((resolve, reject) => {
@@ -2712,7 +2766,105 @@ app.post("/api/fulfillhold", async (req, res) => {
   }
 });
 
-app.get("/profile/api/borroweditems/:memberID", (req, res) => {
+cron.schedule("* * * * *", () => {
+  console.log("Running overdue charge check...");
+
+  pool.getConnection((err, connection) => {
+    if (err) {
+      console.error("Connection error:", err);
+      return;
+    }
+
+    const overdueQuery = `
+      SELECT br.MemberID, br.ItemID, it.TypeName
+      FROM BorrowRecord br
+      JOIN itemtypes it ON br.ItemID = it.ItemID
+      WHERE br.ReturnDate IS NULL
+        AND br.DueDate < CURDATE()
+        AND NOT EXISTS (
+          SELECT 1 FROM overduecharges oc 
+          WHERE oc.MemberID = br.MemberID 
+          AND oc.ItemID = br.ItemID
+        )
+    `;
+
+    connection.query(overdueQuery, (err, overdues) => {
+      if (err) {
+        console.error("Query error:", err);
+        connection.release();
+        return;
+      }
+
+      let processed = 0;
+      if (overdues.length === 0) {
+        connection.release();
+        return;
+      }
+
+      overdues.forEach((row) => {
+        const { MemberID, ItemID, TypeName } = row;
+
+        connection.query(
+          "SELECT FineAmount FROM fines WHERE FineID = ?",
+          [TypeName],
+          (err, fineResults) => {
+            if (err || !fineResults.length) {
+              console.error("Fine lookup error:", err);
+              if (++processed === overdues.length) connection.release();
+              return;
+            }
+
+            const fineAmount = fineResults[0].FineAmount;
+
+            connection.query(
+              `INSERT INTO overduecharges (MemberID, ItemID, Amount, ChargedAt)
+               VALUES (?, ?, ?, NOW())`,
+              [MemberID, ItemID, fineAmount],
+              (err) => {
+                if (err) console.error("Insert error:", err);
+                else
+                  console.log(
+                    `Charged $${fineAmount} to Member ${MemberID} for Item ${ItemID}`
+                  );
+                if (++processed === overdues.length) connection.release();
+              }
+            );
+          }
+        );
+      });
+    });
+  });
+});
+
+// Every day at midnight, the cron job checks for pending notifications
+cron.schedule("0 0 * * *", () => {
+  pool.getConnection((err, connection) => {
+    if (err) {
+      console.error("Error getting connection:", err);
+      return;
+    }
+
+    const updateQuery = `
+      UPDATE PendingNotifications 
+      SET processed = 1
+      WHERE DATEDIFF(notify_at, CURDATE()) = 3 AND processed = 0
+    `;
+
+    connection.query(updateQuery, (err, results) => {
+      connection.release();
+
+      if (err) {
+        console.error("Error updating PendingNotifications:", err);
+        return;
+      }
+
+      console.log(`✅ Updated ${results.affectedRows} pending notifications.`);
+    });
+  });
+});
+
+// API endpoint: Get borrowed items for a member
+app.get("/api/profile/borroweditems/:memberID", (req, res) => {
   const { memberID } = req.params;
 
   pool.getConnection((err, connection) => {
@@ -2891,8 +3043,9 @@ function generatePassword(password) {
   const genHash = crypto
     .pbkdf2Sync(password, salt, 10000, 64, "sha512")
     .toString("hex");
+
   return `${salt}:${genHash}`;
-} 
+}
 /**
  * Generates a secure password hash with salt
  * @param {string} password - The password to hash
@@ -2907,138 +3060,6 @@ function validPassword(password, hash, salt) {
 }
 
 // ------------------------------------------------- BEGIN SIGN UP -------------------------------------------------
-app.get("/api/test-connection", (req, res) => {
-  pool.getConnection((err, connection) => {
-    if (err) {
-      console.error("Error connecting to the database:", err);
-      return res.status(500).json({ success: false, message: "Database connection failed" });
-    }
-
-    connection.query("SELECT 1", (err, results) => {
-      connection.release(); // Release the connection back to the pool
-      if (err) {
-        console.error("Error executing test query:", err);
-        return res.status(500).json({ success: false, message: "Test query failed" });
-      }
-
-      res.status(200).json({ success: true, message: "Database connection successful", results });
-    });
-  });
-});
-
-
-// Configure multer for file uploads
-app.post("/api/admin/add-book", upload.single("photo"), (req, res) => {
-  console.log("Request body:", req.body); // Debugging
-  console.log("Uploaded file:", req.file); // Debugging
-
-  const { isbn, title, authors, genreId, publisher, publicationYear, languageId, cost } = req.body;
-  const photo = req.file ? req.file.buffer : null;
-
-  // Validate required fields
-  if (!isbn || !title || !languageId) {
-    return res.status(400).json({ error: "ISBN, Title, and LanguageID are required." });
-  }
-
-  // Obtain a connection for transaction control
-  pool.getConnection((err, connection) => {
-    if (err) {
-      console.error("Connection error:", err);
-      return res.status(500).json({ error: "Database connection error." });
-    }
-
-    connection.beginTransaction((err) => {
-      if (err) {
-        connection.release();
-        return res.status(500).json({ error: "Transaction initiation error." });
-      }
-
-      // Insert into the Books table
-      const bookQuery = `
-        INSERT INTO Books 
-          (ISBN, Title, Authors, GenreID, Publisher, PublicationYear, LanguageID, Photo)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?);
-      `;
-      const bookParams = [
-        isbn,
-        title,
-        authors || null,
-        genreId || null,
-        publisher || null,
-        publicationYear || null,
-        languageId,
-        photo, // Binary data for photo
-      ];
-
-      connection.query(bookQuery, bookParams, (err) => {
-        if (err) {
-          return connection.rollback(() => {
-            connection.release();
-            console.error("Error inserting book:", err);
-            res.status(500).json({ error: "Failed to add book." });
-          });
-        }
-
-        // Insert into the Items table
-        const itemQuery = `
-          INSERT INTO Items 
-            (Title, Cost, TimesBorrowed, CreatedAt, CreatedBy, LastUpdated, Status)
-          VALUES (?, ?, 0, NOW(), ?, NOW(), ?);
-        `;
-        const createdBy = req.user ? req.user.id : null; // Replace with actual user ID if available
-        const status = "Available"; // Default status
-        const itemParams = [title, cost || 0, createdBy, status];
-
-        connection.query(itemQuery, itemParams, (err, itemResult) => {
-          if (err) {
-            return connection.rollback(() => {
-              connection.release();
-              console.error("Error inserting item:", err);
-              res.status(500).json({ error: "Failed to add item record." });
-            });
-          }
-
-          const itemId = itemResult.insertId;
-
-          // Insert into the ItemTypes table
-          const itemTypeQuery = `
-            INSERT INTO ItemTypes 
-              (ItemID, TypeName, ISBN)
-            VALUES (?, 'Book', ?);
-          `;
-          const itemTypeParams = [itemId, isbn];
-
-          connection.query(itemTypeQuery, itemTypeParams, (err) => {
-            if (err) {
-              return connection.rollback(() => {
-                connection.release();
-                console.error("Error inserting item type:", err);
-                res.status(500).json({ error: "Failed to add item type record." });
-              });
-            }
-
-            // Commit the transaction
-            connection.commit((err) => {
-              if (err) {
-                return connection.rollback(() => {
-                  connection.release();
-                  console.error("Commit error:", err);
-                  res.status(500).json({ error: "Transaction commit error." });
-                });
-              }
-
-              connection.release();
-              res.status(201).json({ success: true, message: "Book and item added successfully!" });
-            });
-          });
-        });
-      });
-    });
-  });
-});
-
-
-
 app.post("/api/signup", async (req, res) => {
   // get Email, Password, & GroupID from request body
   const {
@@ -3107,6 +3128,8 @@ app.post("/api/signup", async (req, res) => {
             "SELECT 1 FROM Members WHERE Email = ? OR PhoneNumber = ? LIMIT 1",
             [email, phoneNumber],
             (err, result) => {
+              connection.release();
+
               if (err) {
                 reject(err);
                 return;
@@ -3114,8 +3137,6 @@ app.post("/api/signup", async (req, res) => {
               resolve(result && result.length > 0);
             }
           );
-          // Important: Release the connection back to the pool
-          connection.release();
         });
       });
     };
@@ -3146,6 +3167,7 @@ app.post("/api/signup", async (req, res) => {
               address,
             ],
             (err, result) => {
+              connection.release();
               if (err) {
                 reject(err);
                 return;
@@ -3153,8 +3175,6 @@ app.post("/api/signup", async (req, res) => {
               resolve(result);
             }
           );
-          // Important: Release the connection back to the pool
-          connection.release();
         });
       });
     };
@@ -3183,72 +3203,6 @@ app.post("/api/signup", async (req, res) => {
     res.status(500).json({ error: "Signup failed" });
     return;
   }
-});
-app.delete("/api/items/:itemId", (req, res) => {
-  const { itemId } = req.params;
-
-  pool.getConnection((err, connection) => {
-    if (err) {
-      console.error("Error getting connection:", err);
-      return res.status(500).json({ error: "Database connection error." });
-    }
-
-    connection.beginTransaction((err) => {
-      if (err) {
-        connection.release();
-        return res.status(500).json({ error: "Transaction initiation error." });
-      }
-
-      // Delete from Books table
-      const deleteBookQuery = `DELETE FROM Books WHERE ISBN = ?`;
-      connection.query(deleteBookQuery, [itemId], (err) => {
-        if (err) {
-          return connection.rollback(() => {
-            connection.release();
-            console.error("Error deleting book:", err);
-            res.status(500).json({ error: "Failed to delete book." });
-          });
-        }
-
-        // Delete from ItemTypes table
-        const deleteItemTypeQuery = `DELETE FROM ItemTypes WHERE ItemID = ?`;
-        connection.query(deleteItemTypeQuery, [itemId], (err) => {
-          if (err) {
-            return connection.rollback(() => {
-              connection.release();
-              console.error("Error deleting item type:", err);
-              res.status(500).json({ error: "Failed to delete item type." });
-            });
-          }
-
-          // Delete from Items table
-          const deleteItemQuery = `DELETE FROM Items WHERE ItemID = ?`;
-          connection.query(deleteItemQuery, [itemId], (err) => {
-            if (err) {
-              return connection.rollback(() => {
-                connection.release();
-                console.error("Error deleting item:", err);
-                res.status(500).json({ error: "Failed to delete item." });
-              });
-            }
-
-            connection.commit((err) => {
-              if (err) {
-                return connection.rollback(() => {
-                  connection.release();
-                  console.error("Commit error:", err);
-                  res.status(500).json({ error: "Transaction commit error." });
-                });
-              }
-
-              connection.release();
-              res.status(200).json({ success: true, message: "Item deleted successfully!" });
-            });
-          });
-        });
-      });
-    });
-  });
 });
 // ------------------------------------------------- END SIGN UP -------------------------------------------------
 
@@ -3280,6 +3234,7 @@ app.post("/api/login", async (req, res) => {
             "SELECT * FROM Members WHERE Email = ? LIMIT 1",
             [email],
             (err, results) => {
+              connection.release();
               if (err) {
                 reject(err);
                 return;
@@ -3293,8 +3248,6 @@ app.post("/api/login", async (req, res) => {
               resolve(results[0]);
             }
           );
-          // Important: Release the connection back to the pool
-          connection.release();
         });
       });
     };
@@ -3375,45 +3328,42 @@ app.delete("/logout", (req, res) => {
     res.status(200).send("No session to log out from");
   }
 });
-
 // ------------------------------------------------- END LOGOUT -------------------------------------------------
 
 app.use(compression());
 app.disable("x-powered-by");
 
-(async () => {
-  if (DEVELOPMENT) {
-    console.log("Starting development server");
-    const viteDevServer = await import("vite").then((vite) =>
-      vite.createServer({
-        server: { middlewareMode: true },
-      })
-    );
-    app.use(viteDevServer.middlewares);
-    app.use(async (req, res, next) => {
-      try {
-        const source = await viteDevServer.ssrLoadModule("./server/app.ts");
-        return await source.app(req, res, next);
-      } catch (error) {
-        if (typeof error === "object" && error instanceof Error) {
-          viteDevServer.ssrFixStacktrace(error);
-        }
-        next(error);
+if (DEVELOPMENT) {
+  console.log("Starting development server");
+  const viteDevServer = await import("vite").then((vite) =>
+    vite.createServer({
+      server: { middlewareMode: true },
+    })
+  );
+  app.use(viteDevServer.middlewares);
+  app.use(async (req, res, next) => {
+    try {
+      const source = await viteDevServer.ssrLoadModule("./server/app.ts");
+      return await source.app(req, res, next);
+    } catch (error) {
+      if (typeof error === "object" && error instanceof Error) {
+        viteDevServer.ssrFixStacktrace(error);
       }
-    });
-  } else {
-    console.log("Starting production server");
-    app.use(
-      "/assets",
-      express.static("build/client/assets", { immutable: true, maxAge: "1y" })
-    );
-    app.use(express.static("build/client", { maxAge: "1h" }));
-    app.use(await import(BUILD_PATH).then((mod) => mod.app));
-  }
-
-  app.use(morgan("tiny"));
-
-  app.listen(PORT, () => {
-    console.log(`Server is running on http://localhost:${PORT}`);
+      next(error);
+    }
   });
-})();
+} else {
+  console.log("Starting production server");
+  app.use(
+    "/assets",
+    express.static("build/client/assets", { immutable: true, maxAge: "1y" })
+  );
+  app.use(express.static("build/client", { maxAge: "1h" }));
+  app.use(await import(BUILD_PATH).then((mod) => mod.app));
+}
+
+app.use(morgan("tiny"));
+
+app.listen(PORT, () => {
+  console.log(`Server is running on http://localhost:${PORT}`);
+});
