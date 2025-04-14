@@ -281,29 +281,24 @@ const Report = () => {
         </div>
 
         {/* Summary Statistics */}
-        <div className="grid grid-cols-5 gap-4 mb-6">
-          <div className="bg-red-100 p-4 rounded shadow">
-            <h3 className="text-red-800">Overdue</h3>
-            <p className="text-2xl">{summaryStats.overdueItems}</p>
-          </div>
-          <div className="bg-green-100 p-4 rounded shadow">
-            <h3 className="text-green-800">Total Fines</h3>
-            <p className="text-2xl">${summaryStats.totalFines.toFixed(2)}</p>
-          </div>
-          <div className="bg-indigo-100 p-4 rounded shadow">
-            <h3 className="text-indigo-800">Books</h3>
-            <p className="text-2xl">{summaryStats.bookCount}</p>
-          </div>
-          <div className="bg-purple-100 p-4 rounded shadow">
-            <h3 className="text-purple-800">Media</h3>
-            <p className="text-2xl">{summaryStats.mediaCount}</p>
-          </div>
-          <div className="bg-cyan-100 p-4 rounded shadow">
-            <h3 className="text-cyan-800">Devices</h3>
-            <p className="text-2xl">{summaryStats.deviceCount}</p>
-          </div>
-        </div>
-
+<div className="grid grid-cols-4 gap-4 mb-6">
+  <div className="bg-green-100 p-4 rounded shadow">
+    <h3 className="text-green-800">Total Fines</h3>
+    <p className="text-2xl">${summaryStats.totalFines.toFixed(2)}</p>
+  </div>
+  <div className="bg-indigo-100 p-4 rounded shadow">
+    <h3 className="text-indigo-800">Books</h3>
+    <p className="text-2xl">{summaryStats.bookCount}</p>
+  </div>
+  <div className="bg-purple-100 p-4 rounded shadow">
+    <h3 className="text-purple-800">Media</h3>
+    <p className="text-2xl">{summaryStats.mediaCount}</p>
+  </div>
+  <div className="bg-cyan-100 p-4 rounded shadow">
+    <h3 className="text-cyan-800">Devices</h3>
+    <p className="text-2xl">{summaryStats.deviceCount}</p>
+  </div>
+</div>
         {/* Results count */}
         <div className="mb-2 text-gray-600">
           Showing {filteredData.length} of {data.length} records

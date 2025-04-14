@@ -205,42 +205,64 @@ app.get("/api/borrowing-history/:memberid", (req, res) => {
       console.error("Database connection error:", err);
       return res.status(500).json({ error: "Database connection error" });
     }
-    connection.query(
-      `SELECT 
-    rr.ReturnID, 
-    rr.MemberID, 
-    rr.ItemID, 
-    rr.BorrowDate, 
-    rr.DueDate, 
-    rr.ReturnDate, 
-    rr.FineAccrued, 
-    i.Title, 
-    it.TypeName 
-FROM 
-    returnrecord rr 
-INNER JOIN 
-    Items i ON rr.ItemID = i.ItemID 
-INNER JOIN 
-    ItemTypes it ON i.ItemID = it.ItemID
-WHERE 
-    rr.MemberID = ?
-ORDER BY 
-    rr.BorrowDate DESC`,
-      [memberId],
-      (err, results) => {
-        connection.release();
 
-        if (err) {
-          return res.status(500).json({ error: "Database query error" });
-        }
+    const query = `
+      SELECT 
+        br.BorrowID AS RecordID,
+        br.MemberID,
+        br.ItemID,
+        br.BorrowDate,
+        br.DueDate,
+        NULL AS ReturnDate,
+        br.FineAccrued,
+        i.Title,
+        it.TypeName,
+        'Borrowed' AS RecordType
+      FROM 
+        borrowrecord br
+      INNER JOIN 
+        Items i ON br.ItemID = i.ItemID
+      INNER JOIN 
+        ItemTypes it ON i.ItemID = it.ItemID
+      WHERE 
+        br.MemberID = ? AND br.ReturnDate IS NULL
+      UNION
+      SELECT 
+        rr.ReturnID AS RecordID,
+        rr.MemberID,
+        rr.ItemID,
+        rr.BorrowDate,
+        rr.DueDate,
+        rr.ReturnDate,
+        rr.FineAccrued,
+        i.Title,
+        it.TypeName,
+        'Returned' AS RecordType
+      FROM 
+        returnrecord rr
+      INNER JOIN 
+        Items i ON rr.ItemID = i.ItemID
+      INNER JOIN 
+        ItemTypes it ON i.ItemID = it.ItemID
+      WHERE 
+        rr.MemberID = ?
+      ORDER BY BorrowDate DESC;
+    `;
 
-        if (results.length === 0) {
-          return res.status(404).json({ error: "Borrowing history not found" });
-        }
+    connection.query(query, [memberId, memberId], (err, results) => {
+      connection.release();
 
-        res.json(results);
+      if (err) {
+        console.error("Database query error:", err);
+        return res.status(500).json({ error: "Database query error" });
       }
-    );
+
+      if (results.length === 0) {
+        return res.status(404).json({ error: "Borrowing history not found" });
+      }
+
+      res.json(results);
+    });
   });
 });
 
