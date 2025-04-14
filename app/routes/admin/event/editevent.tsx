@@ -3,6 +3,7 @@ import { type Event, type Items } from "~/services/api";
 import ConfirmationModal from "~/components/confirmationmodal";
 import "./editevent.css";
 
+
 const EditEvent = () => {
   const [events, setEvents] = useState<Event[]>([]);
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
@@ -16,26 +17,24 @@ const EditEvent = () => {
   const [deleting, setDeleting] = useState(false);
   const EventPhotoInputRef = useRef<HTMLInputElement>(null);
   const [newEventPhoto, setNewEventPhoto] = useState<File | null>(null);
-  const [newEventPhotoPreview, setNewEventPhotoPreview] = useState<
-    string | null
-  >(null);
+  const [newEventPhotoPreview, setNewEventPhotoPreview] = useState<string | null>(null);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
   useEffect(() => {
     fetch("/api/events")
-      .then((res) => res.json())
-      .then((data) => {
+      .then(res => res.json())
+      .then(data => {
         setEvents(data);
         setLoading(false);
       })
-      .catch((err) => {
+      .catch(err => {
         console.error("Error loading events", err);
         setLoading(false);
       });
   }, []);
 
   const handleEventSelect = (eventId: number) => {
-    const event = events.find((e) => e.EventID === eventId) || null;
+    const event = events.find(e => e.EventID === eventId) || null;
     setSelectedEvent(event);
     setItemsToRemove([]);
     setRemovedItemsDisplay([]);
@@ -45,12 +44,12 @@ const EditEvent = () => {
     if (eventId) {
       setItemsLoading(true);
       fetch(`/api/events/${eventId}/items`)
-        .then((res) => res.json())
-        .then((data) => {
+        .then(res => res.json())
+        .then(data => {
           setEventItems(Array.isArray(data) ? data : []);
           setItemsLoading(false);
         })
-        .catch((err) => {
+        .catch(err => {
           console.error("Error loading event items", err);
           setItemsLoading(false);
         });
@@ -63,7 +62,7 @@ const EditEvent = () => {
     if (!selectedEvent) return;
     const { name, value } = e.target;
 
-    setSelectedEvent((prev) => {
+    setSelectedEvent(prev => {
       if (!prev) return null;
 
       if (name === "EventName") {
@@ -79,24 +78,20 @@ const EditEvent = () => {
   };
 
   const handleRemoveItem = (itemId: number) => {
-    const itemToRemove = eventItems.find((item) => item.ItemID === itemId);
+    const itemToRemove = eventItems.find(item => item.ItemID === itemId);
     if (itemToRemove) {
-      setItemsToRemove((prev) => [...prev, itemId]);
-      setRemovedItemsDisplay((prev) => [...prev, itemToRemove]);
-      setEventItems((prev) => prev.filter((item) => item.ItemID !== itemId));
+      setItemsToRemove(prev => [...prev, itemId]);
+      setRemovedItemsDisplay(prev => [...prev, itemToRemove]);
+      setEventItems(prev => prev.filter(item => item.ItemID !== itemId));
     }
   };
 
   const handleUndoItem = (itemId: number) => {
-    setItemsToRemove((prev) => prev.filter((id) => id !== itemId));
-    const itemToUndo = removedItemsDisplay.find(
-      (item) => item.ItemID === itemId
-    );
+    setItemsToRemove(prev => prev.filter(id => id !== itemId));
+    const itemToUndo = removedItemsDisplay.find(item => item.ItemID === itemId);
     if (itemToUndo) {
-      setEventItems((prev) => [...prev, itemToUndo]);
-      setRemovedItemsDisplay((prev) =>
-        prev.filter((item) => item.ItemID !== itemId)
-      );
+      setEventItems(prev => [...prev, itemToUndo]);
+      setRemovedItemsDisplay(prev => prev.filter(item => item.ItemID !== itemId));
     }
   };
 
@@ -123,7 +118,7 @@ const EditEvent = () => {
     if (!selectedEvent) return;
     setStatusMsg(null);
     setSaving(true);
-
+    
     const formData = new FormData();
     formData.append("EventName", selectedEvent.EventName);
     formData.append("StartDate", formatDateForBackend(selectedEvent.StartDate));
@@ -131,61 +126,57 @@ const EditEvent = () => {
     if (newEventPhoto) {
       formData.append("EventPhoto", newEventPhoto);
     }
-
+    
     try {
       const res = await fetch(`/api/events/${selectedEvent.EventID}`, {
         method: "PUT",
         body: formData,
       });
-
+    
       const result = await res.json();
       if (!res.ok) {
         setStatusMsg(`Failed to update event: ${result.error}`);
         return;
       }
-
+    
       if (itemsToRemove.length > 0) {
-        const removeRes = await fetch(
-          `/api/events/${selectedEvent.EventID}/items/delete`,
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ ItemIDs: itemsToRemove }),
-          }
-        );
-
+        const removeRes = await fetch(`/api/events/${selectedEvent.EventID}/items/delete`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ItemIDs: itemsToRemove }),
+        });
+    
         const removeResult = await removeRes.json();
         if (!removeRes.ok) {
           setStatusMsg(`Failed to remove items: ${removeResult.error}`);
           return;
         }
       }
-
-      setSelectedEvent((prev) =>
-        prev
-          ? {
-              ...prev,
-              ...result,
-              ...(newEventPhotoPreview && { EventPhoto: newEventPhotoPreview }),
-            }
-          : null
+  
+      setSelectedEvent(prev => prev ? {
+      ...prev,
+      ...result,
+      ...(newEventPhotoPreview && { EventPhoto: newEventPhotoPreview }),
+      }
+      : null
       );
+    
+    setItemsToRemove([]);
+    setRemovedItemsDisplay([]);
+    setNewEventPhoto(null);
+    setNewEventPhotoPreview(null);
+    setStatusMsg("Event updated successfully!");
 
-      setItemsToRemove([]);
-      setRemovedItemsDisplay([]);
-      setNewEventPhoto(null);
-      setNewEventPhotoPreview(null);
-      setStatusMsg("Event updated successfully!");
-
-      setTimeout(() => {
-        setStatusMsg(null);
-      }, 3000);
-    } catch (err: any) {
+    setTimeout(() => {
+      setStatusMsg(null);
+    }, 3000);
+  
+  } catch (err: any) {
       console.error(err);
       setStatusMsg("An unexpected error occurred.");
     } finally {
-      setSaving(false);
-    }
+        setSaving(false);
+      }
   };
 
   const openDeleteModal = () => {
@@ -203,9 +194,7 @@ const EditEvent = () => {
 
       if (res.ok) {
         setStatusMsg("Event deleted successfully.");
-        setEvents((prev) =>
-          prev.filter((e) => e.EventID !== selectedEvent.EventID)
-        );
+        setEvents(prev => prev.filter(e => e.EventID !== selectedEvent.EventID));
         setSelectedEvent(null);
         setEventItems([]);
         setItemsToRemove([]);
@@ -249,12 +238,9 @@ const EditEvent = () => {
         ) : events.length === 0 ? (
           <p>No events available.</p>
         ) : (
-          <select
-            onChange={(e) => handleEventSelect(Number(e.target.value))}
-            value={selectedEvent?.EventID || ""}
-          >
+          <select onChange={e => handleEventSelect(Number(e.target.value))} value={selectedEvent?.EventID || ''}>
             <option value="">-- Select an Event --</option>
-            {events.map((event) => (
+            {events.map(event => (
               <option key={event.EventID} value={event.EventID}>
                 {event.EventName}
               </option>
@@ -281,9 +267,7 @@ const EditEvent = () => {
           type="date"
           name="StartDate"
           className="event-edit-input"
-          value={
-            selectedEvent?.StartDate?.slice(0, 10) || defaultEvent.StartDate
-          }
+          value={selectedEvent?.StartDate?.slice(0, 10) || defaultEvent.StartDate}
           onChange={handleInputChange}
         />
       </div>
@@ -300,55 +284,37 @@ const EditEvent = () => {
       </div>
 
       <div className="event-edit-titles">
-        Event Photo:
-        <input
-          type="file"
-          name="EventPhoto"
-          accept=".jpg, image/jpeg/*"
-          className="event-edit-photo-field-hidden"
-          onChange={handlePhotoChange}
-          ref={EventPhotoInputRef}
-          id="eventPhotoUpload"
-        />
-        <label htmlFor="eventPhotoUpload" className="custom-file-upload">
-          {newEventPhoto
-            ? newEventPhoto.name
-            : selectedEvent?.EventPhoto
-            ? "Change Photo"
-            : "Upload Photo"}
-        </label>
+      Event Photo:
+      <input
+        type="file"
+        name="EventPhoto"
+        accept=".jpg, image/jpeg/*"
+        className="event-edit-photo-field-hidden"
+        onChange={handlePhotoChange}
+        ref={EventPhotoInputRef}
+        id="eventPhotoUpload"
+      />
+      <label htmlFor="eventPhotoUpload" className="edit-custom-file-upload">
+      {newEventPhoto ? newEventPhoto.name : (selectedEvent?.EventPhoto ? 'Change Photo' : 'Upload Photo')}
+      </label>
       </div>
 
       <div className="event-photo-preview">
-        <h3 style={{ padding: "4px" }}>
-          {newEventPhotoPreview
-            ? "New Photo Preview:"
-            : selectedEvent?.EventPhoto
-            ? "Current Photo:"
-            : "No Photo To Display"}
-        </h3>
-        {newEventPhotoPreview && (
-          <img
-            src={newEventPhotoPreview}
-            alt="New Event Preview"
-            style={{
-              maxWidth: "400px",
-              maxHeight: "500px",
-              marginBottom: "10px",
-            }}
-          />
-        )}
+      <h3 style={{padding: '4px'}}>{newEventPhotoPreview ? 'New Photo Preview:' : selectedEvent?.EventPhoto ? 'Current Photo:' : 'No Photo To Display'}</h3>
+      {newEventPhotoPreview && (
+        <img
+        src={newEventPhotoPreview}
+        alt="New Event Preview"
+        style={{ maxWidth: '400px', maxHeight: '500px', marginBottom: '10px' }}
+        />
+      )}
 
-        {!newEventPhotoPreview && selectedEvent?.EventPhoto && (
-          <img
-            src={selectedEvent.EventPhoto}
-            alt={selectedEvent.EventName}
-            style={{
-              maxWidth: "400px",
-              maxHeight: "500px",
-              marginBottom: "10px",
-            }}
-          />
+      {!newEventPhotoPreview && selectedEvent?.EventPhoto && (
+       <img
+        src={selectedEvent.EventPhoto}
+        alt={selectedEvent.EventName}
+        style={{ maxWidth: '400px', maxHeight: '500px', marginBottom: '10px' }}
+        />
         )}
       </div>
 
@@ -356,16 +322,13 @@ const EditEvent = () => {
       {itemsLoading ? (
         <p>Loading items...</p>
       ) : eventItems.length === 0 ? (
-        <p style={{ marginBottom: "10px" }}>No items in this event.</p>
+        <p style={{ marginBottom: '10px' }}>No items in this event.</p>
       ) : (
         <ul className="item-list">
-          {eventItems.map((item) => (
+          {eventItems.map(item => (
             <li className="item-list-items" key={item.ItemID}>
               {item.Title} ({item.TypeName})
-              <button
-                onClick={() => handleRemoveItem(item.ItemID)}
-                className="remove-item-button"
-              >
+              <button onClick={() => handleRemoveItem(item.ItemID)} className="remove-item-button">
                 Remove
               </button>
             </li>
@@ -375,16 +338,13 @@ const EditEvent = () => {
 
       <h3 className="event-edit-titles">Items to Remove</h3>
       {removedItemsDisplay.length === 0 ? (
-        <p style={{ marginBottom: "10px" }}>No items marked for removal.</p>
+        <p style={{ marginBottom: '10px' }}>No items marked for removal.</p>
       ) : (
         <ul className="item-list">
-          {removedItemsDisplay.map((item) => (
+          {removedItemsDisplay.map(item => (
             <li className="item-list-items" key={item.ItemID}>
               {item.Title}
-              <button
-                onClick={() => handleUndoItem(item.ItemID)}
-                className="undo-item-button"
-              >
+              <button onClick={() => handleUndoItem(item.ItemID)} className="undo-item-button">
                 Undo
               </button>
             </li>
@@ -393,18 +353,10 @@ const EditEvent = () => {
       )}
 
       {/* Buttons to Save Changes or Delete Event */}
-      <button
-        onClick={handleUpdateEvent}
-        disabled={saving || !selectedEvent}
-        className="save-changes-button"
-      >
+      <button onClick={handleUpdateEvent} disabled={saving || !selectedEvent} className="save-changes-button">
         Save Changes
       </button>
-      <button
-        onClick={openDeleteModal}
-        disabled={deleting || !selectedEvent}
-        className="delete-event-button"
-      >
+      <button onClick={openDeleteModal} disabled={deleting || !selectedEvent} className="delete-event-button">
         Delete Event
       </button>
 
@@ -412,15 +364,14 @@ const EditEvent = () => {
       {statusMsg && (
         <p
           style={{
-            color: statusMsg.includes("Event deleted successfully")
-              ? "red"
-              : "blue",
+            color:
+              statusMsg.includes("Event deleted successfully") ? "red" : "blue",
           }}
         >
           {statusMsg}
         </p>
       )}
-      <ConfirmationModal
+        <ConfirmationModal
         isOpen={isDeleteModalOpen}
         message={`Are you sure you want to delete the event "${selectedEvent?.EventName}" and all its items? This action cannot be undone.`}
         onConfirm={confirmDeleteEvent}

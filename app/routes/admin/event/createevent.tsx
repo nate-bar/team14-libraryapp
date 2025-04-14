@@ -137,7 +137,7 @@ export default function CreateEventPage() {
           className="create-event-date"
           required
         />
-        <label className="custom-file-upload">
+        <label className="create-custom-file-upload">
           <input
             type="file"
             accept=".jpg, image/jpeg/*"
