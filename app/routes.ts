@@ -8,6 +8,11 @@ import {
 export default [
   layout("routes/layout.tsx", [
     index("routes/home.tsx"),
+
+    route("eventpage/:eventId", "routes/eventpage.tsx"),
+    route("quickcatalog/books", "routes/quickcatalog/books.tsx"),
+    route("quickcatalog/media", "routes/quickcatalog/media.tsx"),
+    route("quickcatalog/devices", "routes/quickcatalog/devices.tsx"),
     route("about", "routes/info/about.tsx"),
     route("catalog", "routes/catalog.tsx"),
     route("search", "routes/search.tsx"),
@@ -24,6 +29,7 @@ export default [
     route("dashboard", "routes/profile/dashboard.tsx"),
     route("myitems", "routes/profile/myitems.tsx"),
     route("holds", "routes/profile/holds.tsx"),
+    route("payoverdue", "routes/profile/payoverdue.tsx"),
     route("mailbox", "routes/profile/mailbox.tsx"),
     route("settings", "routes/profile/settings.tsx"),
     route("payoverdue", "routes/profile/payoverdue.tsx"),
@@ -37,6 +43,9 @@ export default [
         route("media", "routes/admin/insert/media.tsx"),
         route("device", "routes/admin/insert/device.tsx"),
       ]),
+      route("createevent", "routes/admin/event/createevent.tsx"),
+      route("addeventitems", "routes/admin/event/addeventitems.tsx"),
+      route("editevent", "routes/admin/event/editevent.tsx"),
       route("edit/book/:itemId", "routes/admin/edit/book.tsx"),
       route("edit/media/:itemId", "routes/admin/edit/media.tsx"),
       route("edit/device/:itemId", "routes/admin/edit/device.tsx"),

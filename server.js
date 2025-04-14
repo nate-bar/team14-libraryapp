@@ -60,7 +60,7 @@ const pool = mysql.createPool({
 app.get("/api/fines/:memberid", (req, res) => {
   const memberID = req.params.memberid;
   pool.query(
-    "SELECT SUM(FineAmount - PaymentAmount) AS TotalDue FROM paymenthistory WHERE MemberID = ? AND (FineAmount > PaymentAmount OR PaymentAmount = 0)",
+    "SELECT Balance AS TotalDue FROM Members WHERE MemberID = ?",
     [memberID],
     (err, results) => {
       if (err) {
@@ -80,7 +80,9 @@ app.post("/api/pay", (req, res) => {
   const paymentAmount = parseFloat(amount);
 
   if (isNaN(paymentAmount) || paymentAmount <= 0) {
-    return res.status(400).json({ success: false, message: "Invalid payment amount" });
+    return res
+      .status(400)
+      .json({ success: false, message: "Invalid payment amount" });
   }
 
   // Get a connection from the pool
@@ -92,82 +94,109 @@ app.post("/api/pay", (req, res) => {
         .json({ success: false, message: "Payment processing error" });
     }
 
-    // Start a transaction
-    connection.beginTransaction(err => {
-      if (err) {
-        connection.release();
-        console.error("Error starting transaction:", err);
-        return res.status(500).json({ success: false, message: "Payment processing error" });
-      }
+    // Update the member's balance
+    connection.query(
+      "UPDATE members SET balance = balance - ? WHERE memberID = ?",
+      [paymentAmount, memberID],
+      (err, result) => {
+        connection.release(); // Always release the connection
 
-      // First, get all unpaid fines for this member
-      connection.query(
-        "SELECT PaymentID, FineAmount, PaymentAmount FROM paymenthistory WHERE MemberID = ? AND FineAmount > PaymentAmount ORDER BY CreatedAt ASC",
-        [memberID],
-        (err, results) => {
-          if (err) {
-            return connection.rollback(() => {
-              connection.release();
-              console.error("Error fetching fines:", err);
-              res.status(500).json({ success: false, message: "Payment processing error" });
-            });
-          }
-
-          let remainingPayment = paymentAmount;
-          const updates = [];
-
-          for (const fine of results) {
-            if (remainingPayment <= 0) break;
-
-            const outstanding = fine.FineAmount - fine.PaymentAmount;
-            const appliedPayment = Math.min(outstanding, remainingPayment);
-
-            updates.push(
-              new Promise((resolve, reject) => {
-                connection.query(
-                  "UPDATE paymenthistory SET PaymentAmount = PaymentAmount + ? WHERE PaymentID = ?",
-                  [appliedPayment, fine.PaymentID],
-                  err => {
-                    if (err) reject(err);
-                    else resolve();
-                  }
-                );
-              })
-            );
-
-            remainingPayment -= appliedPayment;
-          }
-
-          Promise.all(updates)
-            .then(() => {
-              connection.commit(err => {
-                connection.release();
-                if (err) {
-                  return connection.rollback(() => {
-                    connection.release();
-                    console.error("Error committing transaction:", err);
-                    res.status(500).json({ success: false, message: "Payment processing error" });
-                  });
-                }
-
-                connection.release();
-                res.json({ success: true, remainingBalance: remainingPayment });
-              });
-            })
-            .catch(err => {
-              connection.rollback(() => {
-                connection.release();
-                console.error("Error updating payments:", err);
-                res.status(500).json({ success: false, message: "Payment processing error" });
-              });
-            });
+        if (err) {
+          console.error("Error updating balance:", err);
+          return res
+            .status(500)
+            .json({ success: false, message: "Payment processing error" });
         }
-      );
-    });
+
+        if (result.affectedRows === 0) {
+          return res
+            .status(404)
+            .json({ success: false, message: "Member not found" });
+        }
+
+        // Get the updated balance
+        pool.query(
+          "SELECT balance FROM members WHERE memberID = ?",
+          [memberID],
+          (err, results) => {
+            if (err) {
+              console.error("Error retrieving updated balance:", err);
+              return res.status(200).json({
+                success: true,
+                message: "Payment processed successfully",
+                // We can't return the balance due to error, but payment was successful
+              });
+            }
+
+            const updatedBalance = results[0]?.balance || 0;
+
+            res.json({
+              success: true,
+              message: "Payment processed successfully",
+              currentBalance: updatedBalance,
+            });
+          }
+        );
+      }
+    );
   });
 });
 
-//shows borrowing history for a specific member
+app.post("/api/deleteitem", (req, res) => {
+  const { itemid } = req.body;
+
+  pool.getConnection((err, connection) => {
+    if (err) {
+      console.error("Database connection error:", err);
+      return res.status(500).json({ error: "Database connection error" });
+    }
+
+    // First delete from itemtypes table
+    connection.query(
+      `DELETE FROM itemtypes WHERE ItemID = ? LIMIT 1`,
+      [itemid],
+      (err, results) => {
+        if (err) {
+          connection.release();
+          console.error("Error deleting from itemtypes:", err);
+          return res
+            .status(500)
+            .json({ error: "Error deleting from itemtypes" });
+        }
+
+        // Then delete from items table
+        connection.query(
+          `DELETE FROM items WHERE ItemID = ? LIMIT 1`,
+          [itemid],
+          (err, results) => {
+            connection.release(); // Release the connection
+
+            if (err) {
+              console.error("Error deleting from items:", err);
+              return res
+                .status(500)
+                .json({ error: "Error deleting from items" });
+            }
+
+            // Check if any rows were actually deleted
+            if (results.affectedRows === 0) {
+              return res
+                .status(404)
+                .json({ message: "Item not found or already deleted" });
+            }
+
+            // Return success response
+            return res.status(200).json({
+              message: "Item successfully deleted",
+              itemid: itemid,
+            });
+          }
+        );
+      }
+    );
+  });
+});
+
 app.get("/api/borrowing-history/:memberid", (req, res) => {
   const memberId = req.params.memberid;
 
@@ -194,7 +223,9 @@ INNER JOIN
 INNER JOIN 
     ItemTypes it ON i.ItemID = it.ItemID
 WHERE 
-    rr.MemberID = ?`,
+    rr.MemberID = ?
+ORDER BY 
+    rr.BorrowDate DESC`,
       [memberId],
       (err, results) => {
         connection.release();
@@ -374,6 +405,501 @@ function handleQuantityInserts(
     });
   });
 }
+
+// -----------------------------------------UPDATE EVENT-----------------------------------------
+app.put("/api/events/:eventId", upload.single("EventPhoto"), (req, res) => {
+  const { eventId } = req.params;
+  const { EventName, StartDate, EndDate } = req.body;
+  const EventPhoto = req.file ? req.file.buffer : null;
+
+  let query = `UPDATE events SET EventName = ?, StartDate = ?, EndDate = ?`;
+  const params = [EventName, StartDate, EndDate];
+
+  if (EventPhoto) {
+    query += `, EventPhoto = ?`;
+    params.push(EventPhoto);
+  }
+
+  query += ` WHERE EventID = ?`;
+  params.push(eventId);
+
+  pool.query(query, params, (err, result) => {
+    if (err) {
+      console.error("Error updating event:", err);
+      return res.status(500).json({ error: "Failed to update event." });
+    }
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ message: "Event not found." });
+    }
+
+    res.json({ message: "Event updated successfully." });
+  });
+});
+
+// -----------------------------------------DELETE EVENT-----------------------------------------
+app.delete("/api/events/:EventID", (req, res) => {
+  const { EventID } = req.params;
+
+  pool.getConnection((err, connection) => {
+    if (err) {
+      console.error("Connection error:", err);
+      return res.status(500).json({ error: "Database connection error" });
+    }
+
+    connection.beginTransaction((err) => {
+      if (err) {
+        connection.release();
+        console.error("Transaction error:", err);
+        return res.status(500).json({ error: "Error starting transaction" });
+      }
+
+      // Step 1: Delete from eventitems
+      connection.query(
+        "DELETE FROM eventitems WHERE EventID = ?",
+        [EventID],
+        (err) => {
+          if (err) {
+            return connection.rollback(() => {
+              connection.release();
+              console.error("Error deleting from eventitems:", err);
+              res
+                .status(500)
+                .json({ error: "Failed to delete associated items" });
+            });
+          }
+
+          // Step 2: Delete from events
+          connection.query(
+            "DELETE FROM events WHERE EventID = ?",
+            [EventID],
+            (err, result) => {
+              if (err) {
+                return connection.rollback(() => {
+                  connection.release();
+                  console.error("Error deleting event:", err);
+                  res.status(500).json({ error: "Failed to delete event" });
+                });
+              }
+
+              if (result.affectedRows === 0) {
+                return connection.rollback(() => {
+                  connection.release();
+                  res.status(404).json({ error: "Event not found" });
+                });
+              }
+
+              connection.commit((err) => {
+                if (err) {
+                  return connection.rollback(() => {
+                    connection.release();
+                    res.status(500).json({ error: "Commit error" });
+                  });
+                }
+
+                connection.release();
+                res.json({
+                  message: `Event ${EventID} and associated items deleted successfully`,
+                });
+              });
+            }
+          );
+        }
+      );
+    });
+  });
+});
+
+// -----------------------------------------DELETE ITEMS FROM EVENT-----------------------------------------
+app.post("/api/events/:EventID/items/delete", (req, res) => {
+  const { EventID } = req.params;
+  const { ItemIDs } = req.body;
+
+  if (!Array.isArray(ItemIDs) || ItemIDs.length === 0) {
+    return res
+      .status(400)
+      .json({ error: "ItemIDs must be a non-empty array." });
+  }
+
+  // Prepare query with placeholders for ItemIDs
+  const placeholders = ItemIDs.map(() => "?").join(", ");
+  const params = [EventID, ...ItemIDs];
+
+  const query = `
+    DELETE FROM eventitems
+    WHERE EventID = ? AND ItemID IN (${placeholders})
+  `;
+
+  // Execute query
+  pool.query(query, params, (err, result) => {
+    if (err) {
+      console.error("Error deleting multiple items from event:", err);
+      return res.status(500).json({ error: "Error deleting items from event" });
+    }
+
+    if (result.affectedRows === 0) {
+      return res
+        .status(404)
+        .json({ message: "No matching items found in this event." });
+    }
+
+    res.json({
+      message: `${result.affectedRows} item(s) removed from event ${EventID}`,
+    });
+  });
+});
+
+// -----------------------------------------GET ITEMS FROM EVENT-----------------------------------------
+app.get("/api/events/:EventID/items", (req, res) => {
+  const { EventID } = req.params;
+
+  const query = `
+    SELECT
+      ei.ItemID,
+      i.Title,
+      it.TypeName,
+      i.Status,
+      i.LastUpdated,
+      i.CreatedAt,
+      i.TimesBorrowed,
+      g.GenreID,
+      g.GenreName,
+      TO_BASE64(i.Photo) AS PhotoBase64
+    FROM eventitems ei
+    INNER JOIN Items i ON ei.ItemID = i.ItemID
+    INNER JOIN ItemTypes it ON i.ItemID = it.ItemID
+    LEFT JOIN Books b ON ei.ISBN = b.ISBN AND it.TypeName = 'Book'
+    LEFT JOIN Media m ON ei.MediaID = m.MediaID AND it.TypeName = 'Media'
+    LEFT JOIN Genres g ON (
+      (it.TypeName = 'Book' AND b.GenreID = g.GenreID) OR
+      (it.TypeName = 'Media' AND m.GenreID = g.GenreID)
+    )
+    WHERE ei.EventID = ?
+  `;
+
+  pool.query(query, [EventID], (err, results) => {
+    if (err) {
+      console.error("Error fetching event items:", err);
+      return res.status(500).send("Error fetching event items");
+    }
+
+    if (results.length === 0) {
+      return res
+        .status(404)
+        .json({ message: "No items found for this event." });
+    }
+
+    // Process results to handle potential null Genre and Photo values
+    const formattedResults = results.map((item) => ({
+      ItemID: item.ItemID,
+      Title: item.Title,
+      TypeName: item.TypeName,
+      Status: item.Status,
+      LastUpdated: item.LastUpdated,
+      CreatedAt: item.CreatedAt,
+      TimesBorrowed: item.TimesBorrowed,
+      GenreID: item.GenreID || null,
+      GenreName: item.GenreName || null,
+      Photo: item.PhotoBase64 || null,
+    }));
+
+    res.json(formattedResults);
+  });
+});
+
+// -----------------------------------------ADD ITEMS TO EVENT-----------------------------------------
+app.post("/api/events/:EventID/items", async (req, res) => {
+  const { EventID } = req.params;
+  const { ItemID } = req.body;
+  const itemIds = Array.isArray(ItemID) ? ItemID : [ItemID];
+  const placeholders = itemIds.map(() => "?").join(", ");
+
+  if (
+    !Array.isArray(ItemID) &&
+    typeof ItemID !== "string" &&
+    typeof ItemID !== "number"
+  ) {
+    return res.status(400).json({ error: "Invalid ItemID(s) format." });
+  }
+
+  if (itemIds.length === 0) {
+    return res
+      .status(400)
+      .json({ error: "No ItemID(s) provided in the request body." });
+  }
+
+  pool.query(
+    `SELECT it.TypeName, it.ISBN, it.MediaID, i.Title, i.ItemID
+     FROM Items i
+     INNER JOIN ItemTypes it ON i.ItemID = it.ItemID
+     WHERE i.ItemID IN (${placeholders})`,
+    itemIds,
+    (err, itemDetailsRows) => {
+      if (err) {
+        console.error("Error fetching item details:", err);
+        return res.status(500).send("Error fetching item details");
+      }
+
+      const itemDetailsMap = {};
+      for (const row of itemDetailsRows) {
+        itemDetailsMap[row.ItemID] = row;
+      }
+
+      let responses = [];
+
+      const processNextItem = (index) => {
+        if (index >= itemIds.length) {
+          const allSuccessful = responses.every((r) => r.success === true);
+          const statusCode = allSuccessful ? 201 : 207;
+          const message = allSuccessful
+            ? "All items added successfully."
+            : "Some items failed to be added.";
+
+          return res.status(statusCode).json({ message, results: responses });
+        }
+
+        const currentItemID = itemIds[index];
+        const details = itemDetailsMap[currentItemID];
+
+        if (!details) {
+          responses.push({
+            itemId: currentItemID,
+            success: false,
+            error: "Item not found",
+          });
+          return processNextItem(index + 1);
+        }
+
+        pool.getConnection((err, connection) => {
+          if (err) {
+            console.error("Error getting connection: ", err);
+            responses.push({
+              itemId: currentItemID,
+              itemName: details?.Title || null,
+              success: false,
+              error: "Connection error",
+            });
+            return processNextItem(index + 1);
+          }
+
+          connection.beginTransaction((err) => {
+            if (err) {
+              connection.release();
+              console.error("Error starting transaction:", err);
+              responses.push({
+                itemId: currentItemID,
+                itemName: details?.Title || null,
+                success: false,
+                error: "Transaction start error",
+              });
+              return processNextItem(index + 1);
+            }
+
+            connection.query(
+              "SELECT EventID, EventName FROM events WHERE EventID = ?",
+              [EventID],
+              (err, eventRows) => {
+                if (err || eventRows.length === 0) {
+                  return connection.rollback(() => {
+                    connection.release();
+                    const errorMsg = err
+                      ? "Error checking event"
+                      : `Event with ID ${EventID} not found.`;
+                    console.error(errorMsg);
+                    responses.push({
+                      itemId: currentItemID,
+                      itemName: details?.Title || null,
+                      success: false,
+                      error: errorMsg,
+                    });
+                    processNextItem(index + 1);
+                  });
+                }
+
+                const itemType = details.TypeName;
+                const isbnToInsert = itemType === "Book" ? details.ISBN : null;
+                const mediaIDToInsert =
+                  itemType === "Media" ? details.MediaID : null;
+
+                connection.query(
+                  "SELECT eventID, ItemID FROM eventitems WHERE eventID = ? AND ItemID = ?",
+                  [EventID, currentItemID],
+                  (err, existingLink) => {
+                    if (err || existingLink.length > 0) {
+                      return connection.rollback(() => {
+                        connection.release();
+                        const errorMsg = err
+                          ? "Error checking existing link"
+                          : `Item ${currentItemID} is already linked to this event.`;
+                        console.error(errorMsg);
+                        responses.push({
+                          itemId: currentItemID,
+                          itemName: details?.Title || null,
+                          success: false,
+                          error: errorMsg,
+                        });
+                        processNextItem(index + 1);
+                      });
+                    }
+
+                    connection.query(
+                      "INSERT INTO eventitems (eventID, ItemID, ISBN, mediaID) VALUES (?, ?, ?, ?)",
+                      [EventID, currentItemID, isbnToInsert, mediaIDToInsert],
+                      (err) => {
+                        if (err) {
+                          return connection.rollback(() => {
+                            connection.release();
+                            console.error("Error adding item to event:", err);
+                            responses.push({
+                              itemId: currentItemID,
+                              itemName: details?.Title || null,
+                              success: false,
+                              error: `Failed to add item: ${err.message}`,
+                            });
+                            processNextItem(index + 1);
+                          });
+                        }
+
+                        connection.commit((err) => {
+                          if (err) {
+                            return connection.rollback(() => {
+                              connection.release();
+                              responses.push({
+                                itemId: currentItemID,
+                                itemName: details?.Title || null,
+                                success: false,
+                                error: "Commit error",
+                              });
+                              processNextItem(index + 1);
+                            });
+                          }
+
+                          connection.release();
+                          responses.push({
+                            itemId: currentItemID,
+                            itemName: details.Title,
+                            eventName: eventRows[0].EventName,
+                            success: true,
+                          });
+                          processNextItem(index + 1);
+                        });
+                      }
+                    );
+                  }
+                );
+              }
+            );
+          });
+        });
+      };
+
+      processNextItem(0);
+    }
+  );
+});
+
+// -----------------------------------------GET SINGLE EVENT INFO-----------------------------------------
+app.get("/api/events/:EventID", (req, res) => {
+  const { EventID } = req.params;
+
+  const query = `
+    SELECT
+      EventID,
+      EventName,
+      StartDate,
+      EndDate,
+      TO_BASE64(EventPhoto) AS EventPhoto
+    FROM events
+    WHERE EventID = ?
+  `;
+
+  pool.query(query, [EventID], (err, results) => {
+    if (err) {
+      console.error("Error fetching event:", err);
+      return res.status(500).send("Error fetching event");
+    }
+
+    if (results.length === 0) {
+      return res.status(404).json({ message: "Event not found" });
+    }
+
+    // Format the EventPhoto as a data URL
+    const formattedResult = {
+      ...results[0],
+      EventPhoto: results[0].EventPhoto
+        ? `data:image/jpeg;base64,${results[0].EventPhoto}`
+        : null,
+    };
+
+    res.json(formattedResult);
+  });
+});
+
+// -----------------------------------------GET ALL EVENTS-----------------------------------------
+app.get("/api/events", (req, res) => {
+  pool.query(
+    "SELECT EventID, EventName, StartDate, EndDate, TO_BASE64(EventPhoto) AS EventPhoto FROM events",
+    (err, results) => {
+      if (err) {
+        console.error("Error executing query: " + err.stack);
+        res.status(500).send("Error fetching events");
+        return;
+      }
+
+      const formatted = results.map((row) => ({
+        ...row,
+        EventPhoto: `data:image/jpeg;base64,${row.EventPhoto}`,
+      }));
+
+      res.json(formatted);
+    }
+  );
+});
+
+// -----------------------------------------CREATE EVENT-----------------------------------------
+app.post("/api/createevent", upload.single("photo"), (req, res) => {
+  const { EventName, StartDate, EndDate } = req.body;
+  const photo = req.file ? req.file.buffer : null;
+
+  if (!EventName || !StartDate || !EndDate || !photo) {
+    return res
+      .status(400)
+      .json({ error: "All fields and photo are required." });
+  }
+
+  pool.getConnection((err, connection) => {
+    if (err) {
+      console.error("DB Connection Error:", err);
+      return res.status(500).json({ error: "Database connection failed" });
+    }
+
+    const query = `
+      INSERT INTO events (EventName, StartDate, EndDate, EventPhoto)
+      VALUES (?, ?, ?, ?);
+    `;
+
+    connection.query(
+      query,
+      [EventName, StartDate, EndDate, photo],
+      (error, results) => {
+        connection.release();
+
+        if (error) {
+          console.error("Event Insert Error:", error);
+          return res
+            .status(500)
+            .json({ error: "Failed to create event", details: error.message });
+        }
+
+        res.status(201).json({
+          success: true,
+          message: "Event created successfully",
+          eventId: results.insertId,
+        });
+      }
+    );
+  });
+});
 
 app.post("/api/insert/:typename", upload.single("photo"), (req, res) => {
   const typename = req.params.typename;
@@ -2108,7 +2634,8 @@ app.get("/api/items", (req, res) => {
       INNER JOIN ItemTypes it ON it.ItemID=i.ItemID
       LEFT JOIN Books b ON b.ISBN = it.ISBN
       LEFT JOIN Media m ON m.MediaID = it.MediaID
-      LEFT JOIN Genres g ON b.GenreID = g.GenreID OR m.GenreID = g.GenreID`,
+      LEFT JOIN Genres g ON b.GenreID = g.GenreID OR m.GenreID = g.GenreID
+      ORDER BY i.Title ASC`,
       (err, results) => {
         connection.release();
         if (err) {

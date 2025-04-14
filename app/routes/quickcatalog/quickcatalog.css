@@ -1,0 +1,86 @@
+/* Container and layout styles */
+.container {
+    margin: 0 auto;
+    padding: 24px;
+  }
+  
+  /* Button styles */
+  .button {
+    padding: 12px 24px;
+    background-color: #76c6de;
+    color: white;
+    border-radius: 8px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+  }
+  
+  .button:disabled {
+    background-color: #d1d1d1;
+    cursor: not-allowed;
+  }
+  
+  .button:hover {
+    background-color: #5ba8c6;
+  }
+  
+  /* Pagination Controls */
+  .pagination-controls {
+    display: flex;
+    justify-content: center;
+    gap: 16px;
+    margin-top: 16px;
+  }
+  
+  .select {
+    padding: 12px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    font-size: 14px;
+    background-color: white;
+  }
+  
+  .select:focus {
+    outline: 2px solid #76c6de;
+  }
+  
+  /* Card styles for items */
+  .card {
+    background-color: white;
+    padding: 16px;
+    border-radius: 12px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    text-align: center;
+  }
+  
+  .card img {
+    width: 100%;
+    height: 200px;
+    object-fit: contain;
+    border-radius: 8px;
+    margin-bottom: 12px;
+  }
+  
+  .card h2 {
+    font-size: 18px;
+    font-weight: bold;
+    margin-bottom: 8px;
+  }
+  
+  .card p {
+    font-size: 14px;
+    color: #555;
+  }
+  
+  /* Responsive layout for smaller screens */
+  @media (max-width: 768px) {
+    .card {
+      padding: 12px;
+    }
+  
+    .pagination-controls {
+      flex-direction: column;
+      gap: 8px;
+    }
+  }
+  

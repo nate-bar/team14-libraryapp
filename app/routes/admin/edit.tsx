@@ -37,8 +37,16 @@ export default function AdminEditPage() {
 
     setIsLoading(true);
     try {
-      const res = await fetch(`/api/items/${itemId}`, { method: "DELETE" });
+      const res = await fetch("/api/deleteitem", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ itemid: itemId }),
+      });
+
       const result = await res.json();
+
       if (res.ok) {
         setMessage("Item deleted successfully.");
         loadItems(); // Reload items after deletion

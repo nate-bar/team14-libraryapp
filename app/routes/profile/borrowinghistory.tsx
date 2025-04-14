@@ -167,7 +167,7 @@ export default function BorrowingHistory() {
     <div>
       <ProfilePage />
       <div className="borrowing-history-container">
-        <h2 className="section-title">Borrowing History</h2>
+        <h2 className="section-title">Return History</h2>
 
         {/* Stats Dashboard */}
         <div className="stats-dashboard">

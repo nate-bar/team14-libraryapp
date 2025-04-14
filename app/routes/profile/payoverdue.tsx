@@ -22,7 +22,7 @@ export default function PayOverdue() {
     expiry: "",
     cvc: "",
   });
-  
+
   useEffect(() => {
     const fetchFineAmount = async () => {
       try {
@@ -48,30 +48,30 @@ export default function PayOverdue() {
 
   const handlePayment = async (e: React.FormEvent) => {
     e.preventDefault();
-  
+
     const payAmount = parseFloat(paymentAmount);
-  
+
     // Frontend validations
     if (!authData?.memberID || isNaN(payAmount) || payAmount <= 0) {
       setError("Invalid member or amount.");
       return;
     }
-  
+
     if (!/^\d{16}$/.test(paymentInfo.cardNumber)) {
       setError("Invalid credit card number.");
       return;
     }
-  
+
     if (!/^\d{3,4}$/.test(paymentInfo.cvc)) {
       setError("Invalid CVC.");
       return;
     }
-  
+
     if (!/^(0[1-9]|1[0-2])\/\d{2}$/.test(paymentInfo.expiry)) {
       setError("Invalid expiry date. Use MM/YY format.");
       return;
     }
-  
+
     try {
       setLoading(true);
       const response = await fetch("/api/pay", {
@@ -85,11 +85,11 @@ export default function PayOverdue() {
           //cardInfo: paymentInfo, // You can ignore it on the server, but this simulates a real flow
         }),
       });
-  
+
       if (!response.ok) {
         throw new Error("Payment failed");
       }
-  
+
       const data = await response.json();
       if (data.success) {
         setPaymentSuccess(true);
@@ -184,7 +184,12 @@ export default function PayOverdue() {
                   id="cardNumber"
                   maxLength={16}
                   value={paymentInfo.cardNumber}
-                  onChange={(e) => setPaymentInfo({ ...paymentInfo, cardNumber: e.target.value })}
+                  onChange={(e) =>
+                    setPaymentInfo({
+                      ...paymentInfo,
+                      cardNumber: e.target.value,
+                    })
+                  }
                   className="w-full p-2 border rounded"
                   required
                 />
@@ -197,7 +202,9 @@ export default function PayOverdue() {
                     type="text"
                     id="expiry"
                     value={paymentInfo.expiry}
-                    onChange={(e) => setPaymentInfo({ ...paymentInfo, expiry: e.target.value })}
+                    onChange={(e) =>
+                      setPaymentInfo({ ...paymentInfo, expiry: e.target.value })
+                    }
                     className="w-full p-2 border rounded"
                     required
                   />
@@ -209,13 +216,15 @@ export default function PayOverdue() {
                     id="cvc"
                     maxLength={4}
                     value={paymentInfo.cvc}
-                    onChange={(e) => setPaymentInfo({ ...paymentInfo, cvc: e.target.value })}
+                    onChange={(e) =>
+                      setPaymentInfo({ ...paymentInfo, cvc: e.target.value })
+                    }
                     className="w-full p-2 border rounded"
                     required
                   />
                 </div>
               </div>
-            
+
               <button
                 type="submit"
                 className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"

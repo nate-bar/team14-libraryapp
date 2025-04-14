@@ -195,7 +195,9 @@ export default function Dashboard() {
           </a>
         </div>
         <div className="text-center">
-          <a href="./payoverdue" className="edit-button">Pay Fine</a>
+          <a href="./payoverdue" className="edit-button">
+            Pay Fine
+          </a>
         </div>
       </div>
 

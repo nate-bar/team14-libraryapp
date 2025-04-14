@@ -70,7 +70,7 @@ export default function CartPage() {
 
   return (
     <div className="cart-container">
-      <h1>We hope you enjoy your books member #{memberID}</h1>
+      <h1>We hope you enjoy your books, member #{memberID}</h1>
 
       <div className="cart-section">
         <h2>Shopping Cart ({cartItems.length} items)</h2>
