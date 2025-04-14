@@ -44,10 +44,10 @@ app.use(
 
 // Connection Pool
 const pool = mysql.createPool({
-  host: process.env.DB_HOST,
-  user: process.env.DB_USER,
-  password: process.env.DB_PASSWORD,
-  database: process.env.DB_NAME,
+  host: 't14librarydb.mysql.database.azure.com',
+  user: 'T14Admin',
+  password: 'gY[0j4c2<%ju',
+  database: 'librarysystem',
   connectionLimit: 10, // try like 10
 });
 
@@ -3032,18 +3032,19 @@ cron.schedule("* * * * *", () => {
 });
 
 // Every day at midnight, the cron job checks for pending notifications
-cron.schedule("0 0 * * *", () => {
+cron.schedule('* * * * *', () => {
   pool.getConnection((err, connection) => {
     if (err) {
       console.error("Error getting connection:", err);
       return;
     }
 
-    const updateQuery = `
-      UPDATE PendingNotifications 
+    const updateQuery = 
+      `UPDATE PendingNotifications 
       SET processed = 1
-      WHERE DATEDIFF(notify_at, CURDATE()) = 3 AND processed = 0
-    `;
+      WHERE DATEDIFF(notify_at, CURDATE()) BETWEEN 0 AND 3
+        AND processed = 0`
+    ;
 
     connection.query(updateQuery, (err, results) => {
       connection.release();
