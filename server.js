@@ -1298,7 +1298,7 @@ app.get("/api/book-details", (req, res) => {
   });
 });
 
-/*
+
 // displays all users in the system
 app.get("/api/users", (req, res) => {
   pool.getConnection((err, connection) => {
@@ -1327,7 +1327,7 @@ app.get("/api/users", (req, res) => {
     });
   });
 });
-*/
+
 
 // deletes a user from the system
 app.delete("/api/usersdelete/:userId", (req, res) => {

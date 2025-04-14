@@ -145,6 +145,9 @@ export default function Dashboard() {
         <div className="text-center">
           <a href="./settings" className="edit-button">Edit Profile</a>
         </div>
+        <div className="text-center">
+          <a href="./payoverdue" className="edit-button">Pay Fine</a>
+        </div>
       </div>
 
       {/* Modal for Avatar Selection */}
