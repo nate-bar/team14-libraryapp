@@ -102,7 +102,7 @@ export default function Dashboard() {
           </div>
         </div>
         <div className="profile-name">
-          {profileData.firstName} {profileData.lastName}
+          {profileData.firstName} {profileData.lastName} {authData.memberID}
         </div>
         <div className="current-balance">
           <strong>Current Balance:</strong>{" "}
@@ -192,6 +192,11 @@ export default function Dashboard() {
         <div className="text-center">
           <a href="./settings" className="edit-button">
             Edit Profile
+          </a>
+        </div>
+        <div className="text-center">
+          <a href="./payoverdue" className="edit-button">
+            Pay Fine
           </a>
         </div>
       </div>

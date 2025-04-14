@@ -142,7 +142,7 @@ const Report = () => {
       } else if (statusFilter === "overdue") {
         filtered = filtered.filter(
           (record) =>
-            record.BorrowStatus === "Borrowed" &&
+            record.BorrowStatus === "Overdue" &&
             new Date(record.DueDate) < today
         );
       }
@@ -419,7 +419,7 @@ const Report = () => {
           <option value="mostBorrowedItemsReport">
             Most Borrowed Items Report
           </option>
-          <option value="bookDetailsReport">Book Details Report</option>
+          {/*<option value="bookDetailsReport">Book Details Report</option>*/}
         </select>
       </div>
 
