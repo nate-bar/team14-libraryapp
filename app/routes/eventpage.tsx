@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link } from "react-router";
 import { type AuthData } from "~/services/api";
 import LoadingSpinner from "~/components/loadingspinner";
 import NoImage from "~/components/imgplaceholder";

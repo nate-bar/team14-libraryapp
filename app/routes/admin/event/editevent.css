@@ -62,7 +62,7 @@
     display: none;
   }
 
-  .custom-file-upload {
+  .edit-custom-file-upload {
     display:flex;
     padding: 10px 15px;
     background-color: #007bff;

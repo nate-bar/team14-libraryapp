@@ -294,7 +294,7 @@ const EditEvent = () => {
         ref={EventPhotoInputRef}
         id="eventPhotoUpload"
       />
-      <label htmlFor="eventPhotoUpload" className="custom-file-upload">
+      <label htmlFor="eventPhotoUpload" className="edit-custom-file-upload">
       {newEventPhoto ? newEventPhoto.name : (selectedEvent?.EventPhoto ? 'Change Photo' : 'Upload Photo')}
       </label>
       </div>
