@@ -28,6 +28,14 @@ const SignupForm: React.FC = () => {
     lastName: "",
   });
 
+  const [message, setMessage] = useState<{
+    text: string;
+    type: "success" | "error" | null;
+  }>({
+    text: "",
+    type: null,
+  });
+
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ): void => {
@@ -50,17 +58,11 @@ const SignupForm: React.FC = () => {
     const { email, password, phoneNumber, birthDate, firstName, lastName } =
       accountData;
 
-    // we need to validate all this in the backend too, and basically return an error if anythings wrong
-    // this is really for checking if the values are there so we can handle the error in the front end
-    // instead of the server returning an error message
     if (!email || !/^\S+@\S+\.\S+$/.test(email))
-      // good validation
       newErrors.email = "Enter a valid email.";
     if (!password || password.length < 8)
-      // idk why changing this to 8
       newErrors.password = "Password must be at least 8 characters.";
     if (!phoneNumber || !/^\d{3}-\d{3}-\d{4}$/.test(phoneNumber))
-      // good validation
       newErrors.phoneNumber = "Enter a valid phone number (e.g. 123-456-7890).";
     if (!birthDate) newErrors.birthDate = "Birthdate is required.";
     if (!firstName) newErrors.firstName = "First name is required";
@@ -74,23 +76,24 @@ const SignupForm: React.FC = () => {
     e: React.FormEvent<HTMLFormElement>
   ): Promise<void> => {
     e.preventDefault();
-    console.log("Form submitted:", accountData);
-
     const validationError = validateForm();
-    if (!validationError) {
-      //alert(validationError);
-      return;
-    }
+    if (!validationError) return;
 
     try {
       const result = await createAccount(accountData);
 
       if (!result.success) {
-        alert(`Error: ${result.error || "Registration failed"}`);
+        setMessage({
+          text: result.error || "Registration failed",
+          type: "error",
+        });
         return;
       }
 
-      console.log("Success:", result);
+      setMessage({
+        text: "Registration successful! Redirecting to login page...",
+        type: "success",
+      });
 
       // Clear form
       setAccountData({
@@ -105,11 +108,11 @@ const SignupForm: React.FC = () => {
         phoneNumber: "",
       });
 
-      alert("Registration successful! Redirecting to login page...");
-      navigate("/login");
+      // Redirect to login page after a short delay
+      setTimeout(() => navigate("/login"), 2000);
     } catch (error) {
       console.error("Error submitting form:", error);
-      alert(`Error submitting form: ${error}`);
+      setMessage({ text: `Error submitting form: ${error}`, type: "error" });
     }
   };
 
@@ -117,6 +120,16 @@ const SignupForm: React.FC = () => {
     <div>
       <div className="custom-container">
         <h1 className="text-2xl font-bold mb-6 text-center">Signup Form</h1>
+
+        {message.text && (
+          <div
+            className={`message-container ${
+              message.type ? message.type + "-message" : ""
+            }`}
+          >
+            {message.text}
+          </div>
+        )}
 
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Name Fields */}
@@ -318,11 +331,7 @@ const SignupForm: React.FC = () => {
             >
               <option value="Student">Student</option>
               <option value="Faculty">Faculty</option>
-              {/*<option value="Administrator">Administrator</option>{" "}
-              
-              commenting this out because I dont really want people
-              to make administrator accounts because they can like delete/add stuff to the database
-              but uncomment if you need to make an admin account*/}
+              <option value="Test">Test</option>
             </select>
           </div>
 

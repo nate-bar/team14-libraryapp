@@ -4,7 +4,12 @@ import { type Genres } from "~/services/api";
 import { type Items } from "~/services/api";
 import LoadingSpinner from "~/components/loadingspinner";
 import NoImage from "~/components/imgplaceholder";
-import './catalog.css';  // Importing the CSS file
+import "./catalog.css"; // Importing the CSS file
+
+// added to fix type error, and add another sort option
+// Items from this interface import only have so many options
+// would have to get more information to sort by other stuff
+type SortableKeys = "Title" | "Status" | "";
 
 const UsingFetch = () => {
   const [genres, setGenres] = useState<Genres[]>([]);
@@ -15,7 +20,7 @@ const UsingFetch = () => {
   const [genreFilter, setGenreFilter] = useState(""); // State for the genre dropdown filter
   const [itemsPerPage, setItemsPerPage] = useState(25); // State for items per page
   const [currentPage, setCurrentPage] = useState(1); // State for the current page
-  const [sortBy, setSortBy] = useState<string>(""); // Sorting field (e.g., Title, PublicationYear)
+  const [sortBy, setSortBy] = useState<SortableKeys>("");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc"); // Ascending or Descending order
 
   const resetFilters = () => {
@@ -134,13 +139,16 @@ const UsingFetch = () => {
     setCurrentPage(page);
   };
 
-  const handleItemsPerPageChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+  const handleItemsPerPageChange = (
+    e: React.ChangeEvent<HTMLSelectElement>
+  ) => {
     setItemsPerPage(parseInt(e.target.value, 10));
     setCurrentPage(1); // Reset to page 1 when changing items per page
   };
 
+  // updated this function to use sortable keys
   const handleSortChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const selectedSortBy = e.target.value;
+    const selectedSortBy = e.target.value as SortableKeys;
     setSortBy(selectedSortBy);
   };
 
@@ -152,10 +160,17 @@ const UsingFetch = () => {
   const sortItems = (items: Items[]) => {
     if (!sortBy) return items;
 
-    return items.sort((a, b) => {
-      const aValue = a[sortBy];
-      const bValue = b[sortBy];
+    return [...items].sort((a, b) => {
+      // added for type safety
+      const aValue = a[sortBy as keyof Items];
+      const bValue = b[sortBy as keyof Items];
 
+      // handle null optons
+      if (aValue === undefined && bValue === undefined) return 0;
+      if (aValue === undefined) return sortOrder === "asc" ? -1 : 1;
+      if (bValue === undefined) return sortOrder === "asc" ? 1 : -1;
+
+      // compare the values
       if (aValue < bValue) return sortOrder === "asc" ? -1 : 1;
       if (aValue > bValue) return sortOrder === "asc" ? 1 : -1;
       return 0;
@@ -203,22 +218,15 @@ const UsingFetch = () => {
         )}
 
         {typeFilter === "Book" && (
-          <select
-            value={sortBy}
-            onChange={handleSortChange}
-            className="select"
-          >
+          <select value={sortBy} onChange={handleSortChange} className="select">
             <option value="">Sort By</option>
             <option value="Title">Title</option>
+            <option value="Status">Status</option>
           </select>
         )}
 
         {typeFilter === "Device" && (
-          <select
-            value={sortBy}
-            onChange={handleSortChange}
-            className="select"
-          >
+          <select value={sortBy} onChange={handleSortChange} className="select">
             <option value="">Sort By</option>
             <option value="DeviceType">Device Type</option>
           </select>
@@ -254,7 +262,9 @@ const UsingFetch = () => {
               to={`/${item.TypeName}/${item.ItemID}`}
               className="card"
             >
-              <h2 className="text-lg font-bold mb-2 text-center">{item.Title}</h2>
+              <h2 className="text-lg font-bold mb-2 text-center">
+                {item.Title}
+              </h2>
               {item.Photo ? (
                 <img
                   src={`data:image/jpeg;base64,${item.Photo}`}

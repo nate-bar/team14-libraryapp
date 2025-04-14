@@ -11,6 +11,7 @@ import ProfilePage from "./profile";
 const UpdateProfile: React.FC = () => {
   const navigate = useNavigate();
   const authData = useOutletContext<AuthData>();
+  const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -64,7 +65,7 @@ const UpdateProfile: React.FC = () => {
         setError(null);
       } catch (err) {
         console.error("Error fetching profile data:", err);
-        setError("Failed to load profile data. ");
+        setError("Failed to load profile data.");
       } finally {
         setIsLoading(false);
       }
@@ -119,14 +120,16 @@ const UpdateProfile: React.FC = () => {
       const result = await updateProfile(userData);
 
       if (result.success) {
-        alert("Profile updated successfully!");
-        navigate("/profile/dashboard"); // Redirect to the dashboard after successful update
+        setStatusMessage("✅ Profile updated successfully!");
+        setTimeout(() => {
+          navigate("/dashboard");
+        }, 1500);
       } else {
-        alert(`Error: ${result.error}`); // Fixed template literal syntax
+        setStatusMessage(`❌ Error: ${result.error}`);
       }
     } catch (error) {
       console.error("Error updating profile:", error);
-      alert("An error occurred while updating your profile.");
+      setStatusMessage("❌ An error occurred while updating your profile.");
     } finally {
       setIsSubmitting(false);
     }
@@ -142,108 +145,111 @@ const UpdateProfile: React.FC = () => {
 
   return (
     <div>
-    <ProfilePage />
-    <div className="update-profile-container">
-      
-      <h2>Edit Your Profile:</h2>
-
-      {error && (
-        <div className="error-message-box">
-          <p>{error}</p>
-        </div>
-      )}
-
-      <form onSubmit={handleSubmit}>
-        {/* First Name */}
-        <input
-          type="text"
-          name="firstName"
-          value={userData.firstName}
-          onChange={handleChange}
-          placeholder="First Name"
-          className={errors.firstName ? "error-field" : ""}
-        />
-        {errors.firstName && (
-          <div className="error-message">{errors.firstName}</div>
+      <ProfilePage />
+      <div className="update-profile-container">
+        <h2>Edit Your Profile:</h2>
+        {statusMessage && (
+          <div className="status-message-box">
+            <p>{statusMessage}</p>
+          </div>
+        )}
+        {error && (
+          <div className="error-message-box">
+            <p>{error}</p>
+          </div>
         )}
 
-        {/* Middle Name */}
-        <input
-          type="text"
-          name="middleName"
-          value={userData.middleName}
-          onChange={handleChange}
-          placeholder="Middle Name"
-        />
+        <form onSubmit={handleSubmit}>
+          {/* First Name */}
+          <input
+            type="text"
+            name="firstName"
+            value={userData.firstName}
+            onChange={handleChange}
+            placeholder="First Name"
+            className={errors.firstName ? "error-field" : ""}
+          />
+          {errors.firstName && (
+            <div className="error-message">{errors.firstName}</div>
+          )}
 
-        {/* Last Name */}
-        <input
-          type="text"
-          name="lastName"
-          value={userData.lastName}
-          onChange={handleChange}
-          placeholder="Last Name"
-          className={errors.lastName ? "error-field" : ""}
-        />
-        {errors.lastName && (
-          <div className="error-message">{errors.lastName}</div>
-        )}
+          {/* Middle Name */}
+          <input
+            type="text"
+            name="middleName"
+            value={userData.middleName}
+            onChange={handleChange}
+            placeholder="Middle Name"
+          />
 
-        {/* Email */}
-        <input
-          type="email"
-          name="email"
-          value={userData.email}
-          onChange={handleChange}
-          placeholder="Email"
-          className={errors.email ? "error-field" : ""}
-        />
-        {errors.email && <div className="error-message">{errors.email}</div>}
+          {/* Last Name */}
+          <input
+            type="text"
+            name="lastName"
+            value={userData.lastName}
+            onChange={handleChange}
+            placeholder="Last Name"
+            className={errors.lastName ? "error-field" : ""}
+          />
+          {errors.lastName && (
+            <div className="error-message">{errors.lastName}</div>
+          )}
 
-        {/* Phone Number */}
-        <input
-          type="tel"
-          name="phoneNumber"
-          value={userData.phoneNumber}
-          onChange={handleChange}
-          placeholder="Phone Number (e.g. 123-456-7890)"
-          className={errors.phoneNumber ? "error-field" : ""}
-        />
-        {errors.phoneNumber && (
-          <div className="error-message">{errors.phoneNumber}</div>
-        )}
+          {/* Email */}
+          <input
+            type="email"
+            name="email"
+            value={userData.email}
+            onChange={handleChange}
+            placeholder="Email"
+            className={errors.email ? "error-field" : ""}
+          />
+          {errors.email && <div className="error-message">{errors.email}</div>}
 
-        {/* Birth Date */}
-        <input
-          type="date"
-          name="birthDate"
-          value={userData.birthDate}
-          onChange={handleChange}
-          className={errors.birthDate ? "error-field" : ""}
-        />
-        {errors.birthDate && (
-          <div className="error-message">{errors.birthDate}</div>
-        )}
+          {/* Phone Number */}
+          <input
+            type="tel"
+            name="phoneNumber"
+            value={userData.phoneNumber}
+            onChange={handleChange}
+            placeholder="Phone Number (e.g. 123-456-7890)"
+            className={errors.phoneNumber ? "error-field" : ""}
+          />
+          {errors.phoneNumber && (
+            <div className="error-message">{errors.phoneNumber}</div>
+          )}
 
-        {/* Address */}
-        <input
-          type="text"
-          name="address"
-          value={userData.address}
-          onChange={handleChange}
-          placeholder="Address"
-        />
+          {/* Birth Date */}
+          <input
+            type="date"
+            name="birthDate"
+            value={userData.birthDate}
+            onChange={handleChange}
+            className={errors.birthDate ? "error-field" : ""}
+          />
+          {errors.birthDate && (
+            <div className="error-message">{errors.birthDate}</div>
+          )}
 
-        {/* Submit Button */}
-        <button
-          type="submit"
-          disabled={isSubmitting}
-          className="submit-button"
-        >
-          {isSubmitting ? "Saving..." : "Save Changes"}
-        </button>
-      </form>
-    </div>
+          {/* Address */}
+          <input
+            type="text"
+            name="address"
+            value={userData.address}
+            onChange={handleChange}
+            placeholder="Address"
+          />
+
+          {/* Submit Button */}
+          <button
+            type="submit"
+            disabled={isSubmitting}
+            className="submit-button"
+          >
+            {isSubmitting ? "Saving..." : "Save Changes"}
+          </button>
+        </form>
+      </div>
     </div>
   );
 };

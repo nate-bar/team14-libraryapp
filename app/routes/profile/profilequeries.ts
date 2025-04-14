@@ -24,7 +24,7 @@ export const updateProfile = async (
     };
 
     // Make the API call
-    const response = await fetch("/profile/api/edit", {
+    const response = await fetch("/api/profile/edit", {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",

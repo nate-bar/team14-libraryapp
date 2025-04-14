@@ -2,12 +2,11 @@ import React, { useState } from "react";
 import { useCart } from "~/context/CartContext";
 import { useOutletContext, Navigate, Link } from "react-router";
 import { type AuthData, type CartItem } from "~/services/api";
+import AlertPopup from "~/components/buttons/AlertPopup";
 import "../routes/CartStyle.css";
 import "../routes/ItemStyle.css";
 
 export default function CartPage() {
-  // helper function to get the path for the item based on type
-  // this is for routing to back to the itemdetail page from cart
   const getItemDetailPath = (item: CartItem): string => {
     switch (item.TypeName) {
       case "Book":
@@ -20,39 +19,33 @@ export default function CartPage() {
         return `/items/${item.ItemID}`;
     }
   };
-  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
-  const [checkoutError, setCheckoutError] = useState<string | null>(null);
+
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [popupMessage, setPopupMessage] = useState<string | null>(null); // 👈 for popup
   const { cartItems, removeFromCart, clearCart } = useCart();
   const { isLoggedIn, memberID } = useOutletContext<AuthData>();
 
-  // simple redirect if user is not logged in
   if (!isLoggedIn) {
     return <Navigate to="/login" />;
   }
 
   const handleCheckout = async () => {
     if (cartItems.length === 0) {
-      setCheckoutError("Your cart is empty");
+      setPopupMessage("Your cart is empty");
       return;
     }
 
     setIsSubmitting(true);
-    setCheckoutError(null);
 
     try {
-      // prepare itemids for checkout api call
       const selectedItemIds = cartItems.map((item) => item.ItemID);
 
-      // making the api call
       const response = await fetch("/api/checkout", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ items: selectedItemIds, memberID }),
       });
 
-      // handle response
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(
@@ -62,14 +55,12 @@ export default function CartPage() {
 
       const data = await response.json();
 
-      // alert on successful checkout
-      alert(`Successfully checked out ${cartItems.length} items`);
-      clearCart(); // clear the cart using CartContext
-
+      setPopupMessage(`Successfully checked out ${cartItems.length} items`);
+      clearCart();
       console.log("Checkout response:", data);
     } catch (error) {
       console.error("Checkout error:", error);
-      setCheckoutError(
+      setPopupMessage(
         error instanceof Error ? error.message : "Unknown error occurred"
       );
     } finally {
@@ -84,8 +75,6 @@ export default function CartPage() {
       <div className="cart-section">
         <h2>Shopping Cart ({cartItems.length} items)</h2>
 
-        {checkoutError && <div className="error-message">{checkoutError}</div>}
-
         {cartItems.length > 0 ? (
           <>
             <div className="cart-items">
@@ -93,12 +82,10 @@ export default function CartPage() {
                 <div key={item.ItemID} className="cart-item">
                   <div className="item-details">
                     <p className="item-title">
-                      {/* Item now holds link back to the item detail page */}
                       <Link to={getItemDetailPath(item)}>{item.Title}</Link>
                     </p>
                     <p className="item-type">{item.TypeName}</p>
                   </div>
-                  {/* remove from cart button */}
                   <button
                     className="btn btn-danger"
                     onClick={() => removeFromCart(item.ItemID)}
@@ -126,6 +113,13 @@ export default function CartPage() {
           <p className="empty-cart-message">Your cart is empty</p>
         )}
       </div>
+
+      {popupMessage && (
+        <AlertPopup
+          message={popupMessage}
+          onClose={() => setPopupMessage(null)}
+        />
+      )}
     </div>
   );
 }

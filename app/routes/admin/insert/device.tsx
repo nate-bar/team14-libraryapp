@@ -4,11 +4,16 @@ import { addDevice } from "../queries";
 import { type AuthData } from "~/services/api";
 import { useOutletContext } from "react-router";
 import Compressor from "compressorjs";
+import AlertPopup from "~/components/buttons/AlertPopup";
 
 const DeviceForm: React.FC = () => {
   const { email } = useOutletContext<AuthData>();
   const [fileName, setFileName] = useState<string>("");
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  const [alert, setAlert] = useState<{
+    message: string;
+    type: "success" | "error" | null;
+  }>({ message: "", type: null });
   const [deviceData, setDeviceData] = useState<DeviceInsert>({
     title: "",
     typename: "Device",
@@ -64,7 +69,10 @@ const DeviceForm: React.FC = () => {
       const maxSizeInBytes = 5 * 1024 * 1024; // 5MB
 
       if (file.size > maxSizeInBytes) {
-        alert("File size exceeds the maximum allowed size (5MB)");
+        setAlert({
+          message: "File size exceeds the maximum allowed size (5MB)",
+          type: "error",
+        });
         return;
       }
 
@@ -79,7 +87,10 @@ const DeviceForm: React.FC = () => {
         })
         .catch((error) => {
           console.error("Image compression failed:", error);
-          alert("Image compression failed. Please try another image.");
+          setAlert({
+            message: "Image compression failed. Please try another image.",
+            type: "error",
+          });
           // setIsLoading(false);
         });
     } else {
@@ -127,7 +138,10 @@ const DeviceForm: React.FC = () => {
       const result = await addDevice(deviceData);
 
       if (!result.success) {
-        alert(`Error: ${result.error || "Registration failed"}`);
+        setAlert({
+          message: `Error: ${result.error || "Registration failed"}`,
+          type: "error",
+        });
         return;
       }
 
@@ -143,10 +157,9 @@ const DeviceForm: React.FC = () => {
         createdby: email,
       });
       setFileName("");
-      alert("Device entered successfully!");
+      setAlert({ message: "Device entered successfully!", type: "success" });
     } catch (error) {
-      console.error("Error submitting form:", error);
-      alert(`Error submitting form: ${error}`);
+      setAlert({ message: `Error submitting form: ${error}`, type: "error" });
     } finally {
       // Reset submitting state regardless of success or failure
       setIsSubmitting(false);
@@ -155,6 +168,13 @@ const DeviceForm: React.FC = () => {
 
   return (
     <div className="admin-container">
+      {alert.message && (
+        <AlertPopup
+          message={alert.message}
+          type={alert.type!}
+          onClose={() => setAlert({ message: "", type: null })}
+        />
+      )}
       <form onSubmit={handleSubmit} className="admin-form">
         <input
           className={`admin-input ${errors.title ? "error-field" : ""}`}

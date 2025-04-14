@@ -90,3 +90,26 @@
 .loading-spinner {
   margin-right: 1rem;
 }
+
+.status-message-box {
+  background-color: #edf7ed;
+  border: 1px solid #76c6de;
+  color: #01497c;
+  padding: 12px;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  text-align: center;
+  font-weight: 500;
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

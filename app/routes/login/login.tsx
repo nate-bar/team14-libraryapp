@@ -1,4 +1,3 @@
-// app/routes/login/login.tsx
 import React, { useState } from "react";
 import { useNavigate } from "react-router";
 import { type AccountLogin } from "~/services/api";
@@ -8,13 +7,16 @@ import "../login/login.css";
 const LoginForm: React.FC = () => {
   const navigate = useNavigate();
 
-  // State to hold the input values
   const [loginData, setLoginData] = useState<AccountLogin>({
     email: "",
     password: "",
   });
 
-  // Handle change for input fields
+  const [message, setMessage] = useState<{
+    type: "success" | "error";
+    text: string;
+  } | null>(null);
+
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ): void => {
@@ -25,36 +27,36 @@ const LoginForm: React.FC = () => {
     }));
   };
 
-  // Handle form submission
   const handleSubmit = async (
     e: React.FormEvent<HTMLFormElement>
   ): Promise<void> => {
     e.preventDefault();
+    setMessage(null); // Clear any previous messages
     try {
-      // Call your login API
       const result = await loginAccount(loginData);
       if (!result.success) {
-        alert(`Error: ${result.error || "Login failed"}`);
+        setMessage({ type: "error", text: result.error || "Login failed" });
         return;
       }
+
       console.log("Success:", result);
 
-      // Reset form on success
       setLoginData({
         email: "",
         password: "",
       });
 
-      // Show success message
-      //alert("Login successful! Redirecting to home page...");
+      setMessage({ type: "success", text: "Login successful! Redirecting..." });
 
-      // Instead of trying to call createUserSession directly,
-      // just navigate to the homepage - the session should
-      // already be set by your backend API
-      navigate("/");
+      setTimeout(() => {
+        navigate("/");
+      }, 1500);
     } catch (error) {
       console.error("Error submitting form:", error);
-      alert(`Error submitting form: ${error}`);
+      setMessage({
+        type: "error",
+        text: `Error submitting form: ${(error as Error).message}`,
+      });
     }
   };
 
@@ -64,7 +66,18 @@ const LoginForm: React.FC = () => {
         <h1 className="text-2xl font-bold mb-6 text-center">Login</h1>
 
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Email Field */}
+          {message && (
+            <div
+              className={`text-center p-3 rounded-md ${
+                message.type === "error"
+                  ? "bg-red-100 text-red-700"
+                  : "bg-green-100 text-green-700"
+              }`}
+            >
+              {message.text}
+            </div>
+          )}
+
           <div>
             <label
               htmlFor="email"
@@ -84,7 +97,6 @@ const LoginForm: React.FC = () => {
             />
           </div>
 
-          {/* Password Field */}
           <div>
             <label
               htmlFor="password"
@@ -104,13 +116,10 @@ const LoginForm: React.FC = () => {
             />
           </div>
 
-          {/* Submit Button */}
           <button type="submit" className="custom-button">
-            {" "}
             Submit
           </button>
 
-          {/* Signup Link */}
           <div className="text-center mt-4">
             <p className="text-gray-600">
               Don't have an account?{" "}
