@@ -66,35 +66,35 @@ const EventPage: React.FC = () => {
   }
 
   return (
-    <div className="event-detail-page container mx-auto p-6">
-      <h2 className="text-2xl font-bold mb-4 text-gray-800">{event.EventName}</h2> {/* Display event name */}
-      <h3 className="text-xl font-semibold mb-3 text-gray-700">Event Items</h3>
+    <div className="event-page-container">
+      <h2 className="event-page-title">{event.EventName}</h2>
+      <h3 className="event-page-subtitle">Event Items</h3>
       {eventItems.length > 0 ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+        <div className="event-page-item-grid">
           {eventItems.map((item) => (
-            <div key={item.ItemID} className="card rounded-lg shadow-md p-4 bg-white">
-              <Link to={`/${item.TypeName}/${item.ItemID}`} className="block">
-                <h3 className="text-lg font-semibold mb-2 text-gray-700">{item.Title}</h3>
+            <div key={item.ItemID} className="event-page-item-card">
+              <Link to={`/${item.TypeName}/${item.ItemID}`} className="item-block">
+                <h3 className="item-block-title">{item.Title}</h3>
                 {item.Photo ? (
                   <img
                     src={`data:image/jpeg;base64,${item.Photo}`}
                     alt={item.Title}
-                    className="w-full h-32 object-contain rounded-md mb-2"
+                    className="item-photo"
                   />
                 ) : (
-                  <NoImage className="w-full h-32 object-contain rounded-md mb-2" />
+                  <NoImage className="no-img-photo" />
                 )}
-                <p className="text-sm text-gray-600 mb-1">Type: {item.TypeName}</p>
-                <p className="text-sm text-gray-600 mb-1">
+                <p className="item-block-type">Type: {item.TypeName}</p>
+                <p className="item-block-status">
                   Status: <span className={`font-semibold ${item.Status === 'Available' ? 'text-green-600' : 'text-red-600'}`}>{item.Status}</span>
                 </p>
-                {item.GenreName && <p className="text-sm text-gray-600 mb-1">Genre: {item.GenreName}</p>}
+                {item.GenreName && <p className="item-block-genre">Genre: {item.GenreName}</p>}
               </Link>
             </div>
           ))}
         </div>
       ) : (
-        <p className="text-gray-500">{event.EventName} event has no items! Check back later!</p>
+        <p className="missing-event-items-text">{event.EventName} event has no items! Check back later!</p>
       )}
     </div>
   );
