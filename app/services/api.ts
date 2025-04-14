@@ -277,3 +277,22 @@ export interface Event {
   EndDate: string;
   EventPhoto?: string | null;
 }
+
+export interface EventItem {
+  ItemID: number;
+  Title: string;
+  TypeName: string;
+  Status: string;
+  LastUpdated: string;
+  CreatedAt: string;
+  TimesBorrowed: number;
+  GenreID?: number;
+  GenreName?: string;
+  Photo?: string | null;
+}
+
+export interface GalleryImage {
+  src: string;
+  caption: string;
+  link: string;
+}

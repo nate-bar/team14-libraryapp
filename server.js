@@ -134,7 +134,7 @@ app.post("/api/createevent", upload.single("photo"), (req, res) => {
   });
 });
 
-// -----------------------------------------GET EVENTS-----------------------------------------
+// -----------------------------------------GET ALL EVENTS-----------------------------------------
 app.get("/api/events", (req, res) => {
   pool.query(
     "SELECT EventID, EventName, StartDate, EndDate, TO_BASE64(EventPhoto) AS EventPhoto FROM events",
@@ -153,6 +153,41 @@ app.get("/api/events", (req, res) => {
       res.json(formatted);
     }
   );
+});
+
+// -----------------------------------------GET SINGLE EVENT INFO-----------------------------------------
+app.get("/api/events/:EventID", (req, res) => {
+  const { EventID } = req.params;
+
+  const query = `
+    SELECT
+      EventID,
+      EventName,
+      StartDate,
+      EndDate,
+      TO_BASE64(EventPhoto) AS EventPhoto
+    FROM events
+    WHERE EventID = ?
+  `;
+
+  pool.query(query, [EventID], (err, results) => {
+    if (err) {
+      console.error("Error fetching event:", err);
+      return res.status(500).send("Error fetching event");
+    }
+
+    if (results.length === 0) {
+      return res.status(404).json({ message: "Event not found" });
+    }
+
+    // Format the EventPhoto as a data URL
+    const formattedResult = {
+      ...results[0],
+      EventPhoto: results[0].EventPhoto ? `data:image/jpeg;base64,${results[0].EventPhoto}` : null,
+    };
+
+    res.json(formattedResult);
+  });
 });
 
 // -----------------------------------------ADD ITEMS TO EVENT----------------------------------------- 
@@ -344,10 +379,26 @@ app.get("/api/events/:EventID/items", (req, res) => {
   const { EventID } = req.params;
 
   const query = `
-    SELECT i.ItemID, i.Title, it.TypeName, it.ISBN, it.MediaID
+    SELECT
+      ei.ItemID,
+      i.Title,
+      it.TypeName,
+      i.Status,
+      i.LastUpdated,
+      i.CreatedAt,
+      i.TimesBorrowed,
+      g.GenreID,
+      g.GenreName,
+      TO_BASE64(i.Photo) AS PhotoBase64
     FROM eventitems ei
     INNER JOIN Items i ON ei.ItemID = i.ItemID
     INNER JOIN ItemTypes it ON i.ItemID = it.ItemID
+    LEFT JOIN Books b ON ei.ISBN = b.ISBN AND it.TypeName = 'Book'
+    LEFT JOIN Media m ON ei.MediaID = m.MediaID AND it.TypeName = 'Media'
+    LEFT JOIN Genres g ON (
+      (it.TypeName = 'Book' AND b.GenreID = g.GenreID) OR
+      (it.TypeName = 'Media' AND m.GenreID = g.GenreID)
+    )
     WHERE ei.EventID = ?
   `;
 
@@ -361,7 +412,21 @@ app.get("/api/events/:EventID/items", (req, res) => {
       return res.status(404).json({ message: "No items found for this event." });
     }
 
-    res.json(results);
+    // Process results to handle potential null Genre and Photo values
+    const formattedResults = results.map(item => ({
+      ItemID: item.ItemID,
+      Title: item.Title,
+      TypeName: item.TypeName,
+      Status: item.Status,
+      LastUpdated: item.LastUpdated,
+      CreatedAt: item.CreatedAt,
+      TimesBorrowed: item.TimesBorrowed,
+      GenreID: item.GenreID || null,
+      GenreName: item.GenreName || null,
+      Photo: item.PhotoBase64 || null,
+    }));
+
+    res.json(formattedResults);
   });
 });
 
