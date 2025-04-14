@@ -2634,7 +2634,8 @@ app.get("/api/items", (req, res) => {
       INNER JOIN ItemTypes it ON it.ItemID=i.ItemID
       LEFT JOIN Books b ON b.ISBN = it.ISBN
       LEFT JOIN Media m ON m.MediaID = it.MediaID
-      LEFT JOIN Genres g ON b.GenreID = g.GenreID OR m.GenreID = g.GenreID`,
+      LEFT JOIN Genres g ON b.GenreID = g.GenreID OR m.GenreID = g.GenreID
+      ORDER BY i.Title ASC`,
       (err, results) => {
         connection.release();
         if (err) {

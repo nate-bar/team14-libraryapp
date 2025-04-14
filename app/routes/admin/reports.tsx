@@ -142,7 +142,7 @@ const Report = () => {
       } else if (statusFilter === "overdue") {
         filtered = filtered.filter(
           (record) =>
-            record.BorrowStatus === "Borrowed" &&
+            record.BorrowStatus === "Overdue" &&
             new Date(record.DueDate) < today
         );
       }
