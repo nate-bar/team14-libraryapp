@@ -55,6 +55,116 @@ const pool = mysql.createPool({
 //---------------------CODE FOR API'S HERE--------------------
 */
 
+//payoverdue.tsx
+// Get overdue amount for a member
+app.get("/api/fines/:memberid", (req, res) => {
+  const memberID = req.params.memberid;
+  pool.query(
+    "SELECT SUM(FineAmount - PaymentAmount) AS TotalDue FROM paymenthistory WHERE MemberID = ? AND (FineAmount > PaymentAmount OR PaymentAmount = 0)",
+    [memberID],
+    (err, results) => {
+      if (err) {
+        console.error("Error executing query: " + err.stack);
+        res.status(500).send("Error fetching overdue amount");
+        return;
+      }
+      const totalDue = results[0].TotalDue || 0;
+      res.json({ FineAmount: totalDue });
+    }
+  );
+});
+
+// Handle payments for overdue items
+app.post("/api/pay", (req, res) => {
+  const { memberID, amount } = req.body;
+  const paymentAmount = parseFloat(amount);
+
+  if (isNaN(paymentAmount) || paymentAmount <= 0) {
+    return res.status(400).json({ success: false, message: "Invalid payment amount" });
+  }
+
+  // Get a connection from the pool
+  pool.getConnection((err, connection) => {
+    if (err) {
+      console.error("Error getting DB connection:", err);
+      return res.status(500).json({ success: false, message: "Payment processing error" });
+    }
+
+    // Start a transaction
+    connection.beginTransaction(err => {
+      if (err) {
+        connection.release();
+        console.error("Error starting transaction:", err);
+        return res.status(500).json({ success: false, message: "Payment processing error" });
+      }
+
+      // First, get all unpaid fines for this member
+      connection.query(
+        "SELECT PaymentID, FineAmount, PaymentAmount FROM paymenthistory WHERE MemberID = ? AND FineAmount > PaymentAmount ORDER BY CreatedAt ASC",
+        [memberID],
+        (err, results) => {
+          if (err) {
+            return connection.rollback(() => {
+              connection.release();
+              console.error("Error fetching fines:", err);
+              res.status(500).json({ success: false, message: "Payment processing error" });
+            });
+          }
+
+          let remainingPayment = paymentAmount;
+          const updates = [];
+
+          for (const fine of results) {
+            if (remainingPayment <= 0) break;
+
+            const outstanding = fine.FineAmount - fine.PaymentAmount;
+            const appliedPayment = Math.min(outstanding, remainingPayment);
+
+            updates.push(
+              new Promise((resolve, reject) => {
+                connection.query(
+                  "UPDATE paymenthistory SET PaymentAmount = PaymentAmount + ? WHERE PaymentID = ?",
+                  [appliedPayment, fine.PaymentID],
+                  err => {
+                    if (err) reject(err);
+                    else resolve();
+                  }
+                );
+              })
+            );
+
+            remainingPayment -= appliedPayment;
+          }
+
+          Promise.all(updates)
+            .then(() => {
+              connection.commit(err => {
+                if (err) {
+                  return connection.rollback(() => {
+                    connection.release();
+                    console.error("Error committing transaction:", err);
+                    res.status(500).json({ success: false, message: "Payment processing error" });
+                  });
+                }
+
+                connection.release();
+                res.json({ success: true, remainingBalance: remainingPayment });
+              });
+            })
+            .catch(err => {
+              connection.rollback(() => {
+                connection.release();
+                console.error("Error updating payments:", err);
+                res.status(500).json({ success: false, message: "Payment processing error" });
+              });
+            });
+        }
+      );
+    });
+  });
+});
+
+//shows borrowing history for a specific member
 app.get("/api/borrowing-history/:memberid", (req, res) => {
   const memberId = req.params.memberid;
 
@@ -2867,32 +2977,38 @@ app.use(compression());
 app.disable("x-powered-by");
 
 if (DEVELOPMENT) {
-  console.log("Starting development server");
-  const viteDevServer = await import("vite").then((vite) =>
-    vite.createServer({
+  (async () => {
+    console.log("Starting development server");
+    const vite = await import("vite");
+    const viteDevServer = await vite.createServer({
       server: { middlewareMode: true },
-    })
-  );
-  app.use(viteDevServer.middlewares);
-  app.use(async (req, res, next) => {
-    try {
-      const source = await viteDevServer.ssrLoadModule("./server/app.ts");
-      return await source.app(req, res, next);
-    } catch (error) {
-      if (typeof error === "object" && error instanceof Error) {
-        viteDevServer.ssrFixStacktrace(error);
+    });
+
+    app.use(viteDevServer.middlewares);
+    app.use(async (req, res, next) => {
+      try {
+        const source = await viteDevServer.ssrLoadModule("./server/app.ts");
+        return await source.app(req, res, next);
+      } catch (error) {
+        if (typeof error === "object" && error instanceof Error) {
+          viteDevServer.ssrFixStacktrace(error);
+        }
+        next(error);
       }
-      next(error);
-    }
-  });
+    });
+  })();
 } else {
-  console.log("Starting production server");
-  app.use(
-    "/assets",
-    express.static("build/client/assets", { immutable: true, maxAge: "1y" })
-  );
-  app.use(express.static("build/client", { maxAge: "1h" }));
-  app.use(await import(BUILD_PATH).then((mod) => mod.app));
+  (async () => {
+    console.log("Starting production server");
+    app.use(
+      "/assets",
+      express.static("build/client/assets", { immutable: true, maxAge: "1y" })
+    );
+    app.use(express.static("build/client", { maxAge: "1h" }));
+    
+    const mod = await import(BUILD_PATH);
+    app.use(mod.app);
+  })();
 }
 
 app.use(morgan("tiny"));

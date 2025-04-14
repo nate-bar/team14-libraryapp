@@ -102,7 +102,7 @@ export default function Dashboard() {
           </div>
         </div>
         <div className="profile-name">
-          {profileData.firstName} {profileData.lastName}
+          {profileData.firstName} {profileData.lastName} {authData.memberID}
         </div>
         <div className="current-balance">
           <strong>Current Balance:</strong>{" "}
