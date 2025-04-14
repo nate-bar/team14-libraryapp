@@ -277,17 +277,3 @@ export interface Event {
   EndDate: string;
   EventPhoto?: string | null;
 }
-
-export async function createEvent(formData: FormData) {
-  const response = await fetch("/api/createevent", {
-    method: "POST",
-    body: formData,
-  });
-
-  if (!response.ok) {
-    const errorData = await response.json();
-    throw new Error(errorData.error || errorData.details || "Failed to create event"); 
-  }
-
-  return await response.json();
-}

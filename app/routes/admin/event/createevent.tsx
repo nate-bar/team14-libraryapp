@@ -1,5 +1,4 @@
 import { useState, useRef } from "react";
-import { createEvent }  from "~/services/api";
 import "./createevent.css";
 
 export default function CreateEventPage() {
@@ -12,8 +11,23 @@ export default function CreateEventPage() {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  async function createEvent(formData: FormData) {
+    const response = await fetch("/api/createevent", {
+      method: "POST",
+      body: formData,
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || errorData.details || "Failed to create event");
+    }
+
+    return await response.json();
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
 
     if (new Date(startDate) > new Date(endDate)) {
       setMessage("Start date must be before end date!");
