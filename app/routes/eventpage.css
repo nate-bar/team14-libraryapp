@@ -7,18 +7,11 @@
 .event-page-title {
   font-weight: bold;
   font-size:xX-large;
-  color: gray800;
-  text-align: center;
-}
-
-.event-page-subtitle {
-  font-size: large;
   color:#01497c;
-  font-weight:600;
-  padding-left: 8px;
-  background-color: #c2a87d;
-  margin-bottom: 16px;
   border-radius: 9999px;
+  background-color: #c2a87d;
+  text-align: center;
+  margin-bottom: 16px;
 }
 
 .event-page-item-grid {

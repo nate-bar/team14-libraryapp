@@ -431,11 +431,11 @@ function handleQuantityInserts(
 // -----------------------------------------UPDATE EVENT-----------------------------------------
 app.put("/api/events/:eventId", upload.single("EventPhoto"), (req, res) => {
   const { eventId } = req.params;
-  const { EventName, StartDate, EndDate } = req.body;
+  const { EventName, StartDate, EndDate, EventDescription } = req.body;
   const EventPhoto = req.file ? req.file.buffer : null;
 
-  let query = `UPDATE events SET EventName = ?, StartDate = ?, EndDate = ?`;
-  const params = [EventName, StartDate, EndDate];
+  let query = `UPDATE events SET EventName = ?, StartDate = ?, EndDate = ?, EventDescription = ?`;
+  const params = [EventName, StartDate, EndDate, EventDescription];
 
   if (EventPhoto) {
     query += `, EventPhoto = ?`;
@@ -830,6 +830,7 @@ app.get("/api/events/:EventID", (req, res) => {
       EventName,
       StartDate,
       EndDate,
+      EventDescription,
       TO_BASE64(EventPhoto) AS EventPhoto
     FROM events
     WHERE EventID = ?
@@ -860,7 +861,7 @@ app.get("/api/events/:EventID", (req, res) => {
 // -----------------------------------------GET ALL EVENTS-----------------------------------------
 app.get("/api/events", (req, res) => {
   pool.query(
-    "SELECT EventID, EventName, StartDate, EndDate, TO_BASE64(EventPhoto) AS EventPhoto FROM events",
+    "SELECT EventID, EventName, StartDate, EndDate, EventDescription, TO_BASE64(EventPhoto) AS EventPhoto FROM events",
     (err, results) => {
       if (err) {
         console.error("Error executing query: " + err.stack);
@@ -880,10 +881,10 @@ app.get("/api/events", (req, res) => {
 
 // -----------------------------------------CREATE EVENT-----------------------------------------
 app.post("/api/createevent", upload.single("photo"), (req, res) => {
-  const { EventName, StartDate, EndDate } = req.body;
+  const { EventName, StartDate, EndDate, EventDescription } = req.body;
   const photo = req.file ? req.file.buffer : null;
 
-  if (!EventName || !StartDate || !EndDate || !photo) {
+  if (!EventName || !StartDate || !EndDate || !photo || !EventDescription) {
     return res
       .status(400)
       .json({ error: "All fields and photo are required." });
@@ -896,8 +897,8 @@ app.post("/api/createevent", upload.single("photo"), (req, res) => {
     }
 
     const query = `
-      INSERT INTO events (EventName, StartDate, EndDate, EventPhoto)
-      VALUES (?, ?, ?, ?);
+      INSERT INTO events (EventName, StartDate, EndDate, EventPhoto, EventDescription)
+      VALUES (?, ?, ?, ?, ?);
     `;
 
     connection.query(

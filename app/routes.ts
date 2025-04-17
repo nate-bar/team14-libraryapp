@@ -8,7 +8,6 @@ import {
 export default [
   layout("routes/layout.tsx", [
     index("routes/home.tsx"),
-
     route("eventpage/:eventId", "routes/eventpage.tsx"),
     route("quickcatalog/books", "routes/quickcatalog/books.tsx"),
     route("quickcatalog/media", "routes/quickcatalog/media.tsx"),

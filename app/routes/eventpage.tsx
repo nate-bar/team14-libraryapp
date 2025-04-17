@@ -67,8 +67,7 @@ const EventPage: React.FC = () => {
 
   return (
     <div className="event-page-container">
-      <h2 className="event-page-title">{event.EventName}</h2>
-      <h3 className="event-page-subtitle">Event Items</h3>
+      <h2 className="event-page-title">{event.EventName} Event Items</h2>
       {eventItems.length > 0 ? (
         <div className="event-page-item-grid">
           {eventItems.map((item) => (

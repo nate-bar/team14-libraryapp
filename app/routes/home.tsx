@@ -53,7 +53,6 @@
           setLoading(true);
           setError(null);
           try {
-            // Replace '/api/events' with the actual endpoint to fetch your events data
             const response = await fetch('/api/events');
             if (!response.ok) {
               throw new Error(`HTTP error! status: ${response.status}`);
@@ -81,13 +80,13 @@
     
         // Transform the active events into the format expected by the gallery
         const formattedImages: GalleryImage[] = activeEvents.map(event => ({
-          src: event.EventPhoto, // Assuming EventPhoto holds the path to the image
-          caption: event.EventName,
-          link: `/eventpage/${event.EventID}`, // Adjust the link as needed
+          src: event.EventPhoto,
+          caption: event.EventDescription,
+          link: `/eventpage/${event.EventID}`,
         }));
     
         setGalleryImages(formattedImages);
-        setCurrentSlide(0); // Reset the slide when the events change
+        setCurrentSlide(0);
       }, [events]);
     
       // Moves the slider by two slides

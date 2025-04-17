@@ -6,6 +6,7 @@ export default function CreateEventPage() {
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [photo, setPhoto] = useState<File | null>(null);
+  const [eventDescription, setEventDescription] = useState("");
   const [message, setMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -54,6 +55,7 @@ export default function CreateEventPage() {
     formData.append("StartDate", startDate);
     formData.append("EndDate", endDate);
     formData.append("photo", photo);
+    formData.append("EventDescription", eventDescription);
 
     setIsSubmitting(true);
 
@@ -65,6 +67,7 @@ export default function CreateEventPage() {
       setEndDate("");
       setPhoto(null);
       setPreviewUrl(null);
+      setEventDescription("");
 
       if (fileInputRef.current) {
         fileInputRef.current.value = "";
@@ -93,7 +96,8 @@ export default function CreateEventPage() {
     startDate !== "" &&
     endDate !== "" &&
     photo !== null &&
-    new Date(startDate) <= new Date(endDate);
+    new Date(startDate) <= new Date(endDate)
+    eventDescription.trim() !== "";
 
   return (
     <div className="create-event-container">
@@ -107,6 +111,13 @@ export default function CreateEventPage() {
           className="create-event-name"
           required
         />
+        <label className="create-event-label">Event Description:</label>
+        <textarea
+          value={eventDescription}
+          onChange={(e) => setEventDescription(e.target.value)}
+          className="create-event-description"
+          required
+        ></textarea>
         <label className="create-event-label">Event Start Date:</label>
         <input
           type="date"

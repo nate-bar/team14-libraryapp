@@ -272,6 +272,7 @@ export interface CreateEventRequest {
   EventName: string;
   StartDate: string;
   EndDate: string;
+  EventDescription: string;
   photo: File | null;
 }
 
@@ -280,6 +281,7 @@ export interface Event {
   EventName: string;
   StartDate: string;
   EndDate: string;
+  EventDescription: string;
   EventPhoto?: string | null;
 }
 

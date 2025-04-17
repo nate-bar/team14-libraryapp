@@ -72,9 +72,17 @@ const EditEvent = () => {
       } else if (name === "EndDate") {
         return { ...prev, EndDate: value };
       }
-
+      else if (name === "EventDescription") {
+        return { ...prev, EventDescription: value };
+      }
       return prev;
     });
+  };
+
+  const handleDescriptionChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    if (!selectedEvent) return;
+    const { value } = e.target;
+    setSelectedEvent(prev => prev ? { ...prev, EventDescription: value } : null);
   };
 
   const handleRemoveItem = (itemId: number) => {
@@ -123,6 +131,7 @@ const EditEvent = () => {
     formData.append("EventName", selectedEvent.EventName);
     formData.append("StartDate", formatDateForBackend(selectedEvent.StartDate));
     formData.append("EndDate", formatDateForBackend(selectedEvent.EndDate));
+    formData.append("EventDescription", selectedEvent.EventDescription);
     if (newEventPhoto) {
       formData.append("EventPhoto", newEventPhoto);
     }
@@ -185,7 +194,7 @@ const EditEvent = () => {
 
   const confirmDeleteEvent = async () => {
     if (!selectedEvent) return;
-    setIsDeleteModalOpen(false); // Close the modal
+    setIsDeleteModalOpen(false);
     setDeleting(true);
     try {
       const res = await fetch(`/api/events/${selectedEvent.EventID}`, {
@@ -258,6 +267,16 @@ const EditEvent = () => {
           className="event-edit-input"
           value={selectedEvent?.EventName || defaultEvent.EventName}
           onChange={handleInputChange}
+        />
+      </div>
+
+      <div className="event-edit-titles">
+        Event Description:
+        <textarea
+          name="EventDescription"
+          className="event-edit-input"
+          value={selectedEvent?.EventDescription || defaultEvent.EventDescription}
+          onChange={handleDescriptionChange}
         />
       </div>
 
