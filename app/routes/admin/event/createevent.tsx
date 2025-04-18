@@ -7,6 +7,7 @@ export default function CreateEventPage() {
   const [endDate, setEndDate] = useState("");
   const [photo, setPhoto] = useState<File | null>(null);
   const [eventDescription, setEventDescription] = useState("");
+  const maxDescriptionLength = 150;
   const [message, setMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -91,6 +92,12 @@ export default function CreateEventPage() {
     }
   };
 
+  const handleDescriptionChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    if (e.target.value.length <= maxDescriptionLength) {
+      setEventDescription(e.target.value);
+    }
+  };
+
   const formIsValid =
     eventName.trim() !== "" &&
     startDate !== "" &&
@@ -113,11 +120,15 @@ export default function CreateEventPage() {
         />
         <label className="create-event-label">Event Description:</label>
         <textarea
-          value={eventDescription}
-          onChange={(e) => setEventDescription(e.target.value)}
-          className="create-event-description"
-          required
-        ></textarea>
+        value={eventDescription}
+        onChange={handleDescriptionChange}
+        className="create-event-description"
+        maxLength={maxDescriptionLength}
+        required
+      ></textarea>
+      <div className="character-count">
+        {eventDescription.length}/{maxDescriptionLength} characters
+      </div>
         <label className="create-event-label">Event Start Date:</label>
         <input
           type="date"

@@ -19,6 +19,8 @@ const EditEvent = () => {
   const [newEventPhoto, setNewEventPhoto] = useState<File | null>(null);
   const [newEventPhotoPreview, setNewEventPhotoPreview] = useState<string | null>(null);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [eventDescription, setEventDescription] = useState('');
+  const [maxDescriptionLength] = useState(150);
 
   useEffect(() => {
     fetch("/api/events")
@@ -32,6 +34,14 @@ const EditEvent = () => {
         setLoading(false);
       });
   }, []);
+
+  useEffect(() => {
+    if (selectedEvent) {
+      setEventDescription(selectedEvent.EventDescription);
+    } else {
+      setEventDescription('');
+    }
+  }, [selectedEvent]);
 
   const handleEventSelect = (eventId: number) => {
     const event = events.find(e => e.EventID === eventId) || null;
@@ -72,17 +82,16 @@ const EditEvent = () => {
       } else if (name === "EndDate") {
         return { ...prev, EndDate: value };
       }
-      else if (name === "EventDescription") {
-        return { ...prev, EventDescription: value };
-      }
       return prev;
     });
   };
 
   const handleDescriptionChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    if (!selectedEvent) return;
-    const { value } = e.target;
-    setSelectedEvent(prev => prev ? { ...prev, EventDescription: value } : null);
+    const newValue = e.target.value;
+    if (newValue.length <= maxDescriptionLength) {
+      setEventDescription(newValue);
+      setSelectedEvent(prev => prev ? { ...prev, EventDescription: newValue } : null);
+    }
   };
 
   const handleRemoveItem = (itemId: number) => {
@@ -165,6 +174,7 @@ const EditEvent = () => {
       setSelectedEvent(prev => prev ? {
       ...prev,
       ...result,
+      EventDescription: eventDescription,
       ...(newEventPhotoPreview && { EventPhoto: newEventPhotoPreview }),
       }
       : null
@@ -232,6 +242,7 @@ const EditEvent = () => {
     EventName: "",
     StartDate: new Date().toISOString().slice(0, 10),
     EndDate: new Date().toISOString().slice(0, 10),
+    EventDescription: "",
     EventPhoto: "",
   };
 
@@ -273,12 +284,16 @@ const EditEvent = () => {
       <div className="event-edit-titles">
         Event Description:
         <textarea
-          name="EventDescription"
-          className="event-edit-input"
-          value={selectedEvent?.EventDescription || defaultEvent.EventDescription}
+          value={eventDescription}
           onChange={handleDescriptionChange}
-        />
+          className="create-event-description"
+          maxLength={maxDescriptionLength}
+          required
+        ></textarea>
       </div>
+      <div className="character-count">
+          {eventDescription.length}/{maxDescriptionLength} characters
+        </div>
 
       <div className="event-edit-titles">
         Start Date:
