@@ -118,6 +118,7 @@ export default function CreateEventPage() {
           className="create-event-name"
           required
         />
+        
         <label className="create-event-label">Event Description:</label>
         <textarea
         value={eventDescription}
@@ -126,6 +127,7 @@ export default function CreateEventPage() {
         maxLength={maxDescriptionLength}
         required
       ></textarea>
+
       <div className="character-count">
         {eventDescription.length}/{maxDescriptionLength} characters
       </div>

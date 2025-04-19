@@ -38,6 +38,7 @@ export default function Admin() {
     { name: "Add Items to Event", path: "/admin/addeventitems" },
     { name: "Edit Event", path: "/admin/editevent" },
     { name: "Users", path: "/admin/usermanagement" },
+    { name: "Change Due Date", path: "/admin/changeduedate" },
   ];
 
   return (

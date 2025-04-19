@@ -84,6 +84,12 @@
   .create-event-button:disabled {
     background-color: #a8a8a8;
     cursor: not-allowed;
+    color: #ffffff;
+    font-weight: bold;
+  }
+
+  .create-event-button:hover {
+    box-shadow: #04197c 0px 0px 5px 1px;
   }
   
   .create-event-message {

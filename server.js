@@ -428,6 +428,94 @@ function handleQuantityInserts(
   });
 }
 
+// -----------------------------------------USER BORROWED ITEMS-----------------------------------------
+app.get("/api/user-borrowed-items/:memberId", (req, res) => {
+  const memberId = req.params.memberId;
+
+  pool.getConnection((err, connection) => {
+    if (err) {
+      console.error("Database connection error:", err);
+      return res.status(500).json({ error: "Database connection error" });
+    }
+
+    connection.query(
+      `SELECT br.BorrowID,
+        br.MemberID,
+        br.ItemID,
+        br.DueDate,
+        i.Title,
+        it.TypeName,
+        TO_BASE64(i.Photo) AS PhotoBase64,
+        m.FirstName,
+        m.MiddleName,
+        m.LastName
+        FROM borrowrecord br
+        INNER JOIN Items i ON br.ItemID = i.ItemID
+        INNER JOIN ItemTypes it ON i.ItemID = it.ItemID
+        INNER JOIN Members m ON br.MemberID = m.MemberID
+        WHERE br.MemberID = ? AND br.ReturnDate IS NULL`,
+      [memberId],
+      (err, results) => {
+        connection.release();
+
+        if (err) {
+          console.error("Database query error:", err);
+          return res.status(500).json({ error: "Database query error" });
+        }
+
+        // ✅ Don't return 404; return an empty array with 200 OK
+        const formattedResults = results.map((item) => ({
+          ...item,
+          PhotoBase64: item.PhotoBase64
+            ? `data:image/jpeg;base64,${item.PhotoBase64}`
+            : null,
+        }));
+
+        res.json(formattedResults);
+      }
+    );
+  });
+});
+
+// -----------------------------------------UPDATE RETURN DATE-----------------------------------------
+app.put("/api/update-due-date", (req, res) => {
+  const { memberId, itemId, newDueDate } = req.body;
+
+  if (!memberId || !itemId || !newDueDate) {
+    return res.status(400).json({ error: "Missing required fields: memberId, itemId, newDueDate" });
+  }
+
+  pool.getConnection((err, connection) => {
+    if (err) {
+      console.error("Database connection error:", err);
+      return res.status(500).json({ error: "Database connection error" });
+    }
+
+    const query = `
+      UPDATE borrowrecord
+      SET DueDate = ?
+      WHERE MemberID = ? AND ItemID = ? AND ReturnDate IS NULL
+      ORDER BY BorrowDate DESC
+      LIMIT 1;
+    `;
+
+    connection.query(query, [newDueDate, memberId, itemId], (err, result) => {
+      connection.release();
+
+      if (err) {
+        console.error("Database query error:", err);
+        return res.status(500).json({ error: "Database query error" });
+      }
+
+      if (result.affectedRows === 0) {
+        return res.status(404).json({ error: "No active borrow record found to update the due date." });
+      }
+
+      res.json({ message: "Due date updated successfully" });
+    });
+  });
+});
+
 // -----------------------------------------UPDATE EVENT-----------------------------------------
 app.put("/api/events/:eventId", upload.single("EventPhoto"), (req, res) => {
   const { eventId } = req.params;
@@ -903,7 +991,7 @@ app.post("/api/createevent", upload.single("photo"), (req, res) => {
 
     connection.query(
       query,
-      [EventName, StartDate, EndDate, photo],
+      [EventName, StartDate, EndDate, photo, EventDescription],
       (error, results) => {
         connection.release();
 

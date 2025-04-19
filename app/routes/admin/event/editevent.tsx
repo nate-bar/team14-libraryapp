@@ -21,6 +21,9 @@ const EditEvent = () => {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [eventDescription, setEventDescription] = useState('');
   const [maxDescriptionLength] = useState(150);
+  const [originalEvent, setOriginalEvent] = useState<Event | null>(null);
+  const [originalItems, setOriginalItems] = useState<Items[]>([]);
+  
 
   useEffect(() => {
     fetch("/api/events")
@@ -46,6 +49,7 @@ const EditEvent = () => {
   const handleEventSelect = (eventId: number) => {
     const event = events.find(e => e.EventID === eventId) || null;
     setSelectedEvent(event);
+    setOriginalEvent(event ? { ...event } : null);
     setItemsToRemove([]);
     setRemovedItemsDisplay([]);
     setNewEventPhoto(null);
@@ -56,7 +60,9 @@ const EditEvent = () => {
       fetch(`/api/events/${eventId}/items`)
         .then(res => res.json())
         .then(data => {
-          setEventItems(Array.isArray(data) ? data : []);
+          const fetchedItems = Array.isArray(data) ? data : [];
+          setEventItems(fetchedItems);
+          setOriginalItems([...fetchedItems]);
           setItemsLoading(false);
         })
         .catch(err => {
@@ -71,7 +77,6 @@ const EditEvent = () => {
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!selectedEvent) return;
     const { name, value } = e.target;
-
     setSelectedEvent(prev => {
       if (!prev) return null;
 
@@ -246,6 +251,33 @@ const EditEvent = () => {
     EventPhoto: "",
   };
 
+  const hasChanges = () => {
+    if (!selectedEvent || !originalEvent) {
+      return false;
+    }
+
+    const fieldsChanged = (
+      selectedEvent.EventName !== originalEvent.EventName ||
+      selectedEvent.StartDate.slice(0, 10) !== originalEvent.StartDate.slice(0, 10) ||
+      selectedEvent.EndDate.slice(0, 10) !== originalEvent.EndDate.slice(0, 10) ||
+      selectedEvent.EventDescription !== originalEvent.EventDescription
+    );
+
+    const photoChanged = !!newEventPhoto;
+    const itemsChanged = itemsToRemove.length > 0;
+    const hasAnyChange = fieldsChanged || photoChanged || itemsChanged;
+
+    return hasAnyChange;
+  };
+
+  useEffect(() => {
+    if (selectedEvent) {
+      setOriginalEvent({ ...selectedEvent });
+    } else {
+      setOriginalEvent(null);
+    }
+  }, [selectedEvent?.EventID]);
+
   return (
     <div className="edit-event-container">
       <h2 className="edit-event-title"> Event Editor Form</h2>
@@ -387,12 +419,23 @@ const EditEvent = () => {
       )}
 
       {/* Buttons to Save Changes or Delete Event */}
-      <button onClick={handleUpdateEvent} disabled={saving || !selectedEvent} className="save-changes-button">
-        Save Changes
+      <div className="edit-event-buttons">
+      <button
+        onClick={handleUpdateEvent}
+        disabled={!hasChanges() || saving || !selectedEvent}
+        className="save-changes-button"
+      >
+        {saving ? "Saving..." : "Save Changes"}
       </button>
-      <button onClick={openDeleteModal} disabled={deleting || !selectedEvent} className="delete-event-button">
-        Delete Event
+
+      <button
+        onClick={openDeleteModal}
+        disabled={!selectedEvent || deleting}
+        className="delete-event-button"
+      >
+        {deleting ? "Deleting..." : "Delete Event"}
       </button>
+    </div>
 
       {/* Status Message */}
       {statusMsg && (

@@ -5,6 +5,13 @@ export interface Member {
   password: string;
 }
 
+export interface UserProfile { //breh
+  memberId: number;
+  firstName: string;
+  lastName: string;
+  middleName?: string;
+}
+
 export interface Profile {
   firstName: string;
   lastName: string;
@@ -20,6 +27,7 @@ export interface Profile {
   mediaItemLimit: number;
   deviceLimit: number;
 }
+
 export interface Notification {
   id: number;
   memberID: number;
@@ -43,6 +51,20 @@ export interface Items {
   GenreName?: string; // Optional if not all items have genres
   Photo?: string; // Optional for item images
 }
+
+export interface BorrowedItem extends Items {
+  BorrowID: number;
+  MemberID: number;
+  ItemID: number;
+  DueDate: string;
+  Title: string;
+  TypeName: string;
+  PhotoBase64?: string;
+  FirstName: string;
+  MiddleName?: string;
+  LastName: string;
+}
+
 
 export interface Book {
   ItemID: number;
@@ -303,3 +325,4 @@ export interface GalleryImage {
   caption: string;
   link: string;
 }
+
