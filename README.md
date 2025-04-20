@@ -1,7 +1,6 @@
 # Welcome to Team 14 Symphony's Library!
 
-# Running this application correctly requires creating a .env file in the project directory
-# with the database connection information.
+# Running this application correctly requires creating a .env file in the project directory with the database connection information.
 
 See Project report for details.
 
